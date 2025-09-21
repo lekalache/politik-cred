@@ -33,15 +33,28 @@ export interface PoliticianDetails {
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-if (!supabaseUrl) {
-  throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable')
-}
+// Use placeholder values during build time if environment variables are missing
+const buildTimeUrl = supabaseUrl || 'https://placeholder.supabase.co'
+const buildTimeKey = (supabaseAnonKey && supabaseAnonKey !== 'YOUR_SUPABASE_ANON_KEY_HERE')
+  ? supabaseAnonKey
+  : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsYWNlaG9sZGVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NDk0MDUyNDAsImV4cCI6MTk2NDk4MTI0MH0.placeholder'
 
-if (!supabaseAnonKey || supabaseAnonKey === 'YOUR_SUPABASE_ANON_KEY_HERE') {
-  throw new Error('Missing or invalid NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable')
-}
+export const supabase = createClient(buildTimeUrl, buildTimeKey)
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Runtime validation function
+export const validateSupabaseConfig = () => {
+  if (typeof window !== 'undefined') { // Only validate on client side
+    if (!supabaseUrl) {
+      console.error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable')
+      return false
+    }
+    if (!supabaseAnonKey || supabaseAnonKey === 'YOUR_SUPABASE_ANON_KEY_HERE') {
+      console.error('Missing or invalid NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable')
+      return false
+    }
+  }
+  return true
+}
 
 export type Database = {
   public: {
