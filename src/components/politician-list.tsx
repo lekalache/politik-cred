@@ -1,247 +1,184 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { PoliticianCard } from "./politician-card"
-import { supabase, type Database } from "@/lib/supabase"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Search, Filter, SortAsc, SortDesc } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useState, useEffect } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Progress } from '@/components/ui/progress'
+import { supabase } from '@/lib/supabase'
+import { User, Calendar, TrendingUp, TrendingDown } from 'lucide-react'
 
-type Politician = Database['public']['Tables']['politicians']['Row']
+interface Politician {
+  id: string
+  name: string
+  party: string | null
+  position: string | null
+  image_url: string | null
+  bio: string | null
+  credibility_score: number
+  total_votes: number
+  created_at: string
+  updated_at: string
+}
 
 interface PoliticianListProps {
-  onVoteClick?: (politicianId: string) => void
+  onVoteClick: (politicianId: string) => void
 }
 
 export function PoliticianList({ onVoteClick }: PoliticianListProps) {
   const [politicians, setPoliticians] = useState<Politician[]>([])
   const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [sortBy, setSortBy] = useState<"name" | "score" | "votes">("score")
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
-  const [filterParty, setFilterParty] = useState<string>("all")
 
   useEffect(() => {
+    async function fetchPoliticians() {
+      try {
+        const { data, error } = await supabase
+          .from('politicians')
+          .select('*')
+          .order('credibility_score', { ascending: false })
+
+        if (error) {
+          console.error('Error fetching politicians:', error)
+          return
+        }
+
+        setPoliticians(data || [])
+      } catch (error) {
+        console.error('Error:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
     fetchPoliticians()
   }, [])
 
-  const fetchPoliticians = async () => {
-    try {
-      setLoading(true)
-      const { data, error } = await supabase
-        .from('politicians')
-        .select('*')
-        .order('credibility_score', { ascending: false })
-
-      if (error) {
-        console.error('Error fetching politicians:', error)
-        return
-      }
-
-      setPoliticians(data || [])
-    } catch (error) {
-      console.error('Error:', error)
-    } finally {
-      setLoading(false)
-    }
+  const getScoreColor = (score: number) => {
+    if (score >= 150) return 'text-green-600'
+    if (score >= 100) return 'text-yellow-600'
+    return 'text-red-600'
   }
 
-  const filteredAndSortedPoliticians = politicians
-    .filter(politician => {
-      const matchesSearch = politician.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           politician.party?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           politician.position?.toLowerCase().includes(searchTerm.toLowerCase())
-
-      const matchesParty = filterParty === "all" || politician.party === filterParty
-
-      return matchesSearch && matchesParty
-    })
-    .sort((a, b) => {
-      let comparison = 0
-
-      switch (sortBy) {
-        case "name":
-          comparison = a.name.localeCompare(b.name)
-          break
-        case "score":
-          comparison = a.credibility_score - b.credibility_score
-          break
-        case "votes":
-          comparison = a.total_votes - b.total_votes
-          break
-      }
-
-      return sortOrder === "asc" ? comparison : -comparison
-    })
-
-  const uniqueParties = Array.from(new Set(politicians.map(p => p.party).filter(Boolean)))
-
-  const getScoreStats = () => {
-    if (politicians.length === 0) return { avg: 0, highest: 0, lowest: 0 }
-
-    const scores = politicians.map(p => p.credibility_score)
-    return {
-      avg: Math.round(scores.reduce((a, b) => a + b, 0) / scores.length),
-      highest: Math.max(...scores),
-      lowest: Math.min(...scores)
-    }
+  const getScoreBadgeColor = (score: number) => {
+    if (score >= 150) return 'bg-green-100 text-green-800 border-green-200'
+    if (score >= 100) return 'bg-yellow-100 text-yellow-800 border-yellow-200'
+    return 'bg-red-100 text-red-800 border-red-200'
   }
-
-  const stats = getScoreStats()
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {[...Array(6)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="p-6">
-                <div className="flex items-start space-x-4">
-                  <div className="w-16 h-16 bg-gray-200 rounded-full" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-gray-200 rounded w-3/4" />
-                    <div className="h-3 bg-gray-200 rounded w-1/2" />
-                  </div>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {[...Array(6)].map((_, i) => (
+          <Card key={i} className="animate-pulse">
+            <CardHeader>
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
+                <div className="space-y-2">
+                  <div className="h-4 bg-gray-200 rounded w-32"></div>
+                  <div className="h-3 bg-gray-200 rounded w-24"></div>
                 </div>
-                <div className="mt-4 space-y-2">
-                  <div className="h-3 bg-gray-200 rounded" />
-                  <div className="h-6 bg-gray-200 rounded" />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="h-2 bg-gray-200 rounded"></div>
+                <div className="h-8 bg-gray-200 rounded"></div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
     )
   }
 
-  return (
-    <div className="space-y-6">
-      {/* Stats Overview */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{stats.avg}</div>
-              <div className="text-sm text-muted-foreground">Score Moyen</div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{stats.highest}</div>
-              <div className="text-sm text-muted-foreground">Score le Plus Élevé</div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-red-600">{stats.lowest}</div>
-              <div className="text-sm text-muted-foreground">Score le Plus Bas</div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+  if (politicians.length === 0) {
+    return (
+      <Card className="text-center py-12">
+        <CardContent>
+          <User className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            Aucun politicien trouvé
+          </h3>
+          <p className="text-gray-600">
+            La base de données sera bientôt alimentée avec les profils des politiciens français.
+          </p>
+        </CardContent>
+      </Card>
+    )
+  }
 
-      {/* Filters and Search */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="grid gap-4 md:grid-cols-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Rechercher un politicien..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+  return (
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {politicians.map((politician) => (
+        <Card key={politician.id} className="hover:shadow-lg transition-shadow">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <Avatar>
+                  <AvatarImage src={politician.image_url || undefined} />
+                  <AvatarFallback>
+                    {politician.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <CardTitle className="text-lg">{politician.name}</CardTitle>
+                  {politician.party && (
+                    <p className="text-sm text-gray-600">{politician.party}</p>
+                  )}
+                </div>
+              </div>
+              <Badge
+                variant="outline"
+                className={getScoreBadgeColor(politician.credibility_score)}
+              >
+                {politician.credibility_score}/200
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {politician.position && (
+              <p className="text-sm font-medium text-gray-700">
+                {politician.position}
+              </p>
+            )}
+
+            {politician.bio && (
+              <p className="text-sm text-gray-600 line-clamp-2">
+                {politician.bio}
+              </p>
+            )}
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600">Score de crédibilité</span>
+                <span className={`font-semibold ${getScoreColor(politician.credibility_score)}`}>
+                  {politician.credibility_score}/200
+                </span>
+              </div>
+              <Progress
+                value={(politician.credibility_score / 200) * 100}
+                className="h-2"
               />
             </div>
 
-            <Select value={filterParty} onValueChange={setFilterParty}>
-              <SelectTrigger>
-                <Filter className="w-4 h-4 mr-2" />
-                <SelectValue placeholder="Parti politique" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous les partis</SelectItem>
-                {uniqueParties.map(party => (
-                  <SelectItem key={party} value={party!}>
-                    {party}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={sortBy} onValueChange={(value: "name" | "score" | "votes") => setSortBy(value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Trier par" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="score">Score de crédibilité</SelectItem>
-                <SelectItem value="votes">Nombre de votes</SelectItem>
-                <SelectItem value="name">Nom</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <button
-              onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-              className="flex items-center justify-center px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-            >
-              {sortOrder === "asc" ? (
-                <SortAsc className="w-4 h-4" />
-              ) : (
-                <SortDesc className="w-4 h-4" />
-              )}
-            </button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Results Info */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <Badge variant="outline">
-            {filteredAndSortedPoliticians.length} politicien(s) trouvé(s)
-          </Badge>
-          {searchTerm && (
-            <Badge variant="secondary">
-              Recherche: "{searchTerm}"
-            </Badge>
-          )}
-          {filterParty !== "all" && (
-            <Badge variant="secondary">
-              Parti: {filterParty}
-            </Badge>
-          )}
-        </div>
-      </div>
-
-      {/* Politicians Grid */}
-      {filteredAndSortedPoliticians.length === 0 ? (
-        <Card>
-          <CardContent className="p-8 text-center">
-            <div className="text-gray-500">
-              <Search className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-              <h3 className="text-lg font-semibold mb-2">Aucun politicien trouvé</h3>
-              <p>Essayez de modifier vos critères de recherche ou de filtrage.</p>
+            <div className="flex items-center justify-between text-sm text-gray-600">
+              <div className="flex items-center space-x-1">
+                <Calendar className="w-4 h-4" />
+                <span>{politician.total_votes} votes</span>
+              </div>
+              <Button
+                onClick={() => onVoteClick(politician.id)}
+                size="sm"
+                variant="outline"
+                className="hover:bg-blue-50 hover:border-blue-300"
+              >
+                Voter
+              </Button>
             </div>
           </CardContent>
         </Card>
-      ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredAndSortedPoliticians.map((politician) => (
-            <PoliticianCard
-              key={politician.id}
-              politician={politician}
-              onVote={onVoteClick}
-            />
-          ))}
-        </div>
-      )}
+      ))}
     </div>
   )
 }

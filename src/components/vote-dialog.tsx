@@ -1,384 +1,407 @@
 "use client"
 
-import { useState } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { supabase, type Database } from "@/lib/supabase"
+import { useState } from 'react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent } from '@/components/ui/card'
+import { Label } from '@/components/ui/label'
+import { AuthDialog } from '@/components/auth/auth-dialog'
+import { useAuth } from '@/components/auth/auth-provider'
+import { supabase } from '@/lib/supabase'
 import {
   ThumbsUp,
   ThumbsDown,
-  Link2,
+  ExternalLink,
   FileText,
   Video,
   File,
   AlertCircle,
-  CheckCircle,
-  Star,
-  Shield
-} from "lucide-react"
-
-type Politician = Database['public']['Tables']['politicians']['Row']
+  CheckCircle
+} from 'lucide-react'
 
 interface VoteDialogProps {
-  politician: Politician
-  trigger?: React.ReactNode
-  onVoteSubmitted?: () => void
+  politicianId: string | null
+  onClose: () => void
 }
 
-export function VoteDialog({ politician, trigger, onVoteSubmitted }: VoteDialogProps) {
-  const [open, setOpen] = useState(false)
-  const [voteType, setVoteType] = useState<"positive" | "negative" | null>(null)
-  const [points, setPoints] = useState(1)
-  const [evidenceTitle, setEvidenceTitle] = useState("")
-  const [evidenceDescription, setEvidenceDescription] = useState("")
-  const [evidenceUrl, setEvidenceUrl] = useState("")
-  const [evidenceType, setEvidenceType] = useState<"article" | "video" | "document" | "other">("article")
+interface VoteFormData {
+  vote_type: 'positive' | 'negative'
+  points: number
+  category: 'integrity' | 'competence' | 'transparency' | 'consistency' | 'leadership' | 'other'
+  evidence_title: string
+  evidence_description: string
+  evidence_url: string
+  evidence_type: 'article' | 'video' | 'document' | 'social_media' | 'speech' | 'interview' | 'other'
+  source_credibility: number
+  tags: string[]
+}
+
+export function VoteDialog({ politicianId, onClose }: VoteDialogProps) {
+  const { user } = useAuth()
+  const [formData, setFormData] = useState<VoteFormData>({
+    vote_type: 'positive',
+    points: 5,
+    category: 'integrity',
+    evidence_title: '',
+    evidence_description: '',
+    evidence_url: '',
+    evidence_type: 'article',
+    source_credibility: 7,
+    tags: []
+  })
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [showAuthDialog, setShowAuthDialog] = useState(false)
 
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map(n => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2)
-  }
+  if (!politicianId) return null
 
-  const getEvidenceIcon = (type: string) => {
-    switch (type) {
-      case "article":
-        return <FileText className="w-4 h-4" />
-      case "video":
-        return <Video className="w-4 h-4" />
-      case "document":
-        return <File className="w-4 h-4" />
-      default:
-        return <Link2 className="w-4 h-4" />
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    // Check if user is authenticated
+    if (!user) {
+      setShowAuthDialog(true)
+      return
     }
-  }
-
-  const handleSubmit = async () => {
-    if (!voteType || !evidenceTitle || !evidenceDescription) return
 
     setIsSubmitting(true)
+    setSubmitStatus('idle')
 
     try {
-      // In a real app, you'd get the user_id from authentication
-      // For demo purposes, we'll use a placeholder
-      const { error } = await supabase
-        .from('votes')
-        .insert({
-          politician_id: politician.id,
-          user_id: null, // Will be set when auth is implemented
-          vote_type: voteType,
-          points,
-          evidence_title: evidenceTitle,
-          evidence_description: evidenceDescription,
-          evidence_url: evidenceUrl || null,
-          evidence_type: evidenceType,
-          status: 'pending'
-        })
+      // First ensure the user exists in the users table
+      const { error: userError } = await supabase.rpc('ensure_user_exists', {
+        user_id: user.id
+      })
 
-      if (error) {
-        console.error('Error submitting vote:', error)
+      if (userError) {
+        console.error('Error ensuring user exists:', userError)
+        setSubmitStatus('error')
         return
       }
 
-      setSubmitted(true)
-      onVoteSubmitted?.()
+      // Now submit the vote
+      const { error } = await supabase
+        .from('votes')
+        .insert([{
+          ...formData,
+          politician_id: politicianId,
+          user_id: user.id
+        }])
 
-      // Reset form after a delay
+      if (error) {
+        console.error('Error submitting vote:', error)
+        setSubmitStatus('error')
+        return
+      }
+
+      setSubmitStatus('success')
       setTimeout(() => {
-        setOpen(false)
-        setSubmitted(false)
-        setVoteType(null)
-        setPoints(1)
-        setEvidenceTitle("")
-        setEvidenceDescription("")
-        setEvidenceUrl("")
-        setEvidenceType("article")
+        onClose()
+        setSubmitStatus('idle')
+        setFormData({
+          vote_type: 'positive',
+          points: 5,
+          category: 'integrity',
+          evidence_title: '',
+          evidence_description: '',
+          evidence_url: '',
+          evidence_type: 'article',
+          source_credibility: 7,
+          tags: []
+        })
       }, 2000)
-
     } catch (error) {
       console.error('Error:', error)
+      setSubmitStatus('error')
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  if (submitted) {
-    return (
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          {trigger}
-        </DialogTrigger>
-        <DialogContent className="max-w-md">
-          <div className="text-center py-8">
-            <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-            <h2 className="text-xl font-bold mb-2">Vote soumis avec succès!</h2>
-            <p className="text-muted-foreground">
-              Votre vote est en cours de modération et sera bientôt pris en compte.
-            </p>
-          </div>
-        </DialogContent>
-      </Dialog>
-    )
+  const getEvidenceIcon = (type: string) => {
+    switch (type) {
+      case 'article': return <FileText className="w-4 h-4" />
+      case 'video': return <Video className="w-4 h-4" />
+      case 'document': return <File className="w-4 h-4" />
+      default: return <ExternalLink className="w-4 h-4" />
+    }
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger || (
-          <Button className="w-full">
-            Voter pour ce politicien
-          </Button>
-        )}
-      </DialogTrigger>
+    <Dialog open={!!politicianId} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center space-x-3">
-            <Avatar className="w-10 h-10">
-              <AvatarImage src={politician.image_url} alt={politician.name} />
-              <AvatarFallback>
-                {getInitials(politician.name)}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <div>Voter pour {politician.name}</div>
-              <div className="text-sm font-normal text-muted-foreground">
-                {politician.position}
-              </div>
-            </div>
+          <DialogTitle className="flex items-center space-x-2">
+            <span>Soumettre un vote avec preuves</span>
+            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+              Modération requise
+            </Badge>
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
-          {/* Current Score Display */}
-          <Card>
+        {submitStatus === 'success' && (
+          <Card className="border-green-200 bg-green-50">
             <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Shield className="w-5 h-5 text-blue-600" />
-                  <span className="font-semibold">Score Actuel</span>
-                </div>
-                <div className="text-2xl font-bold text-blue-600">
-                  {politician.credibility_score}/200
+              <div className="flex items-center space-x-2 text-green-800">
+                <CheckCircle className="w-5 h-5" />
+                <span className="font-medium">Vote soumis avec succès!</span>
+              </div>
+              <p className="text-sm text-green-700 mt-1">
+                Votre vote sera examiné par nos modérateurs avant d&apos;être pris en compte.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {submitStatus === 'error' && (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2 text-red-800">
+                <AlertCircle className="w-5 h-5" />
+                <span className="font-medium">Erreur lors de la soumission</span>
+              </div>
+              <p className="text-sm text-red-700 mt-1">
+                Une erreur s&apos;est produite. Veuillez réessayer.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Vote Type Selection */}
+          <div className="space-y-3">
+            <Label className="text-base font-semibold">Type de vote</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <Card
+                className={`cursor-pointer transition-colors ${
+                  formData.vote_type === 'positive'
+                    ? 'border-green-300 bg-green-50'
+                    : 'hover:bg-gray-50'
+                }`}
+                onClick={() => setFormData(prev => ({ ...prev, vote_type: 'positive' }))}
+              >
+                <CardContent className="p-4 text-center">
+                  <ThumbsUp className={`w-8 h-8 mx-auto mb-2 ${
+                    formData.vote_type === 'positive' ? 'text-green-600' : 'text-gray-400'
+                  }`} />
+                  <span className="font-medium">Vote positif</span>
+                  <p className="text-xs text-gray-600 mt-1">
+                    Améliore la crédibilité
+                  </p>
+                </CardContent>
+              </Card>
+              <Card
+                className={`cursor-pointer transition-colors ${
+                  formData.vote_type === 'negative'
+                    ? 'border-red-300 bg-red-50'
+                    : 'hover:bg-gray-50'
+                }`}
+                onClick={() => setFormData(prev => ({ ...prev, vote_type: 'negative' }))}
+              >
+                <CardContent className="p-4 text-center">
+                  <ThumbsDown className={`w-8 h-8 mx-auto mb-2 ${
+                    formData.vote_type === 'negative' ? 'text-red-600' : 'text-gray-400'
+                  }`} />
+                  <span className="font-medium">Vote négatif</span>
+                  <p className="text-xs text-gray-600 mt-1">
+                    Diminue la crédibilité
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Points Selection */}
+          <div className="space-y-3">
+            <Label className="text-base font-semibold">
+              Impact du vote ({formData.points} points)
+            </Label>
+            <div className="grid grid-cols-5 gap-2">
+              {[1, 3, 5, 7, 10].map((points) => (
+                <Button
+                  key={points}
+                  type="button"
+                  variant={formData.points === points ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFormData(prev => ({ ...prev, points }))}
+                >
+                  {points}
+                </Button>
+              ))}
+            </div>
+            <p className="text-xs text-gray-600">
+              Plus l&apos;impact est important, plus les preuves doivent être solides.
+            </p>
+          </div>
+
+          {/* Vote Category */}
+          <div className="space-y-3">
+            <Label className="text-base font-semibold">Catégorie du vote</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { value: 'integrity', label: 'Intégrité' },
+                { value: 'competence', label: 'Compétence' },
+                { value: 'transparency', label: 'Transparence' },
+                { value: 'consistency', label: 'Cohérence' },
+                { value: 'leadership', label: 'Leadership' },
+                { value: 'other', label: 'Autre' }
+              ].map((category) => (
+                <Button
+                  key={category.value}
+                  type="button"
+                  variant={formData.category === category.value ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFormData(prev => ({ ...prev, category: category.value as VoteFormData['category'] }))}
+                >
+                  {category.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Evidence Type */}
+          <div className="space-y-3">
+            <Label className="text-base font-semibold">Type de preuve</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { value: 'article', label: 'Article de presse', icon: 'article' },
+                { value: 'video', label: 'Vidéo', icon: 'video' },
+                { value: 'document', label: 'Document officiel', icon: 'document' },
+                { value: 'social_media', label: 'Réseaux sociaux', icon: 'other' },
+                { value: 'speech', label: 'Discours', icon: 'other' },
+                { value: 'interview', label: 'Interview', icon: 'video' },
+                { value: 'other', label: 'Autre', icon: 'other' }
+              ].map((type) => (
+                <Button
+                  key={type.value}
+                  type="button"
+                  variant={formData.evidence_type === type.value ? "default" : "outline"}
+                  size="sm"
+                  className="justify-start"
+                  onClick={() => setFormData(prev => ({ ...prev, evidence_type: type.value as VoteFormData['evidence_type'] }))}
+                >
+                  {getEvidenceIcon(type.icon)}
+                  <span className="ml-2">{type.label}</span>
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Source Credibility */}
+          <div className="space-y-3">
+            <Label className="text-base font-semibold">
+              Crédibilité de la source ({formData.source_credibility}/10)
+            </Label>
+            <div className="grid grid-cols-5 gap-2">
+              {[2, 4, 6, 8, 10].map((credibility) => (
+                <Button
+                  key={credibility}
+                  type="button"
+                  variant={formData.source_credibility === credibility ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFormData(prev => ({ ...prev, source_credibility: credibility }))}
+                >
+                  {credibility}
+                </Button>
+              ))}
+            </div>
+            <p className="text-xs text-gray-600">
+              Évaluez la fiabilité de votre source (2: peu fiable, 10: très fiable)
+            </p>
+          </div>
+
+          {/* Evidence Details */}
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="evidence_title" className="text-base font-semibold">
+                Titre de la preuve *
+              </Label>
+              <input
+                id="evidence_title"
+                type="text"
+                required
+                className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Ex: Déclaration publique lors du débat du 15 janvier 2024"
+                value={formData.evidence_title}
+                onChange={(e) => setFormData(prev => ({ ...prev, evidence_title: e.target.value }))}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="evidence_description" className="text-base font-semibold">
+                Description de la preuve *
+              </Label>
+              <textarea
+                id="evidence_description"
+                required
+                rows={4}
+                className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Décrivez en détail la preuve et son contexte. Soyez objectif et factuel."
+                value={formData.evidence_description}
+                onChange={(e) => setFormData(prev => ({ ...prev, evidence_description: e.target.value }))}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="evidence_url" className="text-base font-semibold">
+                Lien vers la preuve
+              </Label>
+              <input
+                id="evidence_url"
+                type="url"
+                className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="https://exemple.com/article-ou-video"
+                value={formData.evidence_url}
+                onChange={(e) => setFormData(prev => ({ ...prev, evidence_url: e.target.value }))}
+              />
+            </div>
+          </div>
+
+          {/* Legal Notice */}
+          <Card className="border-blue-200 bg-blue-50">
+            <CardContent className="p-4">
+              <div className="flex items-start space-x-2">
+                <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
+                <div className="text-sm text-blue-800">
+                  <p className="font-medium mb-1">Engagement de responsabilité</p>
+                  <p>
+                    En soumettant ce vote, vous certifiez que les informations sont exactes
+                    et vérifiables. Tout contenu diffamatoire ou mensonger peut engager votre
+                    responsabilité légale selon la législation française.
+                  </p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Vote Type Selection */}
-          <div className="space-y-3">
-            <Label className="text-base font-semibold">Type de vote</Label>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => setVoteType("positive")}
-                className={`p-4 border-2 rounded-lg transition-all ${
-                  voteType === "positive"
-                    ? "border-green-500 bg-green-50"
-                    : "border-gray-200 hover:border-green-300"
-                }`}
-              >
-                <div className="flex items-center space-x-2">
-                  <ThumbsUp className={`w-6 h-6 ${
-                    voteType === "positive" ? "text-green-600" : "text-gray-400"
-                  }`} />
-                  <div className="text-left">
-                    <div className="font-semibold">Vote Positif</div>
-                    <div className="text-sm text-muted-foreground">
-                      Augmente le score
-                    </div>
-                  </div>
-                </div>
-              </button>
-
-              <button
-                onClick={() => setVoteType("negative")}
-                className={`p-4 border-2 rounded-lg transition-all ${
-                  voteType === "negative"
-                    ? "border-red-500 bg-red-50"
-                    : "border-gray-200 hover:border-red-300"
-                }`}
-              >
-                <div className="flex items-center space-x-2">
-                  <ThumbsDown className={`w-6 h-6 ${
-                    voteType === "negative" ? "text-red-600" : "text-gray-400"
-                  }`} />
-                  <div className="text-left">
-                    <div className="font-semibold">Vote Négatif</div>
-                    <div className="text-sm text-muted-foreground">
-                      Diminue le score
-                    </div>
-                  </div>
-                </div>
-              </button>
-            </div>
+          {/* Submit Buttons */}
+          <div className="flex space-x-3 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={isSubmitting}
+              className="flex-1"
+            >
+              Annuler
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSubmitting || !formData.evidence_title || !formData.evidence_description}
+              className="flex-1"
+            >
+              {isSubmitting ? 'Soumission...' : 'Soumettre le vote'}
+            </Button>
           </div>
-
-          {voteType && (
-            <>
-              {/* Points Selection */}
-              <div className="space-y-3">
-                <Label className="text-base font-semibold">
-                  Impact du vote ({points} point{points > 1 ? "s" : ""})
-                </Label>
-                <div className="grid grid-cols-5 gap-2">
-                  {[1, 2, 3, 4, 5].map((point) => (
-                    <button
-                      key={point}
-                      onClick={() => setPoints(point)}
-                      className={`p-3 border-2 rounded-lg transition-all ${
-                        points === point
-                          ? "border-blue-500 bg-blue-50"
-                          : "border-gray-200 hover:border-blue-300"
-                      }`}
-                    >
-                      <div className="flex flex-col items-center">
-                        <div className="flex">
-                          {[...Array(point)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`w-4 h-4 ${
-                                points === point ? "text-blue-500 fill-current" : "text-gray-400"
-                              }`}
-                            />
-                          ))}
-                        </div>
-                        <span className="text-xs mt-1">{point}</span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Plus l'impact est élevé, plus votre preuve doit être solide
-                </p>
-              </div>
-
-              {/* Evidence Form */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <AlertCircle className="w-5 h-5" />
-                    <span>Preuves à l'appui</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="evidence-title">Titre de la preuve *</Label>
-                    <Input
-                      id="evidence-title"
-                      placeholder="Ex: Déclaration sur l'économie du 15 mars 2024"
-                      value={evidenceTitle}
-                      onChange={(e) => setEvidenceTitle(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="evidence-type">Type de preuve</Label>
-                    <Select value={evidenceType} onValueChange={(value: any) => setEvidenceType(value)}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="article">
-                          <div className="flex items-center space-x-2">
-                            <FileText className="w-4 h-4" />
-                            <span>Article de presse</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="video">
-                          <div className="flex items-center space-x-2">
-                            <Video className="w-4 h-4" />
-                            <span>Vidéo</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="document">
-                          <div className="flex items-center space-x-2">
-                            <File className="w-4 h-4" />
-                            <span>Document officiel</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="other">
-                          <div className="flex items-center space-x-2">
-                            <Link2 className="w-4 h-4" />
-                            <span>Autre</span>
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="evidence-url">Lien vers la preuve (optionnel)</Label>
-                    <Input
-                      id="evidence-url"
-                      type="url"
-                      placeholder="https://..."
-                      value={evidenceUrl}
-                      onChange={(e) => setEvidenceUrl(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="evidence-description">Description détaillée *</Label>
-                    <Textarea
-                      id="evidence-description"
-                      placeholder="Expliquez en détail les faits qui justifient votre vote. Soyez objectif et factuel."
-                      rows={4}
-                      value={evidenceDescription}
-                      onChange={(e) => setEvidenceDescription(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <div className="flex items-start space-x-2">
-                      <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
-                      <div className="text-sm">
-                        <p className="font-semibold text-blue-800 mb-1">
-                          Critères de qualité
-                        </p>
-                        <ul className="text-blue-700 space-y-1">
-                          <li>• Fournissez des sources fiables et vérifiables</li>
-                          <li>• Restez factuel et objectif</li>
-                          <li>• Évitez les opinions personnelles</li>
-                          <li>• Respectez les principes de transparence</li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Submit Button */}
-              <div className="flex space-x-3">
-                <Button
-                  variant="outline"
-                  onClick={() => setOpen(false)}
-                  className="flex-1"
-                >
-                  Annuler
-                </Button>
-                <Button
-                  onClick={handleSubmit}
-                  disabled={!evidenceTitle || !evidenceDescription || isSubmitting}
-                  className="flex-1"
-                >
-                  {isSubmitting ? "Envoi en cours..." : "Soumettre le vote"}
-                </Button>
-              </div>
-            </>
-          )}
-        </div>
+        </form>
       </DialogContent>
+
+      <AuthDialog
+        open={showAuthDialog}
+        onClose={() => setShowAuthDialog(false)}
+        defaultMode="signup"
+      />
     </Dialog>
   )
 }
