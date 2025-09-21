@@ -83,7 +83,7 @@ class MLThreatDetector {
   async analyzeThreat(
     content: string,
     userId: string,
-    context: Record<string, unknown> = {}
+    _context: Record<string, unknown> = {}
   ): Promise<ThreatDetectionResult> {
     try {
       // Get user behavior profile
@@ -142,7 +142,7 @@ class MLThreatDetector {
     }
   }
 
-  async analyzeNetworkThreats(timeWindow: string = '24h'): Promise<NetworkAnalysis> {
+  async analyzeNetworkThreats(_timeWindow: string = '24h'): Promise<NetworkAnalysis> {
     try {
       // Simulate network analysis
       // In production, this would use graph neural networks and clustering algorithms
@@ -200,7 +200,6 @@ class MLThreatDetector {
 
   private async analyzeContent(content: string) {
     // Content analysis using NLP models
-    const words = content.toLowerCase().split(/\s+/)
 
     // Spam detection
     const spamKeywords = ['click here', 'free money', 'guaranteed', 'urgent', 'limited time']
@@ -234,7 +233,7 @@ class MLThreatDetector {
     // In production, this would analyze timing patterns, content similarity, network connections
 
     // Check for identical or near-identical content
-    const contentHash = this.hashContent(content)
+    // const contentHash = this.hashContent(content)
 
     // Simulate checking against recent submissions
     const similarContentCount = Math.floor(Math.random() * 3) // 0-2 similar contents
@@ -519,7 +518,7 @@ class MLThreatDetector {
   }
 
   // Batch processing for historical analysis
-  async processBatchAnalysis(timeframe: string): Promise<any> {
+  async processBatchAnalysis(timeframe: string): Promise<Record<string, unknown>> {
     console.log(`Processing batch analysis for ${timeframe}...`)
     // Would process historical data in batches
     return {

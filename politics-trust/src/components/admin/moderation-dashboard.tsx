@@ -1,29 +1,23 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useAuth } from '@/components/auth/auth-provider'
 import { supabase } from '@/lib/supabase'
 import { aiFactChecker } from '@/lib/ai-fact-checker'
 import {
   Shield,
-  AlertTriangle,
   CheckCircle,
   XCircle,
   Clock,
   Flag,
   Eye,
-  User,
   MessageCircle,
   ExternalLink,
   BarChart3,
-  TrendingUp,
-  TrendingDown,
   Search,
-  Filter,
   RefreshCw
 } from 'lucide-react'
 
@@ -33,6 +27,7 @@ interface ModerationItem {
   status: 'pending' | 'approved' | 'rejected' | 'flagged'
   priority: 'low' | 'medium' | 'high' | 'urgent'
   content: Record<string, unknown>
+  points?: number
   reporter?: {
     id: string
     name: string
@@ -59,7 +54,7 @@ export function ModerationDashboard() {
   const [stats, setStats] = useState<ModerationStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedTab, setSelectedTab] = useState<'pending' | 'approved' | 'rejected' | 'flagged' | 'all'>('pending')
-  const [selectedItem, setSelectedItem] = useState<string | null>(null)
+  const [selectedItem] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [processingItems, setProcessingItems] = useState<Set<string>>(new Set())
 
@@ -304,14 +299,14 @@ export function ModerationDashboard() {
       let evidence = ''
 
       if (item.type === 'vote') {
-        content = item.content.evidence_title
-        evidence = item.content.evidence_description + ' ' + (item.content.evidence_url || '')
+        content = String(item.content.evidence_title || '')
+        evidence = String(item.content.evidence_description || '') + ' ' + String(item.content.evidence_url || '')
       } else if (item.type === 'comment') {
-        content = item.content.content
+        content = String(item.content.content || '')
         evidence = content
       }
 
-      const analysis = await aiFactChecker.checkFact(content, evidence, item.content.evidence_url)
+      const analysis = await aiFactChecker.checkFact(content, evidence, String(item.content.evidence_url || ''))
 
       // Store AI analysis
       await supabase
@@ -476,8 +471,8 @@ export function ModerationDashboard() {
         {items
           .filter(item =>
             !searchTerm ||
-            (item.type === 'vote' && item.content.evidence_title?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            (item.type === 'comment' && item.content.content?.toLowerCase().includes(searchTerm.toLowerCase()))
+            (item.type === 'vote' && String(item.content.evidence_title || '').toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (item.type === 'comment' && String(item.content.content || '').toLowerCase().includes(searchTerm.toLowerCase()))
           )
           .map((item) => (
             <Card key={item.id} className={selectedItem === item.id ? 'ring-2 ring-blue-500' : ''}>
@@ -548,19 +543,19 @@ export function ModerationDashboard() {
                   {item.type === 'vote' ? (
                     <>
                       <div>
-                        <h4 className="font-medium mb-1">{item.content.evidence_title}</h4>
-                        <p className="text-sm text-gray-700">{item.content.evidence_description}</p>
+                        <h4 className="font-medium mb-1">{String(item.content.evidence_title || '')}</h4>
+                        <p className="text-sm text-gray-700">{String(item.content.evidence_description || '')}</p>
                       </div>
                       <div className="flex items-center justify-between text-sm">
                         <div className="flex items-center space-x-4">
-                          <span className={`font-medium ${item.content.vote_type === 'positive' ? 'text-green-600' : 'text-red-600'}`}>
-                            {item.content.vote_type === 'positive' ? '+' : '-'}{item.content.points} points
+                          <span className={`font-medium ${String(item.content.vote_type) === 'positive' ? 'text-green-600' : 'text-red-600'}`}>
+                            {String(item.content.vote_type) === 'positive' ? '+' : '-'}{String(item.content.points || '0')} points
                           </span>
-                          <span className="text-gray-600">Catégorie: {item.content.category}</span>
+                          <span className="text-gray-600">Catégorie: {String(item.content.category || '')}</span>
                         </div>
                         {item.content.evidence_url && (
                           <a
-                            href={item.content.evidence_url}
+                            href={String(item.content.evidence_url || '')}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center space-x-1 text-blue-600 hover:text-blue-800"
@@ -573,10 +568,10 @@ export function ModerationDashboard() {
                     </>
                   ) : (
                     <div>
-                      <p className="text-sm text-gray-700">{item.content.content}</p>
+                      <p className="text-sm text-gray-700">{String(item.content.content || '')}</p>
                       <div className="flex items-center justify-between text-sm mt-2">
                         <span className="text-gray-600">
-                          Par {item.content.user?.name || 'Utilisateur anonyme'}
+                          Par {String((item.content.user as any)?.name || 'Utilisateur anonyme')}
                         </span>
                         <Badge variant="outline" className="bg-orange-50 text-orange-700">
                           <Flag className="w-3 h-3 mr-1" />
@@ -586,19 +581,19 @@ export function ModerationDashboard() {
                     </div>
                   )}
 
-                  {item.content.ai_analysis && (
+                  {item.content.ai_analysis && typeof item.content.ai_analysis === 'object' && (
                     <div className="border-t pt-3 mt-3">
                       <h5 className="font-medium text-sm mb-2">Analyse IA</h5>
                       <div className="text-sm space-y-1">
                         <div className="flex justify-between">
                           <span>Résultat:</span>
                           <Badge variant="outline" className="text-xs">
-                            {item.content.ai_analysis.result}
+                            {String((item.content.ai_analysis as any)?.result || '')}
                           </Badge>
                         </div>
                         <div className="flex justify-between">
                           <span>Confiance:</span>
-                          <span className="font-medium">{Math.round(item.content.ai_analysis.confidence_score * 100)}%</span>
+                          <span className="font-medium">{Math.round(Number((item.content.ai_analysis as any)?.confidence_score || 0) * 100)}%</span>
                         </div>
                       </div>
                     </div>

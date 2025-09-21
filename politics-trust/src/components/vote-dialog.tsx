@@ -148,7 +148,7 @@ export function VoteDialog({ politicianId, onClose }: VoteDialogProps) {
                 <span className="font-medium">Vote soumis avec succès!</span>
               </div>
               <p className="text-sm text-green-700 mt-1">
-                Votre vote sera examiné par nos modérateurs avant d'être pris en compte.
+                Votre vote sera examiné par nos modérateurs avant d&apos;être pris en compte.
               </p>
             </CardContent>
           </Card>
@@ -162,7 +162,7 @@ export function VoteDialog({ politicianId, onClose }: VoteDialogProps) {
                 <span className="font-medium">Erreur lors de la soumission</span>
               </div>
               <p className="text-sm text-red-700 mt-1">
-                Une erreur s'est produite. Veuillez réessayer.
+                Une erreur s&apos;est produite. Veuillez réessayer.
               </p>
             </CardContent>
           </Card>
@@ -231,7 +231,7 @@ export function VoteDialog({ politicianId, onClose }: VoteDialogProps) {
               ))}
             </div>
             <p className="text-xs text-gray-600">
-              Plus l'impact est important, plus les preuves doivent être solides.
+              Plus l&apos;impact est important, plus les preuves doivent être solides.
             </p>
           </div>
 
@@ -252,7 +252,7 @@ export function VoteDialog({ politicianId, onClose }: VoteDialogProps) {
                   type="button"
                   variant={formData.category === category.value ? "default" : "outline"}
                   size="sm"
-                  onClick={() => setFormData(prev => ({ ...prev, category: category.value as any }))}
+                  onClick={() => setFormData(prev => ({ ...prev, category: category.value as VoteFormData['category'] }))}
                 >
                   {category.label}
                 </Button>
@@ -279,7 +279,7 @@ export function VoteDialog({ politicianId, onClose }: VoteDialogProps) {
                   variant={formData.evidence_type === type.value ? "default" : "outline"}
                   size="sm"
                   className="justify-start"
-                  onClick={() => setFormData(prev => ({ ...prev, evidence_type: type.value as any }))}
+                  onClick={() => setFormData(prev => ({ ...prev, evidence_type: type.value as VoteFormData['evidence_type'] }))}
                 >
                   {getEvidenceIcon(type.icon)}
                   <span className="ml-2">{type.label}</span>

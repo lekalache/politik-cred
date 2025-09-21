@@ -206,7 +206,7 @@ class AIFactChecker {
   private getSourceCredibility(domain: string) {
     // Simplified source credibility database
     // In production, this would be a comprehensive database
-    const knownSources: Record<string, any> = {
+    const knownSources: Record<string, Record<string, unknown>> = {
       'lemonde.fr': {
         credibility: 0.9,
         bias: 'center-left' as const,
