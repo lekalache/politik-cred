@@ -3,8 +3,8 @@
 import { supabase } from './supabase'
 import { User } from '@supabase/supabase-js'
 
-export interface AuthUser extends User {
-  user_metadata?: {
+export interface AuthUser extends Omit<User, 'user_metadata'> {
+  user_metadata: {
     name?: string
     role?: 'user' | 'moderator' | 'admin'
   }

@@ -203,9 +203,9 @@ export function ModerationDashboard() {
 
   const determinePriority = (item: ModerationItem): 'low' | 'medium' | 'high' | 'urgent' => {
     if (item.type === 'vote') {
-      if (item.points >= 50) return 'urgent'
-      if (item.points >= 20) return 'high'
-      if (item.points >= 10) return 'medium'
+      if (item.points && item.points >= 50) return 'urgent'
+      if (item.points && item.points >= 20) return 'high'
+      if (item.points && item.points >= 10) return 'medium'
     }
     return 'low'
   }
@@ -553,7 +553,7 @@ export function ModerationDashboard() {
                           </span>
                           <span className="text-gray-600">Catégorie: {String(item.content.category || '')}</span>
                         </div>
-                        {item.content.evidence_url && (
+                        {Boolean(item.content.evidence_url) && String(item.content.evidence_url).trim() !== '' && (
                           <a
                             href={String(item.content.evidence_url || '')}
                             target="_blank"
@@ -581,7 +581,7 @@ export function ModerationDashboard() {
                     </div>
                   )}
 
-                  {item.content.ai_analysis && typeof item.content.ai_analysis === 'object' && (
+                  {Boolean(item.content.ai_analysis) && typeof item.content.ai_analysis === 'object' && item.content.ai_analysis !== null && (
                     <div className="border-t pt-3 mt-3">
                       <h5 className="font-medium text-sm mb-2">Analyse IA</h5>
                       <div className="text-sm space-y-1">

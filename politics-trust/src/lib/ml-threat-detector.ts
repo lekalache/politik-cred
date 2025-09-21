@@ -119,7 +119,11 @@ class MLThreatDetector {
         threat_types: threatTypes,
         confidence_score: this.calculateConfidence(riskFactors),
         risk_factors: riskFactors,
-        anomalies,
+        anomalies: anomalies.map(a => ({
+          type: String(a.type || 'unknown'),
+          description: String(a.description || ''),
+          severity: Number(a.severity || 0)
+        })),
         recommendations
       }
 
@@ -152,9 +156,26 @@ class MLThreatDetector {
       const influenceOperations = await this.detectInfluenceOperations()
 
       return {
-        suspicious_clusters: suspiciousClusters,
-        bot_networks: botNetworks,
-        influence_operations: influenceOperations
+        suspicious_clusters: suspiciousClusters.map(c => ({
+          cluster_id: String(c.cluster_id || ''),
+          size: Number(c.size || 0),
+          coordination_score: Number(c.coordination_score || 0),
+          members: Array.isArray(c.members) ? c.members : [],
+          behavior_patterns: Array.isArray(c.behavior_patterns) ? c.behavior_patterns : []
+        })),
+        bot_networks: botNetworks.map(b => ({
+          network_id: String(b.network_id || ''),
+          confidence: Number(b.confidence || 0),
+          members: Array.isArray(b.members) ? b.members : [],
+          evidence: Array.isArray(b.evidence) ? b.evidence : []
+        })),
+        influence_operations: influenceOperations.map(i => ({
+          operation_id: String(i.operation_id || ''),
+          type: (i.type as any) || 'disinformation',
+          scale: Number(i.scale || 0),
+          targets: Array.isArray(i.targets) ? i.targets : [],
+          indicators: Array.isArray(i.indicators) ? i.indicators : []
+        }))
       }
     } catch (error) {
       console.error('Network analysis error:', error)
@@ -289,7 +310,7 @@ class MLThreatDetector {
     }
 
     // Emotional manipulation in content
-    manipulationRisk += contentAnalysis.emotional_manipulation * 0.3
+    manipulationRisk += Number(contentAnalysis.emotional_manipulation) * 0.3
 
     // Low target diversity (focusing on specific politicians)
     if (profile.voting_patterns.target_diversity < 0.3) {
@@ -342,7 +363,7 @@ class MLThreatDetector {
   }
 
   private calculateThreatLevel(riskFactors: Record<string, unknown>): 'low' | 'medium' | 'high' | 'critical' {
-    const averageRisk = Object.values(riskFactors).reduce((sum: number, value: number) => sum + value, 0) / Object.keys(riskFactors).length
+    const averageRisk = Object.values(riskFactors).reduce((sum: number, value: unknown) => sum + Number(value), 0) / Object.keys(riskFactors).length
 
     if (averageRisk >= 0.8) return 'critical'
     if (averageRisk >= 0.6) return 'high'
@@ -353,12 +374,12 @@ class MLThreatDetector {
   private identifyThreatTypes(riskFactors: Record<string, unknown>, contentAnalysis: Record<string, unknown>): string[] {
     const threats = []
 
-    if (riskFactors.bot_probability > 0.6) threats.push('bot_activity')
-    if (riskFactors.coordinated_behavior > 0.7) threats.push('coordinated_manipulation')
-    if (riskFactors.spam_likelihood > 0.5) threats.push('spam')
-    if (riskFactors.disinformation_score > 0.6) threats.push('disinformation')
-    if (riskFactors.manipulation_risk > 0.6) threats.push('vote_manipulation')
-    if (contentAnalysis.emotional_manipulation > 0.7) threats.push('emotional_manipulation')
+    if (Number(riskFactors.bot_probability) > 0.6) threats.push('bot_activity')
+    if (Number(riskFactors.coordinated_behavior) > 0.7) threats.push('coordinated_manipulation')
+    if (Number(riskFactors.spam_likelihood) > 0.5) threats.push('spam')
+    if (Number(riskFactors.disinformation_score) > 0.6) threats.push('disinformation')
+    if (Number(riskFactors.manipulation_risk) > 0.6) threats.push('vote_manipulation')
+    if (Number(contentAnalysis.emotional_manipulation) > 0.7) threats.push('emotional_manipulation')
 
     return threats
   }
@@ -422,7 +443,7 @@ class MLThreatDetector {
       recommendations.push('Fact-checking approfondi requis')
     }
 
-    if (anomalies.some(a => a.severity >= 8)) {
+    if (anomalies.some(a => Number(a.severity) >= 8)) {
       recommendations.push('Escalade vers l\'équipe sécurité')
     }
 

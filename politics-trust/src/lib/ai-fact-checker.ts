@@ -99,11 +99,11 @@ class AIFactChecker {
       return {
         url,
         domain,
-        credibility_score: verification.credibility,
-        bias_rating: verification.bias,
-        factual_reporting: verification.factual,
-        is_reliable: verification.credibility >= 0.6,
-        notes: verification.notes
+        credibility_score: Number(verification.credibility) || 0,
+        bias_rating: (verification.bias as any) || 'unknown',
+        factual_reporting: (verification.factual as any) || 'mixed',
+        is_reliable: Number(verification.credibility) >= 0.6,
+        notes: Array.isArray(verification.notes) ? verification.notes : [String(verification.notes || '')]
       }
     } catch (error) {
       console.error('Source verification error:', error)
@@ -163,7 +163,7 @@ class AIFactChecker {
   private determineFactCheckResult(analysis: Record<string, unknown>): FactCheckResult['result'] {
     const { evidence_quality, source_reliability } = analysis
 
-    const overallScore = (evidence_quality + source_reliability) / 2
+    const overallScore = (Number(evidence_quality) + Number(source_reliability)) / 2
 
     if (overallScore >= 0.85) return 'true'
     if (overallScore >= 0.7) return 'mostly_true'
@@ -177,8 +177,8 @@ class AIFactChecker {
   private generateExplanation(analysis: Record<string, unknown>, sourceVerification: SourceVerification | null): string {
     let explanation = `Analyse automatique de la déclaration:\n\n`
 
-    explanation += `• Qualité des preuves: ${Math.round(analysis.evidence_quality * 100)}%\n`
-    explanation += `• Fiabilité des sources: ${Math.round(analysis.source_reliability * 100)}%\n`
+    explanation += `• Qualité des preuves: ${Math.round(Number(analysis.evidence_quality) * 100)}%\n`
+    explanation += `• Fiabilité des sources: ${Math.round(Number(analysis.source_reliability) * 100)}%\n`
 
     if (sourceVerification) {
       explanation += `• Crédibilité du domaine: ${Math.round(sourceVerification.credibility_score * 100)}%\n`

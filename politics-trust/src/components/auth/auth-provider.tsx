@@ -28,7 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = auth.onAuthStateChange(
       async (event, session) => {
-        if (session?.user) {
+        if ((session as any)?.user) {
           // Fetch complete user with profile
           const userWithProfile = await auth.getCurrentUser()
           setUser(userWithProfile)

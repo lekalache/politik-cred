@@ -103,7 +103,7 @@ export default function TransparencyPage() {
       // Transform the data
       const transformedRecords = (auditData || []).map(record => ({
         ...record,
-        politician_name: record.politician?.name || 'Politicien inconnu'
+        politician_name: (record.politician as any)?.name || 'Politicien inconnu'
       }))
 
       setAuditRecords(transformedRecords)
