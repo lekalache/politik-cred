@@ -1,0 +1,6 @@
+{
+  "buildCommand": "cd politics-trust && npm run build",
+  "outputDirectory": "politics-trust/.next",
+  "devCommand": "cd politics-trust && npm run dev",
+  "installCommand": "cd politics-trust && npm install"
+}
