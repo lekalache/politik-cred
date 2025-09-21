@@ -32,7 +32,7 @@ interface ModerationItem {
   type: 'vote' | 'comment' | 'user_report'
   status: 'pending' | 'approved' | 'rejected' | 'flagged'
   priority: 'low' | 'medium' | 'high' | 'urgent'
-  content: any
+  content: Record<string, unknown>
   reporter?: {
     id: string
     name: string
@@ -41,7 +41,7 @@ interface ModerationItem {
   created_at: string
   reviewed_at?: string
   reviewed_by?: string
-  ai_analysis?: any
+  ai_analysis?: Record<string, unknown>
 }
 
 interface ModerationStats {
@@ -206,7 +206,7 @@ export function ModerationDashboard() {
     }
   }
 
-  const determinePriority = (item: any): 'low' | 'medium' | 'high' | 'urgent' => {
+  const determinePriority = (item: ModerationItem): 'low' | 'medium' | 'high' | 'urgent' => {
     if (item.type === 'vote') {
       if (item.points >= 50) return 'urgent'
       if (item.points >= 20) return 'high'

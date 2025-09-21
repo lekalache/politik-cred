@@ -37,11 +37,11 @@ export interface UserBehaviorProfile {
   content_analysis: {
     sentiment_consistency: number
     topic_focus: string[]
-    language_patterns: any
+    language_patterns: Record<string, unknown>
     credibility_sources: number
   }
   network_analysis: {
-    connection_patterns: any
+    connection_patterns: Record<string, unknown>
     influence_score: number
     cluster_membership: string[]
   }
@@ -83,7 +83,7 @@ class MLThreatDetector {
   async analyzeThreat(
     content: string,
     userId: string,
-    context: any = {}
+    context: Record<string, unknown> = {}
   ): Promise<ThreatDetectionResult> {
     try {
       // Get user behavior profile
@@ -281,7 +281,7 @@ class MLThreatDetector {
     return Math.min(1, botScore)
   }
 
-  private calculateManipulationRisk(profile: UserBehaviorProfile, contentAnalysis: any): number {
+  private calculateManipulationRisk(profile: UserBehaviorProfile, contentAnalysis: Record<string, unknown>): number {
     let manipulationRisk = 0
 
     // High-frequency voting with low evidence quality
@@ -305,7 +305,7 @@ class MLThreatDetector {
     return Math.min(1, manipulationRisk)
   }
 
-  private detectSuspiciousClusters(): any[] {
+  private detectSuspiciousClusters(): Record<string, unknown>[] {
     // Simulate cluster detection
     // In production, this would use graph clustering algorithms
     return [
@@ -319,7 +319,7 @@ class MLThreatDetector {
     ]
   }
 
-  private detectBotNetworks(): any[] {
+  private detectBotNetworks(): Record<string, unknown>[] {
     return [
       {
         network_id: 'botnet_001',
@@ -330,7 +330,7 @@ class MLThreatDetector {
     ]
   }
 
-  private detectInfluenceOperations(): any[] {
+  private detectInfluenceOperations(): Record<string, unknown>[] {
     return [
       {
         operation_id: 'influence_001',
@@ -342,7 +342,7 @@ class MLThreatDetector {
     ]
   }
 
-  private calculateThreatLevel(riskFactors: any): 'low' | 'medium' | 'high' | 'critical' {
+  private calculateThreatLevel(riskFactors: Record<string, unknown>): 'low' | 'medium' | 'high' | 'critical' {
     const averageRisk = Object.values(riskFactors).reduce((sum: number, value: number) => sum + value, 0) / Object.keys(riskFactors).length
 
     if (averageRisk >= 0.8) return 'critical'
@@ -351,7 +351,7 @@ class MLThreatDetector {
     return 'low'
   }
 
-  private identifyThreatTypes(riskFactors: any, contentAnalysis: any): string[] {
+  private identifyThreatTypes(riskFactors: Record<string, unknown>, contentAnalysis: Record<string, unknown>): string[] {
     const threats = []
 
     if (riskFactors.bot_probability > 0.6) threats.push('bot_activity')
@@ -364,7 +364,7 @@ class MLThreatDetector {
     return threats
   }
 
-  private detectAnomalies(profile: UserBehaviorProfile, contentAnalysis: any, networkThreats: NetworkAnalysis): any[] {
+  private detectAnomalies(profile: UserBehaviorProfile, contentAnalysis: Record<string, unknown>, networkThreats: NetworkAnalysis): Record<string, unknown>[] {
     const anomalies = []
 
     // Unusual voting frequency
@@ -397,7 +397,7 @@ class MLThreatDetector {
     return anomalies
   }
 
-  private generateRecommendations(threatLevel: string, threatTypes: string[], anomalies: any[]): string[] {
+  private generateRecommendations(threatLevel: string, threatTypes: string[], anomalies: Record<string, unknown>[]): string[] {
     const recommendations = []
 
     if (threatLevel === 'critical') {
@@ -430,7 +430,7 @@ class MLThreatDetector {
     return recommendations.length > 0 ? recommendations : ['Surveillance standard']
   }
 
-  private calculateConfidence(riskFactors: any): number {
+  private calculateConfidence(riskFactors: Record<string, unknown>): number {
     // Calculate confidence based on the consistency of risk factors
     const values = Object.values(riskFactors) as number[]
     const mean = values.reduce((sum, val) => sum + val, 0) / values.length

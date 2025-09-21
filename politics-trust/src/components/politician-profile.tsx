@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { CommentsSystem } from '@/components/comments-system'
-import { supabase } from '@/lib/supabase'
+import { supabase, SocialMediaInfo, ContactInfo } from '@/lib/supabase'
 import {
   User,
   MapPin,
@@ -43,8 +43,8 @@ interface PoliticianProfile {
   birth_date: string | null
   gender: string | null
   political_orientation: string | null
-  social_media: any
-  contact_info: any
+  social_media: SocialMediaInfo | null
+  contact_info: ContactInfo | null
   education: string | null
   career_history: string | null
   key_policies: string[]

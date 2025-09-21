@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useAuth } from '@/components/auth/auth-provider'
-import { supabase } from '@/lib/supabase'
+import { supabase, PoliticianDetails } from '@/lib/supabase'
 import {
   User,
   Award,
@@ -55,7 +55,7 @@ interface UserBadge {
 interface UserActivity {
   id: string
   activity_type: string
-  details: any
+  details: Record<string, unknown>
   created_at: string
 }
 

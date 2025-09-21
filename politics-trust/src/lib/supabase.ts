@@ -1,5 +1,35 @@
 import { createClient } from '@supabase/supabase-js'
 
+// Type definitions for JSON fields
+export interface SocialMediaInfo {
+  twitter?: string
+  facebook?: string
+  instagram?: string
+  linkedin?: string
+  youtube?: string
+  tiktok?: string
+  website?: string
+}
+
+export interface ContactInfo {
+  email?: string
+  phone?: string
+  address?: string
+  office_address?: string
+  office_phone?: string
+  website?: string
+}
+
+export interface PoliticianDetails {
+  biography?: string
+  education?: string[]
+  career_highlights?: string[]
+  current_positions?: string[]
+  committee_memberships?: string[]
+  voting_record_url?: string
+  financial_disclosure_url?: string
+}
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
@@ -89,8 +119,8 @@ export type Database = {
           birth_date: string | null
           gender: 'male' | 'female' | 'other' | 'prefer-not-say' | null
           political_orientation: 'left' | 'center-left' | 'center' | 'center-right' | 'right' | null
-          social_media: any
-          contact_info: any
+          social_media: SocialMediaInfo | null
+          contact_info: ContactInfo | null
           education: string | null
           career_history: string | null
           key_policies: string[]
@@ -120,8 +150,8 @@ export type Database = {
           birth_date?: string | null
           gender?: 'male' | 'female' | 'other' | 'prefer-not-say' | null
           political_orientation?: 'left' | 'center-left' | 'center' | 'center-right' | 'right' | null
-          social_media?: any
-          contact_info?: any
+          social_media?: SocialMediaInfo | null
+          contact_info?: ContactInfo | null
           education?: string | null
           career_history?: string | null
           key_policies?: string[]
@@ -151,8 +181,8 @@ export type Database = {
           birth_date?: string | null
           gender?: 'male' | 'female' | 'other' | 'prefer-not-say' | null
           political_orientation?: 'left' | 'center-left' | 'center' | 'center-right' | 'right' | null
-          social_media?: any
-          contact_info?: any
+          social_media?: SocialMediaInfo | null
+          contact_info?: ContactInfo | null
           education?: string | null
           career_history?: string | null
           key_policies?: string[]
@@ -293,7 +323,7 @@ export type Database = {
           id: string
           user_id: string
           activity_type: 'vote_submitted' | 'comment_posted' | 'vote_moderated' | 'profile_updated' | 'login'
-          details: any
+          details: PoliticianDetails | null
           ip_address: string | null
           user_agent: string | null
           created_at: string
@@ -302,7 +332,7 @@ export type Database = {
           id?: string
           user_id: string
           activity_type: 'vote_submitted' | 'comment_posted' | 'vote_moderated' | 'profile_updated' | 'login'
-          details?: any
+          details?: PoliticianDetails | null
           ip_address?: string | null
           user_agent?: string | null
           created_at?: string
@@ -311,7 +341,7 @@ export type Database = {
           id?: string
           user_id?: string
           activity_type?: 'vote_submitted' | 'comment_posted' | 'vote_moderated' | 'profile_updated' | 'login'
-          details?: any
+          details?: PoliticianDetails | null
           ip_address?: string | null
           user_agent?: string | null
           created_at?: string

@@ -160,7 +160,7 @@ class AIFactChecker {
     }
   }
 
-  private determineFactCheckResult(analysis: any): FactCheckResult['result'] {
+  private determineFactCheckResult(analysis: Record<string, unknown>): FactCheckResult['result'] {
     const { evidence_quality, source_reliability } = analysis
 
     const overallScore = (evidence_quality + source_reliability) / 2
@@ -174,7 +174,7 @@ class AIFactChecker {
     return 'unverifiable'
   }
 
-  private generateExplanation(analysis: any, sourceVerification: SourceVerification | null): string {
+  private generateExplanation(analysis: Record<string, unknown>, sourceVerification: SourceVerification | null): string {
     let explanation = `Analyse automatique de la déclaration:\n\n`
 
     explanation += `• Qualité des preuves: ${Math.round(analysis.evidence_quality * 100)}%\n`

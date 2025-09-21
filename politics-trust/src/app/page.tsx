@@ -50,7 +50,7 @@ export default function Home() {
         setVideoError(false)
       }
 
-      const handleError = (error: any) => {
+      const handleError = (error: Event) => {
         console.log('Video error:', error)
         setVideoError(true)
       }
