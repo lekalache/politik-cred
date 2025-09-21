@@ -1,0 +1,205 @@
+/* 🔥 POLITIKCRED - Direction Artistique CSS */
+/* "Il est crédible lauiss ?" - Styles street science ! */
+
+:root {
+  /* Couleurs POLITIKCRED Direction Artistique */
+  --bleu-republique: #1E3A8A;
+  --rouge-tricolore: #DC2626;
+  --blanc-casse: #FAFAFA;
+  --vert-assemblee: #059669;
+  --or-institutionnel: #D97706;
+  --bordeaux-serieux: #7C2D12;
+  --rose-surprise: #EC4899;
+  --jaune-attention: #EAB308;
+}
+
+/* Hero Section */
+.politikcred-hero {
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.politikcred-hero video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -1;
+}
+
+.politikcred-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1;
+}
+
+.politikcred-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: white;
+  text-align: center;
+}
+
+/* Cards Politiciens */
+.politician-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border-left: 4px solid var(--bleu-republique);
+}
+
+.politician-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.politician-card.confident {
+  border-left-color: var(--vert-assemblee);
+}
+
+.politician-card.neutral {
+  border-left-color: var(--or-institutionnel);
+}
+
+.politician-card.skeptical {
+  border-left-color: var(--rouge-tricolore);
+}
+
+/* Credibility Badges */
+.credibility-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.credibility-high {
+  background: var(--vert-assemblee);
+  color: white;
+}
+
+.credibility-medium {
+  background: var(--or-institutionnel);
+  color: white;
+}
+
+.credibility-low {
+  background: var(--rouge-tricolore);
+  color: white;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+/* Responsive Video */
+.responsive-video {
+  position: relative;
+  width: 100%;
+  height: 0;
+  padding-bottom: 56.25%; /* 16:9 ratio */
+}
+
+.responsive-video video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Typography */
+.politikcred-title {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 900;
+  color: var(--bleu-republique);
+}
+
+.politikcred-baseline {
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  color: var(--rouge-tricolore);
+}
+
+/* Buttons */
+.btn-politikcred {
+  background: var(--rouge-tricolore);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-politikcred:hover {
+  background: var(--bordeaux-serieux);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+/* Grid Layout */
+.politicians-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  padding: 24px;
+}
+
+/* Featured Section */
+.featured-politicians {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .featured-politicians {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
+
+/* Loading States */
+.loading-skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

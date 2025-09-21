@@ -1,0 +1,101 @@
+{
+  "politikcred_assets": {
+    "brand": {
+      "name": "POLITIKCRED",
+      "baseline": "Il est crédible lauiss ?",
+      "style": "Street Science + Family Guy cartoon"
+    },
+    "hero_section": {
+      "background_video": "/assets/backgrounds/animated-hemi.mp4",
+      "fallback_image": "/assets/backgrounds/hemicycle.png",
+      "title": "Évaluez la crédibilité de vos représentants",
+      "cta": "Il est crédible lauiss ?",
+      "loop": true,
+      "autoplay": true,
+      "muted": true
+    },
+    "featured_politicians": {
+      "layout": "side_by_side",
+      "videos": [
+        {
+          "file": "/assets/animations/lecornu.mp4",
+          "politician": "Sébastien Lecornu",
+          "position": "left",
+          "poster": "/assets/politicians/lecornu.png"
+        },
+        {
+          "file": "/assets/animations/lepen.mp4",
+          "politician": "Marine Le Pen",
+          "position": "right",
+          "poster": "/assets/politicians/lepen.jpeg"
+        }
+      ],
+      "sync_animation": true
+    },
+    "politicians_gallery": {
+      "layout": "grid",
+      "politicians": [
+        {
+          "name": "Élisabeth Borne",
+          "image": "/assets/politicians/borne.png",
+          "credibility_score": 88,
+          "credibility_label": "Il assure lauiss !",
+          "party": "Renaissance",
+          "card_color": "#1E3A8A"
+        },
+        {
+          "name": "Sébastien Lecornu",
+          "image": "/assets/politicians/lecornu.png",
+          "credibility_score": 87,
+          "credibility_label": "Il assure lauiss !",
+          "party": "Renaissance",
+          "card_color": "#1E3A8A"
+        },
+        {
+          "name": "Éric Lombard",
+          "image": "/assets/politicians/lombart.png",
+          "credibility_score": 90,
+          "credibility_label": "Il assure lauiss !",
+          "party": "Divers gauche",
+          "card_color": "#059669"
+        }
+      ]
+    },
+    "design_system": {
+      "colors": {
+        "bleu_republique": "#1E3A8A",
+        "rouge_tricolore": "#DC2626",
+        "blanc_casse": "#FAFAFA",
+        "vert_assemblee": "#059669",
+        "or_institutionnel": "#D97706",
+        "bordeaux_serieux": "#7C2D12",
+        "rose_surprise": "#EC4899",
+        "jaune_attention": "#EAB308"
+      },
+      "credibility_labels": {
+        "high": "Il assure lauiss !",
+        "medium": "Moyen lauiss...",
+        "low": "Louche lauiss !"
+      },
+      "expressions": {
+        "confident": "😎",
+        "neutral": "😐",
+        "skeptical": "🤨"
+      }
+    },
+    "optimization": {
+      "video_formats": [
+        "mp4",
+        "webm"
+      ],
+      "image_formats": [
+        "webp",
+        "png",
+        "jpg"
+      ],
+      "lazy_loading": true,
+      "responsive_images": true,
+      "compression": "high_quality"
+    }
+  }
+}
