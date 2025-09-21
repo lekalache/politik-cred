@@ -1,0 +1,34 @@
+🔥 POLITIKCRED 2025-09-20 01:49:47,893 - INFO - 🚀 POLITIKCRED démarre ! On va voir qui est crédible lauiss ?
+🔥 POLITIKCRED 2025-09-20 01:49:47,893 - INFO - 🗳️ On check les députés... qui dit vrai dans l'hémicycle ?
+🔥 POLITIKCRED 2025-09-20 01:49:48,037 - WARNING - ⚠️ Raté pour cette URL lauiss: 404 Client Error: Not Found for url: https://data.assemblee-nationale.fr/static/openData/repository/17/amo/deputes/AMO30_deputes_actifs_mandats_actifs_organes_divises.json
+🔥 POLITIKCRED 2025-09-20 01:49:48,166 - WARNING - ⚠️ Raté pour cette URL lauiss: 404 Client Error: Not Found for url: https://data.assemblee-nationale.fr/static/openData/repository/16/amo/deputes/AMO30_deputes_actifs_mandats_actifs_organes_divises.json
+🔥 POLITIKCRED 2025-09-20 01:49:48,416 - WARNING - ⚠️ Raté pour cette URL lauiss: 404 Client Error: Not Found for url: https://www.assemblee-nationale.fr/dyn/opendata/legislature/17/json/acteurs
+🔥 POLITIKCRED 2025-09-20 01:49:48,417 - ERROR - ❌ Problème pour récupérer les députés: 🚨 Aucune URL de députés qui marche - ils cachent quoi ?
+🔥 POLITIKCRED 2025-09-20 01:49:48,417 - INFO - 🏛️ On check les sénateurs... la sagesse du Palais du Luxembourg ?
+🔥 POLITIKCRED 2025-09-20 01:49:48,596 - ERROR - ❌ Galère avec les sénateurs: 'utf-8' codec can't decode byte 0xea in position 6: invalid continuation byte
+🔥 POLITIKCRED 2025-09-20 01:49:48,596 - INFO - 🏛️ On check le gouvernement Bayrou... qui assure au pouvoir ?
+🔥 POLITIKCRED 2025-09-20 01:49:48,596 - INFO - ✅ 9 ministres Bayrou stylés POLITIKCRED - maintenant on sait qui est crédible lauiss !
+🔥 POLITIKCRED 2025-09-20 01:49:48,597 - INFO - 🏙️ On check les maires des grandes villes... qui gère bien sa ville ?
+🔥 POLITIKCRED 2025-09-20 01:49:57,419 - INFO - ✅ 1377 maires checkés - voyons qui gère bien lauiss !
+🔥 POLITIKCRED 2025-09-20 01:49:57,449 - INFO - 📊 Total après nettoyage POLITIKCRED: 9 politiciens checkés
+🔥 POLITIKCRED 2025-09-20 01:49:58,602 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians?columns=%22is_active%22%2C%22name%22%2C%22card_color%22%2C%22total_votes%22%2C%22updated_at%22%2C%22credibility_badge%22%2C%22credibility_label%22%2C%22positive_votes%22%2C%22verification_status%22%2C%22constituency%22%2C%22birth_date%22%2C%22credibility_score%22%2C%22gender%22%2C%22cartoon_expression%22%2C%22party%22%2C%22last_name%22%2C%22crown%22%2C%22first_name%22%2C%22avatar_url%22%2C%22position%22%2C%22negative_votes%22%2C%22trending_score%22%2C%22bio%22%2C%22created_at%22%2C%22political_orientation%22%2C%22highlight%22 "HTTP/2 401 Unauthorized"
+🔥 POLITIKCRED 2025-09-20 01:49:58,603 - ERROR - ❌ Erreur batch 1: {'message': 'new row violates row-level security policy for table "politicians"', 'code': '42501', 'hint': None, 'details': None}
+🔥 POLITIKCRED 2025-09-20 01:49:58,831 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians "HTTP/2 401 Unauthorized"
+🔥 POLITIKCRED 2025-09-20 01:49:58,831 - ERROR - ❌ Erreur pour François Bayrou: {'message': 'new row violates row-level security policy for table "politicians"', 'code': '42501', 'hint': None, 'details': None}
+🔥 POLITIKCRED 2025-09-20 01:50:13,756 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians "HTTP/2 401 Unauthorized"
+🔥 POLITIKCRED 2025-09-20 01:50:13,756 - ERROR - ❌ Erreur pour Élisabeth Borne: {'message': 'new row violates row-level security policy for table "politicians"', 'code': '42501', 'hint': None, 'details': None}
+🔥 POLITIKCRED 2025-09-20 01:50:13,829 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians "HTTP/2 401 Unauthorized"
+🔥 POLITIKCRED 2025-09-20 01:50:13,830 - ERROR - ❌ Erreur pour Manuel Valls: {'message': 'new row violates row-level security policy for table "politicians"', 'code': '42501', 'hint': None, 'details': None}
+🔥 POLITIKCRED 2025-09-20 01:50:14,035 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians "HTTP/2 401 Unauthorized"
+🔥 POLITIKCRED 2025-09-20 01:50:14,035 - ERROR - ❌ Erreur pour Gérald Darmanin: {'message': 'new row violates row-level security policy for table "politicians"', 'code': '42501', 'hint': None, 'details': None}
+🔥 POLITIKCRED 2025-09-20 01:50:14,084 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians "HTTP/2 401 Unauthorized"
+🔥 POLITIKCRED 2025-09-20 01:50:14,085 - ERROR - ❌ Erreur pour Bruno Retailleau: {'message': 'new row violates row-level security policy for table "politicians"', 'code': '42501', 'hint': None, 'details': None}
+🔥 POLITIKCRED 2025-09-20 01:50:14,145 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians "HTTP/2 401 Unauthorized"
+🔥 POLITIKCRED 2025-09-20 01:50:14,146 - ERROR - ❌ Erreur pour Catherine Vautrin: {'message': 'new row violates row-level security policy for table "politicians"', 'code': '42501', 'hint': None, 'details': None}
+🔥 POLITIKCRED 2025-09-20 01:50:14,255 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians "HTTP/2 401 Unauthorized"
+🔥 POLITIKCRED 2025-09-20 01:50:14,256 - ERROR - ❌ Erreur pour Éric Lombard: {'message': 'new row violates row-level security policy for table "politicians"', 'code': '42501', 'hint': None, 'details': None}
+🔥 POLITIKCRED 2025-09-20 01:50:14,900 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians "HTTP/2 401 Unauthorized"
+🔥 POLITIKCRED 2025-09-20 01:50:14,901 - ERROR - ❌ Erreur pour Sébastien Lecornu: {'message': 'new row violates row-level security policy for table "politicians"', 'code': '42501', 'hint': None, 'details': None}
+🔥 POLITIKCRED 2025-09-20 01:50:14,930 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians "HTTP/2 401 Unauthorized"
+🔥 POLITIKCRED 2025-09-20 01:50:14,931 - ERROR - ❌ Erreur pour Rachida Dati: {'message': 'new row violates row-level security policy for table "politicians"', 'code': '42501', 'hint': None, 'details': None}
+🔥 POLITIKCRED 2025-09-20 01:50:14,931 - INFO - 🎉 POLITIKCRED terminé: 0/9 politiques scorés - maintenant on sait qui est crédible lauiss !

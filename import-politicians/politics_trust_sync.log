@@ -1,0 +1,112 @@
+2025-09-20 00:01:51,090 - INFO - ðŸš€ DÃ©but du peuplement de la base Politics Trust
+2025-09-20 00:01:51,090 - INFO - RÃ©cupÃ©ration des dÃ©putÃ©s...
+2025-09-20 00:01:51,286 - ERROR - âŒ Erreur lors de la rÃ©cupÃ©ration des dÃ©putÃ©s: 404 Client Error: Not Found for url: https://data.assemblee-nationale.fr/static/openData/repository/16/amo/deputes/AMO30_deputes_actifs_mandats_actifs_organes_divises.json
+2025-09-20 00:01:51,286 - INFO - RÃ©cupÃ©ration des sÃ©nateurs...
+2025-09-20 00:01:51,374 - ERROR - âŒ Erreur lors de la rÃ©cupÃ©ration des sÃ©nateurs: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1032)>
+2025-09-20 00:01:51,374 - INFO - RÃ©cupÃ©ration des ministres du gouvernement Bayrou...
+2025-09-20 00:01:51,374 - INFO - âœ… 9 ministres du gouvernement Bayrou
+2025-09-20 00:01:51,374 - INFO - RÃ©cupÃ©ration des maires des principales villes...
+2025-09-20 00:01:51,415 - ERROR - âŒ Erreur lors de la rÃ©cupÃ©ration des maires: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1032)>
+2025-09-20 00:01:51,415 - INFO - ðŸ“Š Total aprÃ¨s nettoyage: 9 politiciens
+2025-09-20 00:01:52,445 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians?columns=%22first_name%22%2C%22position%22%2C%22total_votes%22%2C%22credibility_score%22%2C%22trending_score%22%2C%22positive_votes%22%2C%22political_orientation%22%2C%22party%22%2C%22verification_status%22%2C%22birth_date%22%2C%22name%22%2C%22gender%22%2C%22created_at%22%2C%22constituency%22%2C%22last_name%22%2C%22negative_votes%22%2C%22bio%22%2C%22updated_at%22%2C%22is_active%22 "HTTP/2 401 Unauthorized"
+2025-09-20 00:01:52,446 - ERROR - âŒ Erreur batch 1: {'message': 'new row violates row-level security policy for table "politicians"', 'code': '42501', 'hint': None, 'details': None}
+2025-09-20 00:01:52,504 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians "HTTP/2 401 Unauthorized"
+2025-09-20 00:01:52,505 - ERROR - âŒ Erreur pour FranÃ§ois Bayrou: {'message': 'new row violates row-level security policy for table "politicians"', 'code': '42501', 'hint': None, 'details': None}
+2025-09-20 00:01:52,554 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians "HTTP/2 401 Unauthorized"
+2025-09-20 00:01:52,555 - ERROR - âŒ Erreur pour Ã‰lisabeth Borne: {'message': 'new row violates row-level security policy for table "politicians"', 'code': '42501', 'hint': None, 'details': None}
+2025-09-20 00:01:52,604 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians "HTTP/2 401 Unauthorized"
+2025-09-20 00:01:52,604 - ERROR - âŒ Erreur pour Manuel Valls: {'message': 'new row violates row-level security policy for table "politicians"', 'code': '42501', 'hint': None, 'details': None}
+2025-09-20 00:01:52,662 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians "HTTP/2 401 Unauthorized"
+2025-09-20 00:01:52,663 - ERROR - âŒ Erreur pour GÃ©rald Darmanin: {'message': 'new row violates row-level security policy for table "politicians"', 'code': '42501', 'hint': None, 'details': None}
+2025-09-20 00:01:52,711 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians "HTTP/2 401 Unauthorized"
+2025-09-20 00:01:52,712 - ERROR - âŒ Erreur pour Bruno Retailleau: {'message': 'new row violates row-level security policy for table "politicians"', 'code': '42501', 'hint': None, 'details': None}
+2025-09-20 00:01:52,790 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians "HTTP/2 401 Unauthorized"
+2025-09-20 00:01:52,791 - ERROR - âŒ Erreur pour Catherine Vautrin: {'message': 'new row violates row-level security policy for table "politicians"', 'code': '42501', 'hint': None, 'details': None}
+2025-09-20 00:01:52,868 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians "HTTP/2 401 Unauthorized"
+2025-09-20 00:01:52,869 - ERROR - âŒ Erreur pour Ã‰ric Lombard: {'message': 'new row violates row-level security policy for table "politicians"', 'code': '42501', 'hint': None, 'details': None}
+2025-09-20 00:01:52,960 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians "HTTP/2 401 Unauthorized"
+2025-09-20 00:01:52,960 - ERROR - âŒ Erreur pour SÃ©bastien Lecornu: {'message': 'new row violates row-level security policy for table "politicians"', 'code': '42501', 'hint': None, 'details': None}
+2025-09-20 00:01:53,005 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians "HTTP/2 401 Unauthorized"
+2025-09-20 00:01:53,006 - ERROR - âŒ Erreur pour Rachida Dati: {'message': 'new row violates row-level security policy for table "politicians"', 'code': '42501', 'hint': None, 'details': None}
+2025-09-20 00:01:53,006 - INFO - âœ… Peuplement terminÃ©: 0/9 enregistrements insÃ©rÃ©s
+2025-09-20 00:05:37,537 - INFO - 🚀 Début du peuplement de la base Politics Trust
+2025-09-20 00:05:37,537 - INFO - Récupération des députés...
+2025-09-20 00:05:37,659 - ERROR - ❌ Erreur lors de la récupération des députés: 404 Client Error: Not Found for url: https://data.assemblee-nationale.fr/static/openData/repository/16/amo/deputes/AMO30_deputes_actifs_mandats_actifs_organes_divises.json
+2025-09-20 00:05:37,660 - INFO - Récupération des sénateurs...
+2025-09-20 00:05:37,691 - ERROR - ❌ Erreur lors de la récupération des sénateurs: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1032)>
+2025-09-20 00:05:37,691 - INFO - Récupération des ministres du gouvernement Bayrou...
+2025-09-20 00:05:37,691 - INFO - ✅ 9 ministres du gouvernement Bayrou
+2025-09-20 00:05:37,691 - INFO - Récupération des maires des principales villes...
+2025-09-20 00:05:37,727 - ERROR - ❌ Erreur lors de la récupération des maires: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1032)>
+2025-09-20 00:05:37,727 - INFO - 📊 Total après nettoyage: 9 politiciens
+2025-09-20 00:05:37,855 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians?columns=%22is_active%22%2C%22total_votes%22%2C%22political_orientation%22%2C%22bio%22%2C%22credibility_score%22%2C%22constituency%22%2C%22position%22%2C%22trending_score%22%2C%22party%22%2C%22name%22%2C%22verification_status%22%2C%22last_name%22%2C%22positive_votes%22%2C%22updated_at%22%2C%22gender%22%2C%22negative_votes%22%2C%22birth_date%22%2C%22created_at%22%2C%22first_name%22 "HTTP/2 401 Unauthorized"
+2025-09-20 00:05:37,856 - ERROR - ❌ Erreur batch 1: {'message': 'new row violates row-level security policy for table "politicians"', 'code': '42501', 'hint': None, 'details': None}
+2025-09-20 00:05:37,908 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians "HTTP/2 401 Unauthorized"
+2025-09-20 00:05:37,909 - ERROR - ❌ Erreur pour François Bayrou: {'message': 'new row violates row-level security policy for table "politicians"', 'code': '42501', 'hint': None, 'details': None}
+2025-09-20 00:05:37,949 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians "HTTP/2 401 Unauthorized"
+2025-09-20 00:05:37,949 - ERROR - ❌ Erreur pour Élisabeth Borne: {'message': 'new row violates row-level security policy for table "politicians"', 'code': '42501', 'hint': None, 'details': None}
+2025-09-20 00:05:37,995 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians "HTTP/2 401 Unauthorized"
+2025-09-20 00:05:37,996 - ERROR - ❌ Erreur pour Manuel Valls: {'message': 'new row violates row-level security policy for table "politicians"', 'code': '42501', 'hint': None, 'details': None}
+2025-09-20 00:05:38,038 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians "HTTP/2 401 Unauthorized"
+2025-09-20 00:05:38,039 - ERROR - ❌ Erreur pour Gérald Darmanin: {'message': 'new row violates row-level security policy for table "politicians"', 'code': '42501', 'hint': None, 'details': None}
+2025-09-20 00:05:38,077 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians "HTTP/2 401 Unauthorized"
+2025-09-20 00:05:38,077 - ERROR - ❌ Erreur pour Bruno Retailleau: {'message': 'new row violates row-level security policy for table "politicians"', 'code': '42501', 'hint': None, 'details': None}
+2025-09-20 00:05:38,121 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians "HTTP/2 401 Unauthorized"
+2025-09-20 00:05:38,121 - ERROR - ❌ Erreur pour Catherine Vautrin: {'message': 'new row violates row-level security policy for table "politicians"', 'code': '42501', 'hint': None, 'details': None}
+2025-09-20 00:05:38,152 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians "HTTP/2 401 Unauthorized"
+2025-09-20 00:05:38,152 - ERROR - ❌ Erreur pour Éric Lombard: {'message': 'new row violates row-level security policy for table "politicians"', 'code': '42501', 'hint': None, 'details': None}
+2025-09-20 00:05:38,193 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians "HTTP/2 401 Unauthorized"
+2025-09-20 00:05:38,193 - ERROR - ❌ Erreur pour Sébastien Lecornu: {'message': 'new row violates row-level security policy for table "politicians"', 'code': '42501', 'hint': None, 'details': None}
+2025-09-20 00:05:38,239 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians "HTTP/2 401 Unauthorized"
+2025-09-20 00:05:38,239 - ERROR - ❌ Erreur pour Rachida Dati: {'message': 'new row violates row-level security policy for table "politicians"', 'code': '42501', 'hint': None, 'details': None}
+2025-09-20 00:05:38,239 - INFO - ✅ Peuplement terminé: 0/9 enregistrements insérés
+2025-09-20 00:12:02,878 - INFO - 🚀 Début du peuplement de la base Politics Trust
+2025-09-20 00:12:02,878 - INFO - Récupération des députés...
+2025-09-20 00:12:03,001 - WARNING - ⚠️ Échec pour https://data.assemblee-nationale.fr/static/openData/repository/17/amo/deputes/AMO30_deputes_actifs_mandats_actifs_organes_divises.json: 404 Client Error: Not Found for url: https://data.assemblee-nationale.fr/static/openData/repository/17/amo/deputes/AMO30_deputes_actifs_mandats_actifs_organes_divises.json
+2025-09-20 00:12:03,106 - WARNING - ⚠️ Échec pour https://data.assemblee-nationale.fr/static/openData/repository/16/amo/deputes/AMO30_deputes_actifs_mandats_actifs_organes_divises.json: 404 Client Error: Not Found for url: https://data.assemblee-nationale.fr/static/openData/repository/16/amo/deputes/AMO30_deputes_actifs_mandats_actifs_organes_divises.json
+2025-09-20 00:12:03,381 - WARNING - ⚠️ Échec pour https://www.assemblee-nationale.fr/dyn/opendata/legislature/17/json/acteurs: 404 Client Error: Not Found for url: https://www.assemblee-nationale.fr/dyn/opendata/legislature/17/json/acteurs
+2025-09-20 00:12:03,381 - ERROR - ❌ Erreur lors de la récupération des députés: Aucune URL de l'API députés n'a fonctionné
+2025-09-20 00:12:03,382 - INFO - Récupération des sénateurs...
+2025-09-20 00:12:03,531 - ERROR - ❌ Erreur lors de la récupération des sénateurs: 'utf-8' codec can't decode byte 0xea in position 6: invalid continuation byte
+2025-09-20 00:12:03,531 - INFO - Récupération des ministres du gouvernement Bayrou...
+2025-09-20 00:12:03,531 - INFO - ✅ 9 ministres du gouvernement Bayrou
+2025-09-20 00:12:03,531 - INFO - Récupération des maires des principales villes...
+2025-09-20 00:12:09,084 - INFO - ✅ 1377 maires des principales villes récupérés
+2025-09-20 00:12:09,115 - INFO - 📊 Total après nettoyage: 9 politiciens
+2025-09-20 00:12:09,271 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians?columns=%22last_name%22%2C%22party%22%2C%22name%22%2C%22created_at%22%2C%22verification_status%22%2C%22constituency%22%2C%22negative_votes%22%2C%22political_orientation%22%2C%22updated_at%22%2C%22first_name%22%2C%22is_active%22%2C%22total_votes%22%2C%22position%22%2C%22credibility_score%22%2C%22gender%22%2C%22positive_votes%22%2C%22bio%22%2C%22birth_date%22%2C%22trending_score%22 "HTTP/2 201 Created"
+2025-09-20 00:12:09,273 - INFO - ✅ Batch 1: 9 enregistrements insérés
+2025-09-20 00:12:09,775 - INFO - ✅ Peuplement terminé: 9/9 enregistrements insérés
+2025-09-20 01:06:32,758 - INFO - 🚀 Début du peuplement de la base Politics Trust
+2025-09-20 01:06:32,758 - INFO - Récupération des députés...
+2025-09-20 01:06:32,871 - WARNING - ⚠️ Échec pour https://data.assemblee-nationale.fr/static/openData/repository/17/amo/deputes/AMO30_deputes_actifs_mandats_actifs_organes_divises.json: 404 Client Error: Not Found for url: https://data.assemblee-nationale.fr/static/openData/repository/17/amo/deputes/AMO30_deputes_actifs_mandats_actifs_organes_divises.json
+2025-09-20 01:06:32,953 - WARNING - ⚠️ Échec pour https://data.assemblee-nationale.fr/static/openData/repository/16/amo/deputes/AMO30_deputes_actifs_mandats_actifs_organes_divises.json: 404 Client Error: Not Found for url: https://data.assemblee-nationale.fr/static/openData/repository/16/amo/deputes/AMO30_deputes_actifs_mandats_actifs_organes_divises.json
+2025-09-20 01:06:33,181 - WARNING - ⚠️ Échec pour https://www.assemblee-nationale.fr/dyn/opendata/legislature/17/json/acteurs: 404 Client Error: Not Found for url: https://www.assemblee-nationale.fr/dyn/opendata/legislature/17/json/acteurs
+2025-09-20 01:06:33,181 - ERROR - ❌ Erreur lors de la récupération des députés: Aucune URL de l'API députés n'a fonctionné
+2025-09-20 01:06:33,181 - INFO - Récupération des sénateurs...
+2025-09-20 01:06:33,347 - ERROR - ❌ Erreur lors de la récupération des sénateurs: 'utf-8' codec can't decode byte 0xea in position 6: invalid continuation byte
+2025-09-20 01:06:33,348 - INFO - Récupération des ministres du gouvernement Bayrou...
+2025-09-20 01:06:33,348 - INFO - ✅ 9 ministres du gouvernement Bayrou avec DA appliquée
+2025-09-20 01:06:33,348 - INFO - Récupération des maires des principales villes...
+2025-09-20 01:06:39,031 - INFO - ✅ 1377 maires des principales villes récupérés
+2025-09-20 01:06:39,062 - INFO - 📊 Total après nettoyage: 9 politiciens
+2025-09-20 01:06:39,518 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians?columns=%22gender%22%2C%22first_name%22%2C%22credibility_score%22%2C%22position%22%2C%22last_name%22%2C%22total_votes%22%2C%22verification_status%22%2C%22avatar_url%22%2C%22bio%22%2C%22trending_score%22%2C%22name%22%2C%22cartoon_expression%22%2C%22political_orientation%22%2C%22card_color%22%2C%22updated_at%22%2C%22highlight%22%2C%22credibility_badge%22%2C%22positive_votes%22%2C%22party%22%2C%22crown%22%2C%22birth_date%22%2C%22created_at%22%2C%22negative_votes%22%2C%22is_active%22%2C%22constituency%22 "HTTP/2 400 Bad Request"
+2025-09-20 01:06:39,520 - ERROR - ❌ Erreur batch 1: {'message': "Could not find the 'avatar_url' column of 'politicians' in the schema cache", 'code': 'PGRST204', 'hint': None, 'details': None}
+2025-09-20 01:06:39,567 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians "HTTP/2 400 Bad Request"
+2025-09-20 01:06:39,568 - ERROR - ❌ Erreur pour François Bayrou: {'message': "Could not find the 'avatar_url' column of 'politicians' in the schema cache", 'code': 'PGRST204', 'hint': None, 'details': None}
+2025-09-20 01:06:39,628 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians "HTTP/2 400 Bad Request"
+2025-09-20 01:06:39,628 - ERROR - ❌ Erreur pour Élisabeth Borne: {'message': "Could not find the 'avatar_url' column of 'politicians' in the schema cache", 'code': 'PGRST204', 'hint': None, 'details': None}
+2025-09-20 01:06:39,682 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians "HTTP/2 400 Bad Request"
+2025-09-20 01:06:39,683 - ERROR - ❌ Erreur pour Manuel Valls: {'message': "Could not find the 'avatar_url' column of 'politicians' in the schema cache", 'code': 'PGRST204', 'hint': None, 'details': None}
+2025-09-20 01:06:39,725 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians "HTTP/2 400 Bad Request"
+2025-09-20 01:06:39,725 - ERROR - ❌ Erreur pour Gérald Darmanin: {'message': "Could not find the 'avatar_url' column of 'politicians' in the schema cache", 'code': 'PGRST204', 'hint': None, 'details': None}
+2025-09-20 01:06:39,766 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians "HTTP/2 400 Bad Request"
+2025-09-20 01:06:39,766 - ERROR - ❌ Erreur pour Bruno Retailleau: {'message': "Could not find the 'avatar_url' column of 'politicians' in the schema cache", 'code': 'PGRST204', 'hint': None, 'details': None}
+2025-09-20 01:06:39,810 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians "HTTP/2 400 Bad Request"
+2025-09-20 01:06:39,811 - ERROR - ❌ Erreur pour Catherine Vautrin: {'message': "Could not find the 'avatar_url' column of 'politicians' in the schema cache", 'code': 'PGRST204', 'hint': None, 'details': None}
+2025-09-20 01:06:39,853 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians "HTTP/2 400 Bad Request"
+2025-09-20 01:06:39,854 - ERROR - ❌ Erreur pour Éric Lombard: {'message': "Could not find the 'avatar_url' column of 'politicians' in the schema cache", 'code': 'PGRST204', 'hint': None, 'details': None}
+2025-09-20 01:06:39,887 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians "HTTP/2 400 Bad Request"
+2025-09-20 01:06:39,888 - ERROR - ❌ Erreur pour Sébastien Lecornu: {'message': "Could not find the 'avatar_url' column of 'politicians' in the schema cache", 'code': 'PGRST204', 'hint': None, 'details': None}
+2025-09-20 01:06:39,955 - INFO - HTTP Request: POST https://whjoqxozjzcluhdgocly.supabase.co/rest/v1/politicians "HTTP/2 400 Bad Request"
+2025-09-20 01:06:39,955 - ERROR - ❌ Erreur pour Rachida Dati: {'message': "Could not find the 'avatar_url' column of 'politicians' in the schema cache", 'code': 'PGRST204', 'hint': None, 'details': None}
+2025-09-20 01:06:39,956 - INFO - ✅ Peuplement terminé: 0/9 enregistrements insérés
