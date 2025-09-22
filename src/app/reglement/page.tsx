@@ -6,12 +6,114 @@ export default function ReglementPage() {
       <Navigation />
 
       <div className="container mx-auto px-4 py-12">
-        <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8">
+        <div className="relative max-w-6xl mx-auto bg-white rounded-lg shadow-lg p-8">
           <h1 className="text-4xl font-bold text-center text-gray-900 mb-8">
             Le Règlement
           </h1>
 
-          <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed">
+          {/* Politician Images - Positioned absolutely for floating effect */}
+          <div className="hidden lg:block">
+            {/* Image 1 - Right side */}
+            <div className="absolute right-0 top-[30rem] w-32 transform translate-x-1/2 hover:scale-110 transition-transform duration-300">
+              <img
+                src="/assets/politicians/1.png"
+                alt="Politician 1"
+                className="w-full h-auto object-contain hover:border-blue-200 transition-colors duration-300"
+              />
+            </div>
+
+            {/* Image 2 - Left side */}
+            <div className="absolute left-0 top-[60rem] w-28 transform -translate-x-1/2 hover:scale-110 transition-transform duration-300">
+              <img
+                src="/assets/politicians/2.png"
+                alt="Politician 2"
+                className="w-full h-auto object-contain hover:border-blue-200 transition-colors duration-300"
+              />
+            </div>
+
+            {/* Image 3 - Right side */}
+            <div className="absolute right-0 top-[90rem] w-32 transform translate-x-1/2 hover:scale-110 transition-transform duration-300">
+              <img
+                src="/assets/politicians/3.png"
+                alt="Politician 3"
+                className="w-full h-auto object-contain hover:border-blue-200 transition-colors duration-300"
+              />
+            </div>
+
+            {/* Image 4 - Left side */}
+            <div className="absolute left-0 top-[120rem] w-32 transform -translate-x-1/2 hover:scale-110 transition-transform duration-300">
+              <img
+                src="/assets/politicians/4.png"
+                alt="Politician 4"
+                className="w-full h-auto object-contain hover:border-blue-200 transition-colors duration-300"
+              />
+            </div>
+
+            {/* Image 5 - Right side */}
+            <div className="absolute right-0 top-[150rem] w-28 transform translate-x-1/2 hover:scale-110 transition-transform duration-300">
+              <img
+                src="/assets/politicians/5.png"
+                alt="Politician 5"
+                className="w-full h-auto object-contain hover:border-blue-200 transition-colors duration-300 rotate-90"
+              />
+            </div>
+
+            {/* Image 6 - Left side */}
+            <div className="absolute left-0 top-[180rem] w-32 transform -translate-x-1/2 hover:scale-110 transition-transform duration-300">
+              <img
+                src="/assets/politicians/6.png"
+                alt="Politician 6"
+                className="w-full h-auto object-contain hover:border-blue-200 transition-colors duration-300"
+              />
+            </div>
+
+            {/* Image 7 - Right side */}
+            <div className="absolute right-0 top-[210rem] w-32 transform translate-x-1/2 hover:scale-110 transition-transform duration-300">
+              <img
+                src="/assets/politicians/7.png"
+                alt="Politician 7"
+                className="w-full h-auto object-contain hover:border-blue-200 transition-colors duration-300"
+              />
+            </div>
+
+            {/* Image 9 - Left side (skipping 8 as it doesn't exist) */}
+            <div className="absolute left-0 top-[240rem] w-28 transform -translate-x-1/2 hover:scale-110 transition-transform duration-300">
+              <img
+                src="/assets/politicians/9.png"
+                alt="Politician 9"
+                className="w-full h-auto object-contain hover:border-blue-200 transition-colors duration-300"
+              />
+            </div>
+
+            {/* Image 10 - Right side */}
+            <div className="absolute right-0 top-[270rem] w-32 transform translate-x-1/2 hover:scale-110 transition-transform duration-300">
+              <img
+                src="/assets/politicians/10.png"
+                alt="Politician 10"
+                className="w-full h-auto object-contain hover:border-blue-200 transition-colors duration-300"
+              />
+            </div>
+          </div>
+
+          {/* Mobile version - Images in a grid at the bottom */}
+          <div className="lg:hidden mt-8">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
+              Les acteurs politiques concernés
+            </h3>
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-4 justify-items-center">
+              {[1, 2, 3, 4, 5, 6, 7, 9, 10].map((num) => (
+                <div key={num} className="w-16 sm:w-20">
+                  <img
+                    src={`/assets/politicians/${num}.png`}
+                    alt={`Politician ${num}`}
+                    className={`w-full h-auto object-contain ${num === 5 ? 'rotate-90' : ''}`}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="relative z-10 max-w-4xl mx-auto prose prose-lg max-w-none text-gray-700 leading-relaxed">
             <div className="mb-8 text-center">
               <h2 className="text-2xl font-semibold text-gray-900 mb-2">Règles de fonctionnement de Politik-Cred – Experimental</h2>
               <p className="text-sm text-gray-600">Dernière mise à jour : Septembre 2025</p>
