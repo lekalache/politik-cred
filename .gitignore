@@ -1,1 +1,47 @@
-node_modules
+# Dépendances
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Sorties de build Next.js
+.next/
+out/
+dist/
+
+# Cache Next.js et TypeScript
+.next/cache/
+.swc/
+*.tsbuildinfo
+
+# Variables d'environnement (CRITIQUE pour la sécurité)
+.env*
+!.env.example
+
+# Cache des outils
+.eslintcache
+.stylelintcache
+.cache/
+.parcel-cache/
+
+# Fichiers OS
+.DS_Store
+Thumbs.db
+
+# Fichiers IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs et fichiers temporaires
+logs
+*.log
+*.tmp
+
+# Vercel et déploiement
+.vercel
+
+# Turbopack (Next.js 14+)
+.turbo

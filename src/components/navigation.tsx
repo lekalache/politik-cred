@@ -79,6 +79,10 @@ export function Navigation() {
               <a href="/transparency" className="text-gray-600 hover:text-gray-900 transition-colors">
                 Transparence
               </a>
+              <span className="text-gray-300">|</span>
+              <a href="/reglement" className="text-gray-600 hover:text-gray-900 transition-colors">
+                Le Règlement
+              </a>
             </div>
             <Badge variant="outline" className="bg-[#DC2626] text-white border-[#DC2626]">
               Beta
