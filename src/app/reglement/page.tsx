@@ -6,15 +6,15 @@ export default function ReglementPage() {
       <Navigation />
 
       <div className="container mx-auto px-4 py-12">
-        <div className="relative max-w-6xl mx-auto bg-white rounded-lg shadow-lg p-8">
+        <div className="relative max-w-6xl mx-auto bg-white rounded-lg shadow-lg p-4 sm:p-8">
           <h1 className="text-4xl font-bold text-center text-gray-900 mb-8">
             Le Règlement
           </h1>
 
-          {/* Politician Images - Positioned absolutely for floating effect */}
-          <div className="hidden lg:block">
+          {/* Politician Images - Floating effect for md+ screens */}
+          <div className="hidden md:block">
             {/* Image 1 - Right side */}
-            <div className="absolute right-0 top-[30rem] w-32 transform translate-x-1/2 hover:scale-110 transition-transform duration-300">
+            <div className="absolute right-0 top-[36rem] w-24 lg:w-32 transform translate-x-1/2 hover:scale-110 transition-transform duration-300">
               <img
                 src="/assets/politicians/1.png"
                 alt="Politician 1"
@@ -23,7 +23,7 @@ export default function ReglementPage() {
             </div>
 
             {/* Image 2 - Left side */}
-            <div className="absolute left-0 top-[60rem] w-28 transform -translate-x-1/2 hover:scale-110 transition-transform duration-300">
+            <div className="absolute left-0 top-[72rem] w-20 lg:w-28 transform -translate-x-1/2 hover:scale-110 transition-transform duration-300">
               <img
                 src="/assets/politicians/2.png"
                 alt="Politician 2"
@@ -32,7 +32,7 @@ export default function ReglementPage() {
             </div>
 
             {/* Image 3 - Right side */}
-            <div className="absolute right-0 top-[90rem] w-32 transform translate-x-1/2 hover:scale-110 transition-transform duration-300">
+            <div className="absolute right-0 top-[108rem] w-24 lg:w-32 transform translate-x-1/2 hover:scale-110 transition-transform duration-300">
               <img
                 src="/assets/politicians/3.png"
                 alt="Politician 3"
@@ -41,7 +41,7 @@ export default function ReglementPage() {
             </div>
 
             {/* Image 4 - Left side */}
-            <div className="absolute left-0 top-[120rem] w-32 transform -translate-x-1/2 hover:scale-110 transition-transform duration-300">
+            <div className="absolute left-0 top-[144rem] w-24 lg:w-32 transform -translate-x-1/2 hover:scale-110 transition-transform duration-300">
               <img
                 src="/assets/politicians/4.png"
                 alt="Politician 4"
@@ -50,7 +50,7 @@ export default function ReglementPage() {
             </div>
 
             {/* Image 5 - Right side */}
-            <div className="absolute right-0 top-[150rem] w-28 transform translate-x-1/2 hover:scale-110 transition-transform duration-300">
+            <div className="absolute right-0 top-[180rem] w-20 lg:w-28 transform translate-x-1/2 hover:scale-110 transition-transform duration-300">
               <img
                 src="/assets/politicians/5.png"
                 alt="Politician 5"
@@ -59,7 +59,7 @@ export default function ReglementPage() {
             </div>
 
             {/* Image 6 - Left side */}
-            <div className="absolute left-0 top-[180rem] w-32 transform -translate-x-1/2 hover:scale-110 transition-transform duration-300">
+            <div className="absolute left-0 top-[216rem] w-24 lg:w-32 transform -translate-x-1/2 hover:scale-110 transition-transform duration-300">
               <img
                 src="/assets/politicians/6.png"
                 alt="Politician 6"
@@ -68,7 +68,7 @@ export default function ReglementPage() {
             </div>
 
             {/* Image 7 - Right side */}
-            <div className="absolute right-0 top-[210rem] w-32 transform translate-x-1/2 hover:scale-110 transition-transform duration-300">
+            <div className="absolute right-0 top-[252rem] w-24 lg:w-32 transform translate-x-1/2 hover:scale-110 transition-transform duration-300">
               <img
                 src="/assets/politicians/7.png"
                 alt="Politician 7"
@@ -77,7 +77,7 @@ export default function ReglementPage() {
             </div>
 
             {/* Image 9 - Left side (skipping 8 as it doesn't exist) */}
-            <div className="absolute left-0 top-[240rem] w-28 transform -translate-x-1/2 hover:scale-110 transition-transform duration-300">
+            <div className="absolute left-0 top-[288rem] w-20 lg:w-28 transform -translate-x-1/2 hover:scale-110 transition-transform duration-300">
               <img
                 src="/assets/politicians/9.png"
                 alt="Politician 9"
@@ -86,30 +86,12 @@ export default function ReglementPage() {
             </div>
 
             {/* Image 10 - Right side */}
-            <div className="absolute right-0 top-[270rem] w-32 transform translate-x-1/2 hover:scale-110 transition-transform duration-300">
+            <div className="absolute right-0 top-[324rem] w-24 lg:w-32 transform translate-x-1/2 hover:scale-110 transition-transform duration-300">
               <img
                 src="/assets/politicians/10.png"
                 alt="Politician 10"
                 className="w-full h-auto object-contain hover:border-blue-200 transition-colors duration-300"
               />
-            </div>
-          </div>
-
-          {/* Mobile version - Images in a grid at the bottom */}
-          <div className="lg:hidden mt-8">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
-              Les acteurs politiques concernés
-            </h3>
-            <div className="grid grid-cols-3 sm:grid-cols-5 gap-4 justify-items-center">
-              {[1, 2, 3, 4, 5, 6, 7, 9, 10].map((num) => (
-                <div key={num} className="w-16 sm:w-20">
-                  <img
-                    src={`/assets/politicians/${num}.png`}
-                    alt={`Politician ${num}`}
-                    className={`w-full h-auto object-contain ${num === 5 ? 'rotate-90' : ''}`}
-                  />
-                </div>
-              ))}
             </div>
           </div>
 
@@ -128,6 +110,18 @@ export default function ReglementPage() {
             </div>
 
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">1. Inscription & Participation</h2>
+
+            {/* Mobile Image 1 */}
+            <div className="md:hidden mb-6 flex justify-end">
+              <div className="w-20 flex-shrink-0">
+                <img
+                  src="/assets/politicians/1.png"
+                  alt="Politician 1"
+                  className="w-full h-auto object-contain"
+                />
+              </div>
+            </div>
+
             <ul className="mb-6 space-y-2">
               <li><strong>Inscription obligatoire :</strong> seuls les inscrits peuvent créer des votes ou participer aux discussions.</li>
               <li><strong>Un compte par personne :</strong> vérifié via une adresse email unique.</li>
@@ -156,6 +150,18 @@ export default function ReglementPage() {
             </ul>
 
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">3. Types de Votes</h2>
+
+            {/* Mobile Image 2 */}
+            <div className="md:hidden mb-6 flex justify-start">
+              <div className="w-20 flex-shrink-0">
+                <img
+                  src="/assets/politicians/2.png"
+                  alt="Politician 2"
+                  className="w-full h-auto object-contain"
+                />
+              </div>
+            </div>
+
             <ul className="mb-6 space-y-2">
               <li><strong>Vote négatif :</strong> diminue la crédibilité (fait dommageable).</li>
               <li><strong>Vote positif :</strong> augmente la crédibilité (fait bénéfique).</li>
@@ -182,6 +188,18 @@ export default function ReglementPage() {
             </ul>
 
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">5. Sources acceptées</h2>
+
+            {/* Mobile Image 3 */}
+            <div className="md:hidden mb-6 flex justify-end">
+              <div className="w-20 flex-shrink-0">
+                <img
+                  src="/assets/politicians/3.png"
+                  alt="Politician 3"
+                  className="w-full h-auto object-contain"
+                />
+              </div>
+            </div>
+
             <h3 className="text-lg font-semibold text-gray-800 mb-3">Fiabilité maximale</h3>
             <ul className="mb-4 space-y-2">
               <li>Agences de presse : AFP, Reuters, AP.</li>
@@ -224,6 +242,18 @@ export default function ReglementPage() {
             </ul>
 
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">7. Impact sur la notation</h2>
+
+            {/* Mobile Image 4 */}
+            <div className="md:hidden mb-6 flex justify-start">
+              <div className="w-20 flex-shrink-0">
+                <img
+                  src="/assets/politicians/4.png"
+                  alt="Politician 4"
+                  className="w-full h-auto object-contain"
+                />
+              </div>
+            </div>
+
             <h3 className="text-lg font-semibold text-gray-800 mb-3">Calcul des scores</h3>
             <p className="mb-3">Chaque vote validé impacte une ou plusieurs catégories :</p>
             <ul className="mb-4 space-y-2">
@@ -267,6 +297,18 @@ export default function ReglementPage() {
             </ul>
 
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">9. Transparence et responsabilité</h2>
+
+            {/* Mobile Image 5 - Rotated */}
+            <div className="md:hidden mb-6 flex justify-end">
+              <div className="w-16 flex-shrink-0">
+                <img
+                  src="/assets/politicians/5.png"
+                  alt="Politician 5"
+                  className="w-full h-auto object-contain rotate-90"
+                />
+              </div>
+            </div>
+
             <h3 className="text-lg font-semibold text-gray-800 mb-3">Accès à l&apos;information</h3>
             <ul className="mb-4 space-y-2">
               <li>Méthodologie accessible publiquement.</li>
@@ -304,6 +346,18 @@ export default function ReglementPage() {
             </ul>
 
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">11. Limites et précautions</h2>
+
+            {/* Mobile Image 6 */}
+            <div className="md:hidden mb-6 flex justify-start">
+              <div className="w-20 flex-shrink-0">
+                <img
+                  src="/assets/politicians/6.png"
+                  alt="Politician 6"
+                  className="w-full h-auto object-contain"
+                />
+              </div>
+            </div>
+
             <h3 className="text-lg font-semibold text-gray-800 mb-3">Ce que Politik-Cred n&apos;est pas</h3>
             <ul className="mb-4 space-y-2">
               <li>Pas un tribunal : aucune décision juridique.</li>

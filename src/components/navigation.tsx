@@ -178,6 +178,38 @@ export function Navigation() {
                 Beta
               </Badge>
 
+              {/* Mobile Navigation Links */}
+              <div className="space-y-3 pt-3 border-t border-gray-100">
+                <a
+                  href="/analytics"
+                  className="text-sm text-gray-600 hover:text-gray-900 transition-colors block"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Analytics
+                </a>
+                <a
+                  href="/legal"
+                  className="text-sm text-gray-600 hover:text-gray-900 transition-colors block"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Conformité légale
+                </a>
+                <a
+                  href="/transparency"
+                  className="text-sm text-gray-600 hover:text-gray-900 transition-colors block"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Transparence
+                </a>
+                <a
+                  href="/reglement"
+                  className="text-sm text-gray-600 hover:text-gray-900 transition-colors block"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Le Règlement
+                </a>
+              </div>
+
               {loading ? (
                 <div className="text-sm text-gray-600">Chargement...</div>
               ) : user ? (
