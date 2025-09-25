@@ -45,9 +45,12 @@ class CustomAuthService {
       this.notifyListeners(this.currentUser)
 
       // Store in localStorage for persistence
-      localStorage.setItem('auth_user', JSON.stringify(this.currentUser))
-
-      return { data: { user: this.currentUser } }
+      if (this.currentUser) {
+        localStorage.setItem('auth_user', JSON.stringify(this.currentUser))
+        return { data: { user: this.currentUser } }
+      } else {
+        return { error: { message: 'Invalid user data received' } }
+      }
     } catch (error) {
       return { error: { message: 'Network error' } }
     }
