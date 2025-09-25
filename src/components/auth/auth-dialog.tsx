@@ -51,11 +51,28 @@ export function AuthDialog({ open, onClose, defaultMode = 'signin' }: AuthDialog
           return
         }
 
-        const { error } = await signUp(formData.email, formData.password, formData.name)
-        if (error) {
-          setError(error.message)
-        } else {
-          setSuccess('Compte créé avec succès! Vérifiez votre email pour confirmer votre compte.')
+        try {
+          const response = await fetch('/api/auth/signup', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: formData.email,
+              password: formData.password,
+              name: formData.name
+            })
+          })
+
+          const result = await response.json()
+
+          if (!response.ok) {
+            setError(result.error || 'Une erreur est survenue')
+          } else {
+            setSuccess('Compte créé avec succès! Vérifiez votre email pour confirmer votre compte.')
+          }
+        } catch (signupError) {
+          setError('Une erreur est survenue lors de la création du compte')
         }
       } else {
         const { error } = await signIn(formData.email, formData.password)

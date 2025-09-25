@@ -1,9 +1,11 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, Suspense } from "react"
+import { useRouter } from "next/navigation"
 import { Navigation } from "@/components/navigation"
 import { PoliticianList } from "@/components/politician-list"
 import { VoteDialog } from "@/components/vote-dialog"
+import { WelcomeBanner } from "@/components/welcome-banner"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -19,9 +21,14 @@ export default function Home() {
   const [selectedPolitician, setSelectedPolitician] = useState<string | null>(null)
   const [videoError, setVideoError] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
+  const router = useRouter()
 
   const handleVoteClick = (politicianId: string) => {
     setSelectedPolitician(politicianId)
+  }
+
+  const handleReglementClick = () => {
+    router.push('/reglement')
   }
 
   useEffect(() => {
@@ -84,6 +91,9 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#FAFAFA]">
+      <Suspense fallback={null}>
+        <WelcomeBanner />
+      </Suspense>
       <style jsx>{`
         .text-shadow-lg {max-w-4xl px-4 py-8 rounded-lg bg-black/20 backdrop-blur-sm
           text-shadow: 0 4px 8px rgba(255, 255, 255, 0.8), 0 2px 4px rgba(0, 0, 0, 0.6);
@@ -136,7 +146,10 @@ export default function Home() {
             <h2 className="text-2xl md:text-4xl font-semibold mb-8 text-shadow-md">
               Évaluez la crédibilité de vos représentants
             </h2>
-            <button className="bg-[#DC2626] hover:bg-[#B91C1C] text-white text-xl md:text-2xl px-8 py-4 rounded-lg font-bold transition-colors">
+            <button
+              onClick={handleReglementClick}
+              className="bg-[#DC2626] hover:bg-[#B91C1C] text-white text-xl md:text-2xl px-8 py-4 rounded-lg font-bold transition-colors cursor-pointer"
+            >
               Il est crédible lui ?
             </button>
             <p className="text-lg text-white max-w-3xl mx-auto mt-6 text-shadow-md">
