@@ -57,8 +57,11 @@ export async function POST(request: NextRequest) {
     // Generate verification token
     const { token } = await VerificationTokenService.generateToken(userId, email)
 
-    // Create verification link
-    const verificationLink = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/verify-email?token=${token}`
+    // Create verification link with dynamic domain detection
+    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http'
+    const host = request.headers.get('host') || 'localhost:3000'
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || `${protocol}://${host}`
+    const verificationLink = `${baseUrl}/api/verify-email?token=${token}`
 
     // Send verification email using server-side function
     try {
