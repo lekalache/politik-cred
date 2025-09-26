@@ -82,7 +82,7 @@ class ArticleProcessor {
       }
     }
 
-    const results = {
+    const results: ProcessingResults = {
       processed: 0,
       saved: 0,
       duplicates: 0,
@@ -136,7 +136,7 @@ class ArticleProcessor {
         }
 
       } catch (error) {
-        results.errors.push(`Error processing article: ${error.message}`)
+        results.errors.push(`Error processing article: ${error instanceof Error ? error.message : 'Unknown error'}`)
         console.error('Article processing error:', error)
       }
     }
@@ -258,7 +258,7 @@ class ArticleProcessor {
   /**
    * Calculate similarity between two titles using Levenshtein distance
    */
-  calculateTitleSimilarity(title1, title2) {
+  calculateTitleSimilarity(title1: string, title2: string): number {
     const clean1 = this.cleanTitle(title1)
     const clean2 = this.cleanTitle(title2)
 
@@ -273,7 +273,7 @@ class ArticleProcessor {
   /**
    * Clean title for comparison
    */
-  cleanTitle(title) {
+  cleanTitle(title: string): string {
     return title
       .toLowerCase()
       .replace(/[^\w\s]/g, '') // Remove punctuation
@@ -284,7 +284,7 @@ class ArticleProcessor {
   /**
    * Calculate Levenshtein distance between two strings
    */
-  levenshteinDistance(str1, str2) {
+  levenshteinDistance(str1: string, str2: string): number {
     const matrix = []
 
     for (let i = 0; i <= str2.length; i++) {
@@ -336,7 +336,7 @@ class ArticleProcessor {
       console.log(`Saved article: ${article.title.substring(0, 50)}...`)
       return data.id
     } catch (error) {
-      console.error('Error saving article:', error.message)
+      console.error('Error saving article:', error instanceof Error ? error.message : 'Unknown error')
       return false
     }
   }
@@ -344,7 +344,7 @@ class ArticleProcessor {
   /**
    * Update existing articles with new data
    */
-  async updateArticle(articleId, updates) {
+  async updateArticle(articleId: string, updates: any): Promise<boolean> {
     try {
       const { error } = await supabase
         .from('articles')
@@ -364,7 +364,7 @@ class ArticleProcessor {
   /**
    * Get articles that need updating (old articles that might have new content)
    */
-  async getArticlesForUpdate(hours = 24) {
+  async getArticlesForUpdate(hours: number = 24): Promise<any[]> {
     try {
       const cutoff = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString()
 
@@ -386,7 +386,7 @@ class ArticleProcessor {
   /**
    * Clean up old articles to manage storage
    */
-  async cleanupOldArticles(daysOld = 30) {
+  async cleanupOldArticles(daysOld: number = 30): Promise<number> {
     try {
       const cutoff = new Date(Date.now() - daysOld * 24 * 60 * 60 * 1000).toISOString()
 
@@ -430,7 +430,7 @@ class ArticleProcessor {
         .from('articles')
         .select('relevance_score')
 
-      const averageRelevance = avgRelevance?.length > 0
+      const averageRelevance = avgRelevance && avgRelevance.length > 0
         ? avgRelevance.reduce((sum, article) => sum + (article.relevance_score || 0), 0) / avgRelevance.length
         : 0
 

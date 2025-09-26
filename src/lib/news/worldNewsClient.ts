@@ -50,7 +50,7 @@ class WorldNewsClient {
   /**
    * Check if we can make an API call within daily limits
    */
-  async checkDailyLimit() {
+  async checkDailyLimit(): Promise<boolean> {
     try {
       const { data } = await supabase.rpc('check_daily_api_limit', {
         service_name: 'worldnews',
@@ -67,7 +67,7 @@ class WorldNewsClient {
   /**
    * Track API usage in database
    */
-  async trackApiUsage(endpoint, responseStatus = 200) {
+  async trackApiUsage(endpoint: string, responseStatus: number = 200): Promise<void> {
     try {
       await supabase.from('api_usage_log').upsert({
         service: 'worldnews',
@@ -86,7 +86,7 @@ class WorldNewsClient {
   /**
    * Get current API usage statistics
    */
-  async getUsageStats() {
+  async getUsageStats(): Promise<any[]> {
     try {
       const { data } = await supabase.rpc('get_api_usage_stats', {
         service_name: 'worldnews'
@@ -102,7 +102,7 @@ class WorldNewsClient {
   /**
    * Make authenticated request to World News API
    */
-  async makeRequest(endpoint, params = {}) {
+  async makeRequest(endpoint: string, params: any = {}): Promise<any> {
     // Check daily limits before making request
     const canMakeRequest = await this.checkDailyLimit()
     if (!canMakeRequest) {
@@ -112,6 +112,9 @@ class WorldNewsClient {
     const url = new URL(`${this.baseUrl}${endpoint}`)
 
     // Add API key and default parameters
+    if (!this.apiKey) {
+      throw new Error('World News API key not configured')
+    }
     url.searchParams.set('api-key', this.apiKey)
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
@@ -142,7 +145,7 @@ class WorldNewsClient {
 
       return data
     } catch (error) {
-      console.error('World News API request failed:', error.message)
+      console.error('World News API request failed:', error instanceof Error ? error.message : 'Unknown error')
       await this.trackApiUsage(endpoint, 500) // Track failed requests
       throw error
     }
@@ -151,7 +154,7 @@ class WorldNewsClient {
   /**
    * Search for French political news
    */
-  async searchFrenchPolitics(options = {}) {
+  async searchFrenchPolitics(options: any = {}): Promise<any> {
     const defaultParams = {
       language: 'fr',
       text: 'politique OR gouvernement OR élections OR parlement OR macron OR assemblée',
@@ -181,7 +184,7 @@ class WorldNewsClient {
   /**
    * Get latest French political news with smart parameters
    */
-  async getLatestFrenchPolitics(limit = 25) {
+  async getLatestFrenchPolitics(limit: number = 25): Promise<any> {
     const oneDayAgo = new Date()
     oneDayAgo.setDate(oneDayAgo.getDate() - 1)
 
@@ -195,7 +198,7 @@ class WorldNewsClient {
   /**
    * Search for specific politician or topic
    */
-  async searchByTopic(topic, limit = 10) {
+  async searchByTopic(topic: string, limit: number = 10): Promise<any> {
     return this.searchFrenchPolitics({
       text: `${topic} AND (politique OR gouvernement)`,
       number: limit
@@ -205,7 +208,7 @@ class WorldNewsClient {
   /**
    * Get news by specific French sources
    */
-  async getNewsBySource(sources = [], limit = 25) {
+  async getNewsBySource(sources: string[] = [], limit: number = 25): Promise<any> {
     const sourceList = sources.length > 0 ? sources.join(',') : 'lemonde.fr,lefigaro.fr,liberation.fr'
 
     return this.searchFrenchPolitics({
@@ -217,7 +220,7 @@ class WorldNewsClient {
   /**
    * Get top headlines for French politics
    */
-  async getTopHeadlines() {
+  async getTopHeadlines(): Promise<any> {
     return this.makeRequest('/top-news', {
       'source-countries': 'fr',
       language: 'fr',
@@ -230,7 +233,7 @@ class WorldNewsClient {
    */
   validateArticle(article: RawArticle): CleanArticle | null {
     const required = ['title', 'url', 'publish_date']
-    const hasRequired = required.every(field => article[field])
+    const hasRequired = required.every(field => (article as any)[field])
 
     if (!hasRequired) {
       return null
@@ -238,10 +241,10 @@ class WorldNewsClient {
 
     return {
       external_id: article.id?.toString() || null,
-      title: article.title?.trim(),
+      title: article.title?.trim() || '',
       content: article.text?.trim() || null,
       summary: article.summary?.trim() || null,
-      url: article.url?.trim(),
+      url: article.url?.trim() || '',
       source: article.source?.trim() || null,
       author: article.author?.trim() || null,
       published_at: article.publish_date ? new Date(article.publish_date).toISOString() : null,
@@ -257,7 +260,7 @@ class WorldNewsClient {
   /**
    * Extract keywords from article
    */
-  extractKeywords(article) {
+  extractKeywords(article: RawArticle): string[] {
     const text = `${article.title || ''} ${article.summary || ''}`.toLowerCase()
     const politicalKeywords = [
       'macron', 'gouvernement', 'politique', 'élection', 'député', 'sénat',
@@ -271,7 +274,7 @@ class WorldNewsClient {
   /**
    * Simple sentiment analysis
    */
-  analyzeSentiment(title = '', summary = '') {
+  analyzeSentiment(title: string = '', summary: string = ''): string {
     const text = `${title} ${summary}`.toLowerCase()
     const positive = ['succès', 'victoire', 'progrès', 'amélioration', 'accord']
     const negative = ['crise', 'échec', 'problème', 'conflit', 'scandale', 'démission']
@@ -287,7 +290,7 @@ class WorldNewsClient {
   /**
    * Calculate relevance score for political content
    */
-  calculateRelevance(article) {
+  calculateRelevance(article: RawArticle): number {
     const text = `${article.title || ''} ${article.summary || ''}`.toLowerCase()
     let score = 50 // Base score
 

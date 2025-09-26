@@ -71,9 +71,10 @@ export function UserManagement() {
           email,
           name,
           role,
-          is_verified,
+          active,
           created_at,
-          last_active
+          last_sign_in_at,
+          profile_complete
         `)
         .order('created_at', { ascending: false })
 

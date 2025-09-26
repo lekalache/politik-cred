@@ -26,6 +26,9 @@ const getServiceClient = () => {
 }
 
 class CacheManager {
+  private defaultTTL: number
+  private maxCacheSize: number
+
   constructor() {
     this.defaultTTL = 6 * 60 * 60 * 1000 // 6 hours in milliseconds
     this.maxCacheSize = 1000 // Maximum cache entries to prevent storage bloat
@@ -34,11 +37,11 @@ class CacheManager {
   /**
    * Generate consistent cache key from search parameters
    */
-  generateCacheKey(searchParams) {
+  generateCacheKey(searchParams: any): string {
     // Sort parameters for consistency
     const sortedParams = Object.keys(searchParams)
       .sort()
-      .reduce((result, key) => {
+      .reduce((result: any, key) => {
         result[key] = searchParams[key]
         return result
       }, {})
@@ -50,7 +53,7 @@ class CacheManager {
   /**
    * Get cached results if available and not expired
    */
-  async getCached(searchParams: any) {
+  async getCached(searchParams: any): Promise<any> {
     try {
       const cacheKey = this.generateCacheKey(searchParams)
       const serviceClient = getServiceClient()
@@ -74,7 +77,7 @@ class CacheManager {
       return {
         data: data.response_data,
         cached: true,
-        cacheAge: new Date() - new Date(data.created_at)
+        cacheAge: new Date().getTime() - new Date(data.created_at).getTime()
       }
     } catch (error) {
       console.error('Error retrieving from cache:', error)
@@ -85,7 +88,7 @@ class CacheManager {
   /**
    * Store API response in cache
    */
-  async setCached(searchParams: any, responseData: any, ttl = this.defaultTTL) {
+  async setCached(searchParams: any, responseData: any, ttl: number = this.defaultTTL): Promise<boolean> {
     try {
       const cacheKey = this.generateCacheKey(searchParams)
       const expiresAt = new Date(Date.now() + ttl).toISOString()
@@ -122,7 +125,7 @@ class CacheManager {
   /**
    * Increment hit count for cache analytics
    */
-  async incrementHitCount(cacheKey) {
+  async incrementHitCount(cacheKey: string): Promise<void> {
     try {
       await supabase.rpc('increment', {
         table_name: 'news_cache',
@@ -131,14 +134,14 @@ class CacheManager {
       })
     } catch (error) {
       // Non-critical error, don't fail the request
-      console.warn('Could not increment hit count:', error.message)
+      console.warn('Could not increment hit count:', error instanceof Error ? error.message : 'Unknown error')
     }
   }
 
   /**
    * Clean expired cache entries to manage storage
    */
-  async cleanExpiredCache() {
+  async cleanExpiredCache(): Promise<number> {
     try {
       const { data } = await supabase.rpc('clean_expired_cache')
 
@@ -159,7 +162,7 @@ class CacheManager {
   /**
    * Enforce maximum cache size to stay within storage limits
    */
-  async enforceMaxCacheSize() {
+  async enforceMaxCacheSize(): Promise<void> {
     try {
       const { data: cacheCount, error } = await supabase
         .from('news_cache')
@@ -198,7 +201,7 @@ class CacheManager {
   /**
    * Invalidate cache for specific search parameters
    */
-  async invalidateCache(searchParams) {
+  async invalidateCache(searchParams: any): Promise<boolean> {
     try {
       const cacheKey = this.generateCacheKey(searchParams)
 
@@ -221,7 +224,7 @@ class CacheManager {
   /**
    * Get cache statistics for monitoring
    */
-  async getCacheStats() {
+  async getCacheStats(): Promise<any> {
     try {
       // Get cache counts and hit rates
       const { data: stats } = await supabase
@@ -260,7 +263,7 @@ class CacheManager {
   /**
    * Check if cache needs refresh based on age and hit count
    */
-  shouldRefreshCache(cacheAge, hitCount) {
+  shouldRefreshCache(cacheAge: number, hitCount: number): boolean {
     const maxAge = 12 * 60 * 60 * 1000 // 12 hours
     const minHitsForLongCache = 5
 
@@ -280,7 +283,7 @@ class CacheManager {
   /**
    * Smart cache with different TTLs based on search type
    */
-  getTTLForSearchType(searchParams) {
+  getTTLForSearchType(searchParams: any): number {
     // Latest news - shorter cache (2 hours)
     if (searchParams.text?.includes('latest') || searchParams.sort === 'publish-time') {
       return 2 * 60 * 60 * 1000
@@ -298,7 +301,7 @@ class CacheManager {
   /**
    * Preload popular search combinations
    */
-  async preloadPopularSearches() {
+  async preloadPopularSearches(): Promise<void> {
     const popularSearches = [
       { text: 'macron', language: 'fr', number: 10 },
       { text: 'gouvernement', language: 'fr', number: 15 },

@@ -17,10 +17,19 @@ export function NewsBanner() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
 
+  // Calculate animation duration - fast but ensures ALL articles are shown
+  // Fast ticker that completes the full cycle
+ const animationDuration = Math.max(5, news.length * 0.5)
+
+
+
+
   useEffect(() => {
     const fetchLatestNews = async () => {
       try {
-        const response = await fetch('/api/news/articles?limit=8&sortBy=published_at&sortOrder=desc&minRelevance=50')
+        // Get today's date for filtering
+        const today = new Date().toISOString().split('T')[0]
+        const response = await fetch(`/api/news/articles?limit=50&sortBy=published_at&sortOrder=desc&minRelevance=30&fromDate=${today}`)
         if (response.ok) {
           const data = await response.json()
           setNews(data.articles || [])
@@ -36,8 +45,8 @@ export function NewsBanner() {
     }
 
     fetchLatestNews()
-    // Refresh news every 10 minutes
-    const interval = setInterval(fetchLatestNews, 10 * 60 * 1000)
+    // Refresh news every 15 minutes
+    const interval = setInterval(fetchLatestNews, 15 * 60 * 1000)
     return () => clearInterval(interval)
   }, [])
 
@@ -94,58 +103,38 @@ export function NewsBanner() {
       {/* Scrolling News Container */}
       <div className="pl-20 py-3 relative">
         <div className="overflow-hidden">
-          <div className="flex animate-scroll">
-            {/* First set of news items */}
-            {news.map((item, index) => (
-              <div key={`first-${item.id}`} className="flex items-center whitespace-nowrap mr-12">
-                <div className="flex items-center space-x-3">
-                  <Clock className="w-4 h-4 text-[#FAFAFA]" />
-                  <span className="text-sm font-medium text-[#FAFAFA]">
-                    {formatTimeAgo(item.published_at)}
-                  </span>
-                  <div className="w-1 h-1 bg-[#DC2626] rounded-full" />
-                  <span className="text-lg font-semibold">{item.title}</span>
-                  <div className="w-1 h-1 bg-[#FAFAFA] rounded-full" />
-                  <span className="text-sm text-[#FAFAFA] uppercase tracking-wide">
-                    {item.source}
-                  </span>
-                  {item.keywords && item.keywords.length > 0 && (
-                    <>
-                      <div className="w-1 h-1 bg-[#DC2626] rounded-full" />
-                      <span className="text-sm text-[#DC2626] font-medium">
-                        #{item.keywords[0]}
-                      </span>
-                    </>
-                  )}
+          <div
+            className="flex animate-scroll"
+            style={{ '--animation-duration': `${animationDuration}s` } as React.CSSProperties}
+          >
+            {/* Display all unique articles in one continuous stream */}
+            {/* We create multiple copies for seamless looping */}
+            {[...Array(2)].map((_, copyIndex) =>
+              news.map((item) => (
+                <div key={`copy-${copyIndex}-${item.id}`} className="flex items-center whitespace-nowrap mr-16">
+                  <div className="flex items-center space-x-3">
+                    <Clock className="w-4 h-4 text-[#FAFAFA]" />
+                    <span className="text-sm font-medium text-[#FAFAFA]">
+                      {formatTimeAgo(item.published_at)}
+                    </span>
+                    <div className="w-1 h-1 bg-[#DC2626] rounded-full" />
+                    <span className="text-lg font-semibold">{item.title}</span>
+                    <div className="w-1 h-1 bg-[#FAFAFA] rounded-full" />
+                    <span className="text-sm text-[#FAFAFA] uppercase tracking-wide">
+                      {item.source}
+                    </span>
+                    {item.keywords && item.keywords.length > 0 && (
+                      <>
+                        <div className="w-1 h-1 bg-[#DC2626] rounded-full" />
+                        <span className="text-sm text-[#DC2626] font-medium">
+                          #{item.keywords[0]}
+                        </span>
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
-
-            {/* Duplicate set for seamless loop */}
-            {news.map((item, index) => (
-              <div key={`second-${item.id}`} className="flex items-center whitespace-nowrap mr-12">
-                <div className="flex items-center space-x-3">
-                  <Clock className="w-4 h-4 text-[#FAFAFA]" />
-                  <span className="text-sm font-medium text-[#FAFAFA]">
-                    {formatTimeAgo(item.published_at)}
-                  </span>
-                  <div className="w-1 h-1 bg-[#DC2626] rounded-full" />
-                  <span className="text-lg font-semibold">{item.title}</span>
-                  <div className="w-1 h-1 bg-[#FAFAFA] rounded-full" />
-                  <span className="text-sm text-[#FAFAFA] uppercase tracking-wide">
-                    {item.source}
-                  </span>
-                  {item.keywords && item.keywords.length > 0 && (
-                    <>
-                      <div className="w-1 h-1 bg-[#DC2626] rounded-full" />
-                      <span className="text-sm text-[#DC2626] font-medium">
-                        #{item.keywords[0]}
-                      </span>
-                    </>
-                  )}
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </div>
@@ -170,7 +159,7 @@ export function NewsBanner() {
         }
 
         .animate-scroll {
-          animation: scroll 120s linear infinite;
+          animation: scroll var(--animation-duration, 10s) linear infinite;
         }
 
         .animate-scroll:hover {
