@@ -5,12 +5,46 @@
 
 import { supabase } from '@/lib/supabase'
 
+interface RawArticle {
+  id?: string | number
+  title?: string
+  text?: string
+  summary?: string
+  url?: string
+  source?: string
+  author?: string
+  publish_date?: string
+  image?: string
+}
+
+interface CleanArticle {
+  external_id?: string | null
+  title: string
+  content?: string | null
+  summary?: string | null
+  url: string
+  source?: string | null
+  author?: string | null
+  published_at?: string | null
+  image_url?: string | null
+  language: string
+  category: string
+  keywords: string[]
+  sentiment: string
+  relevance_score: number
+}
+
 class WorldNewsClient {
+  private apiKey: string | undefined
+  private baseUrl: string
+  private dailyLimit: number
+  private monthlyLimit: number
+
   constructor() {
     this.apiKey = process.env.WORLD_NEWS_API_KEY
     this.baseUrl = 'https://api.worldnewsapi.com'
-    this.dailyLimit = parseInt(process.env.DAILY_API_LIMIT) || 100
-    this.monthlyLimit = parseInt(process.env.MONTHLY_API_LIMIT) || 1000
+    this.dailyLimit = parseInt(process.env.DAILY_API_LIMIT || '100')
+    this.monthlyLimit = parseInt(process.env.MONTHLY_API_LIMIT || '1000')
   }
 
   /**
@@ -194,7 +228,7 @@ class WorldNewsClient {
   /**
    * Validate and clean article data from API response
    */
-  validateArticle(article) {
+  validateArticle(article: RawArticle): CleanArticle | null {
     const required = ['title', 'url', 'publish_date']
     const hasRequired = required.every(field => article[field])
 

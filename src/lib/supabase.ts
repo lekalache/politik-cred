@@ -32,6 +32,7 @@ export interface PoliticianDetails {
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 // Use placeholder values during build time if environment variables are missing
 const buildTimeUrl = supabaseUrl || 'https://placeholder.supabase.co'
@@ -40,6 +41,16 @@ const buildTimeKey = (supabaseAnonKey && supabaseAnonKey !== 'YOUR_SUPABASE_ANON
   : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsYWNlaG9sZGVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NDk0MDUyNDAsImV4cCI6MTk2NDk4MTI0MH0.placeholder'
 
 export const supabase = createClient(buildTimeUrl, buildTimeKey)
+
+// Service role client for server-side operations that bypass RLS
+export const supabaseAdmin = supabaseServiceKey
+  ? createClient(buildTimeUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    })
+  : null
 
 // Runtime validation function
 export const validateSupabaseConfig = () => {

@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { Navigation } from '@/components/navigation'
 import { ModerationDashboard } from '@/components/admin/moderation-dashboard'
 import { ThreatMonitoring } from '@/components/admin/threat-monitoring'
+import { NewsManagement } from '@/components/admin/news-management'
+import { UserManagement } from '@/components/admin/user-management'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -18,7 +20,8 @@ import {
   TrendingUp,
   Database,
   Activity,
-  Eye
+  Eye,
+  Newspaper
 } from 'lucide-react'
 
 interface AdminStats {
@@ -38,7 +41,7 @@ interface RecentActivity {
 
 export default function AdminPage() {
   const { user, loading } = useAuth()
-  const [activeTab, setActiveTab] = useState<'overview' | 'moderation' | 'threats' | 'users' | 'analytics' | 'settings'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'moderation' | 'threats' | 'news' | 'users' | 'analytics' | 'settings'>('overview')
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([])
   const [statsLoading, setStatsLoading] = useState(true)
@@ -222,6 +225,7 @@ export default function AdminPage() {
               { key: 'overview', label: 'Vue d\'ensemble', icon: <BarChart3 className="w-4 h-4" />, adminOnly: false },
               { key: 'moderation', label: 'Modération', icon: <Shield className="w-4 h-4" />, adminOnly: false },
               { key: 'threats', label: 'Menaces IA', icon: <Eye className="w-4 h-4" />, adminOnly: false },
+              { key: 'news', label: 'Actualités', icon: <Newspaper className="w-4 h-4" />, adminOnly: true },
               { key: 'users', label: 'Utilisateurs', icon: <Users className="w-4 h-4" />, adminOnly: true },
               { key: 'analytics', label: 'Analytics', icon: <TrendingUp className="w-4 h-4" />, adminOnly: true },
               { key: 'settings', label: 'Paramètres', icon: <Settings className="w-4 h-4" />, adminOnly: true }
@@ -359,7 +363,19 @@ export default function AdminPage() {
                       <Shield className="w-4 h-4 mr-2" />
                       Réviser la modération
                     </Button>
-                    <Button className="w-full justify-start" variant="outline">
+                    <Button
+                      className="w-full justify-start"
+                      variant="outline"
+                      onClick={() => setActiveTab('news')}
+                    >
+                      <Newspaper className="w-4 h-4 mr-2" />
+                      Gérer les actualités
+                    </Button>
+                    <Button
+                      className="w-full justify-start"
+                      variant="outline"
+                      onClick={() => setActiveTab('users')}
+                    >
                       <Users className="w-4 h-4 mr-2" />
                       Gérer les utilisateurs
                     </Button>
@@ -393,21 +409,12 @@ export default function AdminPage() {
           <ThreatMonitoring />
         )}
 
+        {activeTab === 'news' && isAdmin && (
+          <NewsManagement />
+        )}
+
         {activeTab === 'users' && isAdmin && (
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Gestion des utilisateurs</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12 text-gray-500">
-                  <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                  <h3 className="font-medium mb-2">Gestion des utilisateurs</h3>
-                  <p className="text-sm">Cette fonctionnalité sera disponible prochainement.</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <UserManagement />
         )}
 
         {activeTab === 'analytics' && isAdmin && (

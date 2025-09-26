@@ -4,7 +4,26 @@
  */
 
 import { supabase } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
+
+// Create a service client for admin operations
+const getServiceClient = () => {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (serviceKey) {
+    return createClient(supabaseUrl, serviceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    })
+  }
+
+  // Fallback to regular client
+  return supabase
+}
 
 class CacheManager {
   constructor() {
@@ -31,11 +50,12 @@ class CacheManager {
   /**
    * Get cached results if available and not expired
    */
-  async getCached(searchParams) {
+  async getCached(searchParams: any) {
     try {
       const cacheKey = this.generateCacheKey(searchParams)
+      const serviceClient = getServiceClient()
 
-      const { data, error } = await supabase
+      const { data, error } = await serviceClient
         .from('news_cache')
         .select('response_data, article_count, created_at')
         .eq('cache_key', cacheKey)
@@ -65,7 +85,7 @@ class CacheManager {
   /**
    * Store API response in cache
    */
-  async setCached(searchParams, responseData, ttl = this.defaultTTL) {
+  async setCached(searchParams: any, responseData: any, ttl = this.defaultTTL) {
     try {
       const cacheKey = this.generateCacheKey(searchParams)
       const expiresAt = new Date(Date.now() + ttl).toISOString()
@@ -74,7 +94,8 @@ class CacheManager {
       // Clean old cache before adding new entries
       await this.cleanExpiredCache()
 
-      const { error } = await supabase
+      const serviceClient = getServiceClient()
+      const { error } = await serviceClient
         .from('news_cache')
         .upsert({
           cache_key: cacheKey,

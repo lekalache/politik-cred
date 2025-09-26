@@ -4,9 +4,61 @@
  */
 
 import { supabase } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
 import worldNewsClient from './worldNewsClient'
 
+// Create a service client for admin operations
+const getServiceClient = () => {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (serviceKey) {
+    return createClient(supabaseUrl, serviceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    })
+  }
+
+  // Fallback to regular client
+  return supabase
+}
+
+interface ProcessingResults {
+  processed: number
+  saved: number
+  duplicates: number
+  invalid: number
+  errors: string[]
+}
+
+interface CleanArticle {
+  external_id?: string | null
+  title: string
+  content?: string | null
+  summary?: string | null
+  url: string
+  source?: string | null
+  author?: string | null
+  published_at?: string | null
+  image_url?: string | null
+  language: string
+  category: string
+  keywords: string[]
+  sentiment: string
+  relevance_score: number
+}
+
+interface ApiResponse {
+  articles?: any[]
+}
+
 class ArticleProcessor {
+  private duplicateThreshold: number
+  private minTitleLength: number
+  private maxTitleLength: number
+  private maxContentLength: number
   constructor() {
     this.duplicateThreshold = 0.85 // Similarity threshold for duplicates
     this.minTitleLength = 10
@@ -17,7 +69,7 @@ class ArticleProcessor {
   /**
    * Process and save articles from API response
    */
-  async processArticles(apiResponse, jobId = null) {
+  async processArticles(apiResponse: ApiResponse, jobId: string | null = null): Promise<ProcessingResults> {
     const articles = apiResponse.articles || []
 
     if (articles.length === 0) {
@@ -47,12 +99,23 @@ class ArticleProcessor {
         // Validate and clean article data
         const cleanArticle = worldNewsClient.validateArticle(rawArticle)
         if (!cleanArticle) {
+          console.log(`Article failed worldNewsClient validation:`, {
+            title: rawArticle.title?.substring(0, 50),
+            url: rawArticle.url,
+            publish_date: rawArticle.publish_date
+          })
           results.invalid++
           continue
         }
 
         // Additional validation
         if (!this.isValidArticle(cleanArticle)) {
+          console.log(`Article failed isValidArticle check:`, {
+            title: cleanArticle.title?.substring(0, 50),
+            url: cleanArticle.url,
+            published_at: cleanArticle.published_at,
+            relevance_score: cleanArticle.relevance_score
+          })
           results.invalid++
           continue
         }
@@ -85,16 +148,18 @@ class ArticleProcessor {
   /**
    * Validate article meets our quality standards
    */
-  isValidArticle(article) {
+  isValidArticle(article: CleanArticle): boolean {
     // Title validation
     if (!article.title ||
         article.title.length < this.minTitleLength ||
         article.title.length > this.maxTitleLength) {
+      console.log(`Article rejected for title validation: ${article.title?.substring(0, 50)}...`)
       return false
     }
 
     // URL validation
     if (!article.url || !this.isValidUrl(article.url)) {
+      console.log(`Article rejected for URL validation: ${article.url}`)
       return false
     }
 
@@ -110,12 +175,14 @@ class ArticleProcessor {
 
       // Reject articles older than a week or from the future
       if (pubDate < oneWeekAgo || pubDate > new Date()) {
+        console.log(`Article rejected for date validation: ${pubDate.toISOString()} (${article.title?.substring(0, 50)}...)`)
         return false
       }
     }
 
-    // Political relevance check
-    if (article.relevance_score < 30) {
+    // Political relevance check - lowered threshold for more articles
+    if (article.relevance_score < 20) {
+      console.log(`Article rejected for low relevance (${article.relevance_score}): ${article.title?.substring(0, 50)}...`)
       return false
     }
 
@@ -125,7 +192,7 @@ class ArticleProcessor {
   /**
    * Check if URL is valid
    */
-  isValidUrl(string) {
+  isValidUrl(string: string): boolean {
     try {
       const url = new URL(string)
       return url.protocol === 'http:' || url.protocol === 'https:'
@@ -137,10 +204,11 @@ class ArticleProcessor {
   /**
    * Check for duplicate articles using multiple strategies
    */
-  async checkForDuplicate(article) {
+  async checkForDuplicate(article: CleanArticle): Promise<boolean> {
     try {
+      const serviceClient = getServiceClient()
       // Strategy 1: Exact URL match
-      const { data: urlMatch } = await supabase
+      const { data: urlMatch } = await serviceClient
         .from('articles')
         .select('id')
         .eq('url', article.url)
@@ -152,7 +220,7 @@ class ArticleProcessor {
 
       // Strategy 2: External ID match (if available)
       if (article.external_id) {
-        const { data: idMatch } = await supabase
+        const { data: idMatch } = await serviceClient
           .from('articles')
           .select('id')
           .eq('external_id', article.external_id)
@@ -166,7 +234,7 @@ class ArticleProcessor {
       // Strategy 3: Title similarity check for recent articles
       const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
 
-      const { data: recentArticles } = await supabase
+      const { data: recentArticles } = await serviceClient
         .from('articles')
         .select('title')
         .gte('created_at', oneDayAgo)
@@ -247,9 +315,10 @@ class ArticleProcessor {
   /**
    * Save article to Supabase
    */
-  async saveArticle(article) {
+  async saveArticle(article: CleanArticle): Promise<string | false> {
     try {
-      const { data, error } = await supabase
+      const serviceClient = getServiceClient()
+      const { data, error } = await serviceClient
         .from('articles')
         .insert(article)
         .select('id')

@@ -9,10 +9,67 @@ import cacheManager from '@/lib/news/cacheManager'
 import articleProcessor from '@/lib/news/articleProcessor'
 import { supabase } from '@/lib/supabase'
 
+// Helper function to verify admin authentication
+async function verifyAdminAuth(request: NextRequest) {
+  try {
+    // Get authorization header
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return { isAdmin: false, error: 'No authorization token provided' }
+    }
+
+    const token = authHeader.split(' ')[1]
+    if (!token) {
+      return { isAdmin: false, error: 'Invalid authorization format' }
+    }
+
+    // Try to parse the token as user data (from localStorage)
+    let userData
+    try {
+      userData = JSON.parse(decodeURIComponent(token))
+    } catch {
+      return { isAdmin: false, error: 'Invalid token format' }
+    }
+
+    if (!userData?.id || !userData?.role) {
+      return { isAdmin: false, error: 'Invalid user data in token' }
+    }
+
+    // Verify user exists and has admin role
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('id, role, is_verified')
+      .eq('id', userData.id)
+      .single()
+
+    if (error || !user) {
+      return { isAdmin: false, error: 'User not found' }
+    }
+
+    if (user.role !== 'admin') {
+      return { isAdmin: false, error: 'Admin access required' }
+    }
+
+    if (!user.is_verified) {
+      return { isAdmin: false, error: 'Account not verified' }
+    }
+
+    return { isAdmin: true, userId: user.id }
+  } catch (error) {
+    return { isAdmin: false, error: 'Authentication error' }
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
-    // TODO: Add authentication check for admin users
-    // For now, we'll allow any authenticated user
+    // Check admin authentication
+    const authResult = await verifyAdminAuth(request)
+    if (!authResult.isAdmin) {
+      return NextResponse.json(
+        { error: authResult.error },
+        { status: 401 }
+      )
+    }
 
     const body = await request.json().catch(() => ({}))
     const {
@@ -24,29 +81,15 @@ export async function POST(request: NextRequest) {
 
     console.log('🔄 Manual refresh triggered')
 
-    // Create job tracking
-    const { data: job, error: jobError } = await supabase
-      .from('news_collection_jobs')
-      .insert({
-        job_type: 'refresh',
-        status: 'running'
-      })
-      .select('id')
-      .single()
+    // Create job tracking - we'll create a simple job ID for now
+    const jobId = `refresh_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
-    if (jobError) {
-      return NextResponse.json(
-        { error: 'Failed to create job' },
-        { status: 500 }
-      )
-    }
-
-    const jobId = job.id
+    console.log(`🆔 Created job ID: ${jobId}`)
 
     // Check API limits with slightly more lenient check for manual refresh
     const canRefresh = await worldNewsClient.checkDailyLimit()
     if (!canRefresh) {
-      await updateJobStatus(jobId, 'failed', 'Daily API limit reached')
+      console.log(`❌ Job ${jobId} failed: Daily API limit reached`)
       return NextResponse.json(
         { error: 'Daily API limit reached' },
         { status: 429 }
@@ -111,19 +154,16 @@ export async function POST(request: NextRequest) {
     console.log(`📰 Processing ${apiResponse.articles?.length || 0} articles`)
     const processingResults = await articleProcessor.processArticles(apiResponse, jobId)
 
-    // Update job status
-    await updateJobStatus(jobId, 'completed', null, {
-      articles_collected: apiResponse.articles?.length || 0,
-      articles_new: processingResults.saved,
-      articles_updated: 0,
-      api_calls_made: 1
-    })
+    // Log job completion
+    console.log(`✅ Job ${jobId} completed successfully`)
+    console.log(`📊 Results: ${apiResponse.articles?.length || 0} collected, ${processingResults.saved} saved`)
 
     // Get fresh stats
     const stats = await articleProcessor.getArticleStats()
 
     return NextResponse.json({
       success: true,
+      id: 'success',
       jobId,
       refreshType: topic ? 'topic' : sources ? 'sources' : 'general',
       results: {
@@ -131,12 +171,13 @@ export async function POST(request: NextRequest) {
         saved: processingResults.saved,
         duplicates: processingResults.duplicates,
         invalid: processingResults.invalid,
-        errors: processingResults.errors.slice(0, 5) // Limit error details
+        errors: processingResults.errors?.slice(0, 5) || [] // Limit error details
       },
       stats: {
         totalArticles: stats?.totalArticles || 0,
         todayArticles: stats?.todayArticles || 0,
-        averageRelevance: stats?.averageRelevance || 0
+        averageRelevance: stats?.averageRelevance || 0,
+        sourcesCount: stats?.sourcesCount || 0
       },
       available: apiResponse.available || 0,
       searchParams: {
@@ -160,45 +201,3 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Helper function to update job status
-async function updateJobStatus(
-  jobId: string,
-  status: string,
-  errorMessage?: string | null,
-  additionalData?: object
-) {
-  try {
-    const updateData: any = {
-      status,
-      completed_at: new Date().toISOString()
-    }
-
-    if (errorMessage) {
-      updateData.error_message = errorMessage
-    }
-
-    if (additionalData) {
-      Object.assign(updateData, additionalData)
-    }
-
-    // Calculate duration
-    const { data: job } = await supabase
-      .from('news_collection_jobs')
-      .select('started_at')
-      .eq('id', jobId)
-      .single()
-
-    if (job) {
-      const duration = Math.round((new Date().getTime() - new Date(job.started_at).getTime()) / 1000)
-      updateData.duration_seconds = duration
-    }
-
-    await supabase
-      .from('news_collection_jobs')
-      .update(updateData)
-      .eq('id', jobId)
-
-  } catch (error) {
-    console.error('Error updating job status:', error)
-  }
-}
