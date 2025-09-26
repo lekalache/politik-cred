@@ -6,6 +6,7 @@ import { Navigation } from "@/components/navigation"
 import { PoliticianList } from "@/components/politician-list"
 import { VoteDialog } from "@/components/vote-dialog"
 import { WelcomeBanner } from "@/components/welcome-banner"
+import { NewsBanner } from "@/components/news-banner"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -158,6 +159,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* News Banner */}
+      <NewsBanner />
 
       {/* Featured Politicians Section */}
       <section className="py-16 bg-[#FAFAFA]">
