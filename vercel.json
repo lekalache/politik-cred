@@ -1,15 +1,6 @@
 {
   "framework": "nextjs",
-  "crons": [
-    {
-      "path": "/api/cron/collect-news",
-      "schedule": "0 */6 * * *"
-    }
-  ],
   "functions": {
-    "src/app/api/cron/collect-news/route.ts": {
-      "maxDuration": 300
-    },
     "src/app/api/news/collect/route.ts": {
       "maxDuration": 180
     },
