@@ -6,7 +6,9 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed-politicians": "tsx scripts/seed-politicians.ts",
+    "collect-promises": "tsx scripts/collect-promises.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
