@@ -9,93 +9,81 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { dataCollectionOrchestrator } from '@/lib/scrapers/data-collection-orchestrator'
 import { supabase } from '@/lib/supabase'
+import { withAdminAuth } from '@/lib/middleware/auth'
+import { withRateLimit, RateLimitPresets } from '@/lib/middleware/rate-limit'
+import {
+  DataCollectionSchema,
+  validateRequest,
+  formatValidationErrors
+} from '@/lib/validation/schemas'
 
 export async function POST(request: NextRequest) {
-  try {
-    // Get authorization header
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: 'Missing or invalid authorization header' },
-        { status: 401 }
-      )
-    }
+  return withRateLimit(request, RateLimitPresets.dataCollection, async () => {
+    return withAdminAuth(request, async (req, authContext) => {
+      try {
+        // Parse and validate request body
+        const body = await req.json()
+        const validation = await validateRequest(DataCollectionSchema, body)
 
-    const token = authHeader.substring(7)
+        if (!validation.success) {
+          return NextResponse.json(
+            formatValidationErrors(validation.errors),
+            { status: 400 }
+          )
+        }
 
-    // Verify user is admin
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+        const { type, limit } = validation.data
 
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
+        console.log(`Starting ${type} data collection by ${authContext.user.email}`)
 
-    // Check user role
-    const { data: userProfile } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', user.id)
-      .single()
+        let result
 
-    if (!userProfile || !['admin', 'moderator'].includes(userProfile.role)) {
-      return NextResponse.json(
-        { error: 'Insufficient permissions. Admin role required.' },
-        { status: 403 }
-      )
-    }
+        switch (type) {
+          case 'deputies':
+            result = await dataCollectionOrchestrator.collectDeputiesData()
+            break
 
-    // Get collection type from request body
-    const body = await request.json()
-    const { type = 'full', limit } = body
+          case 'full':
+            result = await dataCollectionOrchestrator.runFullCollection()
+            break
 
-    console.log(`Starting ${type} data collection...`)
+          case 'incremental':
+            result = await dataCollectionOrchestrator.collectDeputiesVotes(limit)
+            break
 
-    let result
+          case 'senators':
+            // Not yet implemented
+            return NextResponse.json(
+              { error: 'Senator data collection not yet implemented' },
+              { status: 501 }
+            )
 
-    switch (type) {
-      case 'deputies':
-        result = await dataCollectionOrchestrator.collectDeputiesData()
-        break
+          default:
+            return NextResponse.json(
+              { error: `Unknown collection type: ${type}` },
+              { status: 400 }
+            )
+        }
 
-      case 'votes':
-        result = await dataCollectionOrchestrator.collectDeputiesVotes(limit)
-        break
+        return NextResponse.json({
+          success: true,
+          type,
+          result,
+          message: `Data collection completed successfully`
+        })
+      } catch (error) {
+        console.error('Data collection error:', error)
 
-      case 'activity':
-        result = await dataCollectionOrchestrator.collectDeputiesActivity(limit)
-        break
-
-      case 'full':
-        result = await dataCollectionOrchestrator.runFullCollection()
-        break
-
-      default:
         return NextResponse.json(
-          { error: `Unknown collection type: ${type}` },
-          { status: 400 }
+          {
+            error: 'Data collection failed',
+            details: error instanceof Error ? error.message : 'Unknown error'
+          },
+          { status: 500 }
         )
-    }
-
-    return NextResponse.json({
-      success: true,
-      type,
-      result,
-      message: `Data collection completed successfully`
+      }
     })
-  } catch (error) {
-    console.error('Data collection error:', error)
-
-    return NextResponse.json(
-      {
-        error: 'Data collection failed',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 500 }
-    )
-  }
+  })
 }
 
 // GET endpoint to check collection status

@@ -2,10 +2,11 @@
  * Semantic Matching Engine
  * Matches promises to parliamentary actions using semantic similarity
  *
- * NOTE: This is a placeholder implementation using simple text similarity.
- * For production, integrate sentence-transformers via Python microservice
- * or Hugging Face Inference API.
+ * Uses Hugging Face Inference API for production-grade semantic matching
+ * Falls back to Jaccard similarity if API is unavailable
  */
+
+import { huggingfaceClient } from '@/lib/ai/huggingface-client'
 
 interface Match {
   promiseId: string
@@ -17,9 +18,21 @@ interface Match {
 }
 
 export class SemanticMatcher {
+  private useHuggingFace: boolean
+
+  constructor() {
+    this.useHuggingFace = huggingfaceClient.isAvailable()
+
+    if (!this.useHuggingFace) {
+      console.warn('Hugging Face API not available. Using Jaccard similarity as fallback.')
+    } else {
+      console.log('Semantic matcher initialized with Hugging Face embeddings')
+    }
+  }
+
   /**
    * Compute Jaccard similarity between two texts
-   * (Placeholder for real semantic embeddings)
+   * (Fallback method when Hugging Face is unavailable)
    */
   private jaccardSimilarity(text1: string, text2: string): number {
     const words1 = new Set(
@@ -42,6 +55,24 @@ export class SemanticMatcher {
     const union = new Set([...words1, ...words2])
 
     return intersection.size / union.size
+  }
+
+  /**
+   * Calculate semantic similarity between two texts
+   * Uses Hugging Face if available, falls back to Jaccard
+   */
+  private async calculateSimilarity(text1: string, text2: string): Promise<number> {
+    try {
+      if (this.useHuggingFace) {
+        return await huggingfaceClient.calculateSimilarity(text1, text2)
+      }
+    } catch (error) {
+      console.error('Hugging Face similarity calculation failed, using fallback:', error)
+      this.useHuggingFace = false // Disable for this session
+    }
+
+    // Fallback to Jaccard
+    return this.jaccardSimilarity(text1, text2)
   }
 
   /**
@@ -98,8 +129,8 @@ export class SemanticMatcher {
     )
 
     for (const action of relevantActions) {
-      // Compute similarity
-      const similarity = this.jaccardSimilarity(
+      // Compute similarity (uses Hugging Face or falls back to Jaccard)
+      const similarity = await this.calculateSimilarity(
         promiseText,
         `${action.description} ${action.billTitle || ''}`
       )
@@ -234,23 +265,15 @@ export class SemanticMatcher {
 export const semanticMatcher = new SemanticMatcher()
 
 /**
- * TODO: For production, replace Jaccard similarity with real semantic embeddings
+ * Environment Variables Required:
+ * - HUGGINGFACE_API_KEY: Optional. If not set, falls back to Jaccard similarity
  *
- * Option 1: Python microservice with sentence-transformers
- * ```python
- * from sentence_transformers import SentenceTransformer
- * model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
+ * Usage Stats:
+ * - Free tier: 30,000 requests/month
+ * - Model: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+ * - Embedding dimensions: 384
  *
- * embeddings = model.encode([promise_text, action_text])
- * similarity = cosine_similarity(embeddings[0], embeddings[1])
- * ```
- *
- * Option 2: Hugging Face Inference API
- * ```typescript
- * const response = await fetch('https://api-inference.huggingface.co/models/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2', {
- *   method: 'POST',
- *   headers: { 'Authorization': `Bearer ${HF_API_KEY}` },
- *   body: JSON.stringify({ inputs: [promiseText, actionText] })
- * })
- * ```
+ * For higher volume production use, consider:
+ * - Python microservice with local sentence-transformers deployment
+ * - Hugging Face Inference Endpoints (paid, dedicated instance)
  */

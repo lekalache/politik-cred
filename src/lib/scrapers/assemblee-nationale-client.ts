@@ -224,14 +224,16 @@ class AssembleeNationaleClient {
 
   /**
    * Store deputy data in database
+   * Uses external_id (slug) to prevent duplicates
    */
-  async storeDeputyInDatabase(deputy: DeputyInfo): Promise<void> {
+  async storeDeputyInDatabase(deputy: DeputyInfo): Promise<string> {
     try {
-      // Check if politician already exists
+      // Check if politician already exists by external_id
       const { data: existing } = await supabase
         .from('politicians')
         .select('id')
-        .eq('name', deputy.nom)
+        .eq('external_id', deputy.slug)
+        .eq('source_system', 'nosdeputes')
         .single()
 
       const politicianData = {
@@ -249,6 +251,8 @@ class AssembleeNationaleClient {
         contact_info: {
           email: deputy.emails?.[0] || null
         },
+        external_id: deputy.slug,
+        source_system: 'nosdeputes',
         is_active: true,
         verification_status: 'verified' as const
       }
@@ -260,14 +264,22 @@ class AssembleeNationaleClient {
           .update(politicianData)
           .eq('id', existing.id)
 
-        console.log(`Updated politician: ${deputy.nom}`)
+        console.log(`Updated politician: ${deputy.nom} (${deputy.slug})`)
+        return existing.id
       } else {
         // Insert new politician
-        await supabase
+        const { data: inserted, error } = await supabase
           .from('politicians')
           .insert(politicianData)
+          .select('id')
+          .single()
 
-        console.log(`Inserted politician: ${deputy.nom}`)
+        if (error) {
+          throw error
+        }
+
+        console.log(`Inserted politician: ${deputy.nom} (${deputy.slug})`)
+        return inserted.id
       }
     } catch (error) {
       console.error(`Error storing deputy ${deputy.nom}:`, error)

@@ -57,12 +57,15 @@ export class ConsistencyCalculator {
     const partial = verifications.filter(v => v.match_type === 'partial').length
     const pending = verifications.filter(v => v.match_type === 'pending').length
 
-    const total = kept + broken + partial + pending
+    // Total only counts verified promises (kept + broken + partial)
+    // Pending promises don't affect the score
+    const total = kept + broken + partial
 
     // Calculate score: kept=100%, partial=50%, broken=0%
+    // Formula: (kept * 100 + partial * 50) / total
     const score =
       total > 0
-        ? ((kept * 100 + partial * 50) / total) * (total / (total + pending))
+        ? (kept * 100 + partial * 50) / total
         : 0
 
     // Get attendance data
@@ -259,18 +262,164 @@ export class ConsistencyCalculator {
 
   /**
    * Batch calculate scores for multiple politicians
+   * Optimized to fetch all data in 3 queries instead of N*4 queries
    */
   async batchCalculate(politicianIds: string[]): Promise<ConsistencyMetrics[]> {
-    const metrics: ConsistencyMetrics[] = []
+    // Fetch all data in batch queries
 
-    for (const id of politicianIds) {
-      try {
-        const score = await this.calculateConsistencyScore(id)
-        await this.storeConsistencyScore(score)
-        metrics.push(score)
-      } catch (error) {
-        console.error(`Failed to calculate score for ${id}:`, error)
+    // 1. Get all promises for these politicians
+    const { data: allPromises } = await supabase
+      .from('political_promises')
+      .select('id, politician_id')
+      .in('politician_id', politicianIds)
+
+    if (!allPromises || allPromises.length === 0) {
+      return politicianIds.map(id => this.getEmptyMetrics(id))
+    }
+
+    const promiseIds = allPromises.map(p => p.id)
+
+    // 2. Get all verifications for these promises
+    const { data: allVerifications } = await supabase
+      .from('promise_verifications')
+      .select('promise_id, match_type, match_confidence')
+      .in('promise_id', promiseIds)
+      .eq('is_disputed', false)
+      .not('verified_at', 'is', null)
+
+    // 3. Get all actions for these politicians
+    const { data: allActions } = await supabase
+      .from('parliamentary_actions')
+      .select('politician_id, action_type, vote_position')
+      .in('politician_id', politicianIds)
+
+    // Build lookup maps
+    const promiseToPolitician = new Map(
+      allPromises.map(p => [p.id, p.politician_id])
+    )
+
+    // Group verifications by politician
+    const verificationsByPolitician = new Map<string, typeof allVerifications>()
+    if (allVerifications) {
+      for (const v of allVerifications) {
+        const politicianId = promiseToPolitician.get(v.promise_id)
+        if (politicianId) {
+          if (!verificationsByPolitician.has(politicianId)) {
+            verificationsByPolitician.set(politicianId, [])
+          }
+          verificationsByPolitician.get(politicianId)!.push(v)
+        }
       }
+    }
+
+    // Group actions by politician
+    const actionsByPolitician = new Map<string, typeof allActions>()
+    if (allActions) {
+      for (const action of allActions) {
+        if (!actionsByPolitician.has(action.politician_id)) {
+          actionsByPolitician.set(action.politician_id, [])
+        }
+        actionsByPolitician.get(action.politician_id)!.push(action)
+      }
+    }
+
+    // Calculate metrics for each politician
+    const metrics: ConsistencyMetrics[] = []
+    const metricsToStore: any[] = []
+
+    for (const politicianId of politicianIds) {
+      try {
+        const verifications = verificationsByPolitician.get(politicianId) || []
+        const actions = actionsByPolitician.get(politicianId) || []
+
+        if (verifications.length === 0) {
+          const emptyMetric = this.getEmptyMetrics(politicianId)
+          metrics.push(emptyMetric)
+          continue
+        }
+
+        // Count promises by outcome
+        const kept = verifications.filter(v => v.match_type === 'kept').length
+        const broken = verifications.filter(v => v.match_type === 'broken').length
+        const partial = verifications.filter(v => v.match_type === 'partial').length
+        const pending = verifications.filter(v => v.match_type === 'pending').length
+        const total = kept + broken + partial
+
+        // Calculate score
+        const score = total > 0 ? (kept * 100 + partial * 50) / total : 0
+
+        // Calculate attendance
+        const votes = actions.filter(a => a.action_type === 'vote')
+        const attended = votes.filter(v => v.vote_position !== 'absent').length
+        const attendanceRate = votes.length > 0
+          ? Math.round((attended / votes.length) * 100 * 100) / 100
+          : null
+
+        // Calculate legislative activity
+        const bills = actions.filter(a => a.action_type === 'bill_sponsor').length
+        const amendments = actions.filter(a => a.action_type === 'amendment').length
+        const debates = actions.filter(a => a.action_type === 'debate').length
+        const questions = actions.filter(a => a.action_type === 'question').length
+        const activityTotal = bills + amendments + debates + questions
+        const rawScore = bills * 10 + amendments * 5 + debates * 2 + questions * 1
+        const activityScore = activityTotal > 0
+          ? Math.min((rawScore / 500) * 100, 100)
+          : 0
+
+        // Calculate data quality
+        const dataQuality = this.assessDataQuality(total, votes.length, activityTotal)
+
+        const metric: ConsistencyMetrics = {
+          politicianId,
+          overallScore: Math.round(score * 100) / 100,
+          promisesKept: kept,
+          promisesBroken: broken,
+          promisesPartial: partial,
+          promisesPending: pending,
+          totalPromises: total,
+          attendanceRate,
+          sessionsAttended: attended,
+          sessionsScheduled: votes.length,
+          legislativeActivityScore: activityScore > 0
+            ? Math.round(activityScore * 100) / 100
+            : null,
+          billsSponsored: bills,
+          amendmentsProposed: amendments,
+          debatesParticipated: debates,
+          questionsAsked: questions,
+          dataQualityScore: dataQuality,
+          lastCalculatedAt: new Date()
+        }
+
+        metrics.push(metric)
+        metricsToStore.push({
+          politician_id: metric.politicianId,
+          overall_score: metric.overallScore,
+          promises_kept: metric.promisesKept,
+          promises_broken: metric.promisesBroken,
+          promises_partial: metric.promisesPartial,
+          promises_pending: metric.promisesPending,
+          attendance_rate: metric.attendanceRate,
+          sessions_attended: metric.sessionsAttended,
+          sessions_scheduled: metric.sessionsScheduled,
+          legislative_activity_score: metric.legislativeActivityScore,
+          bills_sponsored: metric.billsSponsored,
+          amendments_proposed: metric.amendmentsProposed,
+          debates_participated: metric.debatesParticipated,
+          questions_asked: metric.questionsAsked,
+          data_quality_score: metric.dataQualityScore,
+          last_calculated_at: metric.lastCalculatedAt.toISOString()
+        })
+      } catch (error) {
+        console.error(`Failed to calculate score for ${politicianId}:`, error)
+      }
+    }
+
+    // Batch upsert all metrics in one query
+    if (metricsToStore.length > 0) {
+      await supabase
+        .from('consistency_scores')
+        .upsert(metricsToStore, { onConflict: 'politician_id' })
     }
 
     return metrics
@@ -278,6 +427,7 @@ export class ConsistencyCalculator {
 
   /**
    * Calculate scores for all politicians with promises
+   * Optimized batch operation to eliminate N+1 queries
    */
   async calculateAllScores(): Promise<{
     updated: number
@@ -298,23 +448,18 @@ export class ConsistencyCalculator {
     // Get unique politician IDs
     const politicianIds = [...new Set(promises.map((p: { politician_id: string }) => p.politician_id))]
 
-    let updated = 0
-    let failed = 0
+    console.log(`Calculating scores for ${politicianIds.length} politicians using batch operation...`)
 
-    for (const id of politicianIds) {
-      try {
-        const metrics = await this.calculateConsistencyScore(id)
-        await this.storeConsistencyScore(metrics)
-        updated++
-      } catch (error) {
-        console.error(`Failed to calculate score for ${id}:`, error)
-        failed++
-      }
-    }
+    // Use optimized batch calculation
+    const results = await this.batchCalculate(politicianIds)
 
     const duration = Math.round((Date.now() - startTime) / 1000)
 
-    return { updated, failed, duration }
+    return {
+      updated: results.length,
+      failed: politicianIds.length - results.length,
+      duration
+    }
   }
 }
 
