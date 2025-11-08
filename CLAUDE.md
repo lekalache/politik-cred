@@ -233,7 +233,7 @@ MAILJET_SECRET_KEY=your_mailjet_secret
 ### Optional Configuration
 ```env
 DAILY_API_LIMIT=100
-MONTHLY_API_LIMIT=1000
+MONTHLY_API_LIMIT=1000 
 ```
 
 ## Quick Start Commands
