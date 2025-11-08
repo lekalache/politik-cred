@@ -19,11 +19,19 @@ Scrape official sources:
 - **Assemblée Nationale API** (free, public) - all votes, debates, bill text
 - **Sénat data** (free, public) - legislative activity JSON exports
 - **data.gouv.fr** - official French open data portal with parliamentary records
+- **Vigie du Mensonge** (https://vigiedumensonge.fr/) - Clément Viktorovitch's verified lie database (sourced, provable, unattackable)
 - **Politician social media** - Twitter/X API free tier (1,500 tweets/month)
 - **Campaign websites** - one-time scrape per election cycle for promises
 - **World News API** - existing integration for contextual articles
 
 Store everything with timestamps and source links. Every claim must be traceable.
+
+**Vigie du Mensonge Integration Strategy:**
+- Use as authoritative source for verified political lies and false statements
+- Each entry is pre-vetted by their team with rigorous sourcing standards
+- Cross-reference their data with parliamentary voting records to build promise-action mismatches
+- Their methodology: "tout soit sourcé, prouvable, infakable, introllable, inattaquable"
+- Complements our promise tracking by providing verified instances of broken commitments
 
 #### Layer 2: Free AI Processing
 - **Hugging Face Inference API** free tier (30,000 requests/month) for promise extraction
