@@ -38,7 +38,8 @@ Politik Cred' is a French political transparency platform that enables citizens 
 ### External Integrations
 - **World News API**: French political news collection
 - **Mailjet**: Email service for notifications
-- **Vercel Analytics**: Performance monitoring
+- **Hugging Face**: Semantic embeddings for promise matching (optional)
+- **Netlify Analytics**: Privacy-friendly analytics (dashboard activation)
 
 ## Project Structure
 
@@ -157,15 +158,18 @@ src/
 - **next.config.js**: Next.js configuration
 - **tailwind.config.js**: Tailwind CSS customization
 - **eslint.config.mjs**: ESLint rules
-- **vercel.json**: Deployment configuration
+- **netlify.toml**: Deployment configuration
 
 ## Deployment & Infrastructure
 
-### Vercel Deployment
-- **Edge Runtime**: Global content delivery
+### Netlify Deployment
+- **Edge Network**: Global CDN with edge functions
 - **Environment Variables**: Secure configuration management
-- **Analytics Integration**: Performance monitoring
-- **Speed Insights**: Core Web Vitals tracking
+- **Netlify Analytics**: Privacy-friendly analytics (requires dashboard activation)
+- **Function Timeouts**: Custom timeouts for long-running API routes
+  - Data collection: 5 minutes
+  - Semantic matching: 2 minutes
+  - Score calculation: 2 minutes
 
 ### Database Hosting
 - **Supabase Cloud**: Managed PostgreSQL
@@ -188,8 +192,8 @@ src/
 ## Monitoring & Analytics
 
 ### Performance Monitoring
-- **Vercel Analytics**: User analytics and insights
-- **Speed Insights**: Performance metrics
+- **Netlify Analytics**: Privacy-friendly user analytics (enable in dashboard)
+- **Custom Logging**: API route performance tracking
 - **Error Tracking**: Built-in error boundary system
 
 ### Business Metrics
@@ -270,15 +274,14 @@ npm run lint
 
 ### Integrations
 - **Mailjet**: ^6.0.9 (Email service)
-- **Vercel Analytics**: ^1.5.0 (User analytics)
-- **Vercel Speed Insights**: ^1.2.0 (Performance monitoring)
+- **Netlify Analytics**: Dashboard-enabled (Privacy-friendly analytics)
 
 ## Key Files for Development
 
 ### Critical Configuration
 - `/src/lib/supabase.ts` - Database configuration and comprehensive type definitions
 - `/src/components/auth/auth-provider.tsx` - Authentication context and state management
-- `/src/app/layout.tsx` - Root layout with AuthProvider, Analytics, and Speed Insights
+- `/src/app/layout.tsx` - Root layout with AuthProvider and global styles
 - `/src/lib/utils.ts` - Utility functions and Tailwind class merging
 
 ### Feature Implementations
