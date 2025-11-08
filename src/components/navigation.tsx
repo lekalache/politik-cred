@@ -72,6 +72,10 @@ export function Navigation() {
                 Analytics
               </a>
               <span className="text-gray-300">|</span>
+              <a href="/promises" className="text-gray-600 hover:text-gray-900 transition-colors">
+                Promesses
+              </a>
+              <span className="text-gray-300">|</span>
               <a href="/legal" className="text-gray-600 hover:text-gray-900 transition-colors">
                 Conformité légale
               </a>
@@ -186,6 +190,13 @@ export function Navigation() {
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Analytics
+                </a>
+                <a
+                  href="/promises"
+                  className="text-sm text-gray-600 hover:text-gray-900 transition-colors block"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Promesses
                 </a>
                 <a
                   href="/legal"

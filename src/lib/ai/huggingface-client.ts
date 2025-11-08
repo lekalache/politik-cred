@@ -12,7 +12,7 @@ interface EmbeddingResponse {
 
 export class HuggingFaceClient {
   private apiKey: string
-  private baseUrl = 'https://api-inference.huggingface.co/pipeline/feature-extraction'
+  private baseUrl = 'https://router.huggingface.co/hf-inference/models'
   private model = 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2'
   private requestCount = 0
   private readonly maxRequestsPerMonth = 30000
@@ -109,29 +109,84 @@ export class HuggingFaceClient {
 
   /**
    * Calculate semantic similarity between two texts
+   * Uses the new Hugging Face API format which returns similarity directly
    */
   async calculateSimilarity(text1: string, text2: string): Promise<number> {
-    const embeddings = await this.getEmbeddings([text1, text2])
-    return this.cosineSimilarity(embeddings[0], embeddings[1])
+    if (!this.isAvailable()) {
+      throw new Error('Hugging Face API not available. Check API key and rate limits.')
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/${this.model}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          inputs: {
+            source_sentence: text1,
+            sentences: [text2]
+          }
+        })
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(`Hugging Face API error (${response.status}): ${errorText}`)
+      }
+
+      const similarities = await response.json()
+      this.requestCount += 1
+
+      // API returns array of similarity scores
+      return Array.isArray(similarities) && similarities.length > 0 ? similarities[0] : 0
+    } catch (error) {
+      console.error('Error calculating similarity with Hugging Face:', error)
+      throw error
+    }
   }
 
   /**
    * Batch calculate similarities between one text and multiple candidates
-   * More efficient than calling calculateSimilarity in a loop
+   * Uses the new Hugging Face API which accepts multiple sentences at once
    */
   async batchCalculateSimilarities(
     sourceText: string,
     candidateTexts: string[]
   ): Promise<number[]> {
-    const allTexts = [sourceText, ...candidateTexts]
-    const embeddings = await this.getEmbeddings(allTexts)
+    if (!this.isAvailable()) {
+      throw new Error('Hugging Face API not available. Check API key and rate limits.')
+    }
 
-    const sourceEmbedding = embeddings[0]
-    const candidateEmbeddings = embeddings.slice(1)
+    try {
+      const response = await fetch(`${this.baseUrl}/${this.model}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          inputs: {
+            source_sentence: sourceText,
+            sentences: candidateTexts
+          }
+        })
+      })
 
-    return candidateEmbeddings.map(candidateEmb =>
-      this.cosineSimilarity(sourceEmbedding, candidateEmb)
-    )
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(`Hugging Face API error (${response.status}): ${errorText}`)
+      }
+
+      const similarities = await response.json()
+      this.requestCount += 1
+
+      return Array.isArray(similarities) ? similarities : []
+    } catch (error) {
+      console.error('Error in batch similarity calculation:', error)
+      throw error
+    }
   }
 
   /**
