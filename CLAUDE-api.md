@@ -914,4 +914,404 @@ export async function POST(request: NextRequest) {
 }
 ```
 
+---
+
+## Promise Tracker APIs
+
+### Extract Promises
+Extract political promises from text using AI classification and store in database.
+
+**Endpoint:** `POST /api/promises/extract`
+
+**Authentication:** Admin role required for POST, public for GET
+
+**Request Body (POST):**
+```typescript
+{
+  politicianId: string,      // UUID of politician
+  text: string,              // Text to extract promises from
+  sourceUrl: string,         // URL of source
+  sourceType: 'campaign_site' | 'interview' | 'social_media' | 'debate' | 'speech',
+  date: string               // ISO date string
+}
+```
+
+**Response:**
+```typescript
+// Success (200)
+{
+  success: true,
+  extracted: number,         // Promises detected
+  stored: number,            // Promises saved to database
+  promises: Array<{
+    text: string,
+    category: string,        // economic, social, environmental, etc.
+    isActionable: boolean,
+    confidence: number       // 0.00-1.00
+  }>
+}
+
+// Error (400)
+{
+  error: "Invalid politician ID" | "Text too short" | "Invalid date format"
+}
+
+// Unauthorized (401)
+{
+  error: "Admin access required"
+}
+```
+
+**GET Query Parameters:**
+```typescript
+{
+  politicianId?: string,     // Filter by politician
+  category?: string,         // Filter by category
+  status?: string           // pending, verified, actionable
+}
+```
+
+**GET Response:**
+```typescript
+{
+  success: true,
+  summary: {
+    total: number,
+    pending: number,
+    verified: number,
+    actionable: number
+  },
+  promises: Promise[]
+}
+```
+
+**Implementation:**
+```typescript
+export async function POST(request: NextRequest) {
+  try {
+    // Verify admin authentication
+    const user = await requireRole(request, ['admin'])
+
+    const body = await request.json()
+    const { politicianId, text, sourceUrl, sourceType, date } = body
+
+    // Extract promises using AI classifier
+    const extractedPromises = promiseClassifier.extractPromises(text)
+    const stored = []
+
+    for (const promise of extractedPromises) {
+      const { data, error } = await supabase
+        .from('political_promises')
+        .insert({
+          politician_id: politicianId,
+          promise_text: promise.text,
+          promise_date: date,
+          category: promise.category,
+          source_url: sourceUrl,
+          source_type: sourceType,
+          extraction_method: 'ai_extracted',
+          confidence_score: promise.confidence,
+          is_actionable: promise.isActionable,
+          verification_status: 'pending'
+        })
+        .select()
+        .single()
+
+      if (!error) stored.push(data)
+    }
+
+    return NextResponse.json({
+      success: true,
+      extracted: extractedPromises.length,
+      stored: stored.length,
+      promises: stored
+    })
+
+  } catch (error) {
+    return handleError(error, request)
+  }
+}
+```
+
+---
+
+### Match Promises to Actions
+Semantically match promises to parliamentary actions using Hugging Face AI.
+
+**Endpoint:** `POST /api/promises/match`
+
+**Authentication:** Admin role required
+
+**Request Body:**
+```typescript
+{
+  politicianId?: string,     // Specific politician (optional, defaults to all)
+  promiseId?: string,        // Specific promise (optional)
+  minConfidence?: number     // Minimum similarity (0.0-1.0, default: 0.6)
+}
+```
+
+**Response:**
+```typescript
+// Success (200)
+{
+  success: true,
+  autoMatched: number,       // High-confidence matches (>= 0.85)
+  queuedForReview: number,   // Medium-confidence matches (0.6-0.85)
+  summary: {
+    promisesProcessed: number,
+    actionsChecked: number,
+    highConfidenceMatches: number,
+    mediumConfidenceMatches: number,
+    avgSimilarity: number
+  },
+  matches: Array<{
+    promiseId: string,
+    actionId: string,
+    matchType: 'kept' | 'broken' | 'partial' | 'pending',
+    confidence: number,
+    explanation: string
+  }>
+}
+
+// Error (400)
+{
+  error: "Invalid politician ID" | "Invalid confidence threshold"
+}
+```
+
+**Implementation:**
+```typescript
+export async function POST(request: NextRequest) {
+  try {
+    const user = await requireRole(request, ['admin'])
+    const { politicianId, promiseId, minConfidence = 0.6 } = await request.json()
+
+    // Fetch promises and actions
+    const { data: promises } = await supabase
+      .from('political_promises')
+      .select('*')
+      .eq(politicianId ? 'politician_id' : 'id', politicianId || promiseId)
+
+    const { data: actions } = await supabase
+      .from('parliamentary_actions')
+      .select('*')
+      .eq('politician_id', politicianId)
+
+    const matcher = new SemanticMatcher()
+    const matches = []
+    let autoMatched = 0
+    let queuedForReview = 0
+
+    for (const promise of promises) {
+      const bestMatch = await matcher.findBestMatch(promise, actions)
+
+      if (bestMatch.similarity >= minConfidence) {
+        const matchType = matcher.determineMatchType(promise, bestMatch.action, bestMatch.similarity)
+
+        // Auto-approve high-confidence matches
+        const verifiedBy = bestMatch.similarity >= 0.85 ? user.id : null
+
+        const { data: verification } = await supabase
+          .from('promise_verifications')
+          .insert({
+            promise_id: promise.id,
+            action_id: bestMatch.action.id,
+            match_type: matchType,
+            match_confidence: bestMatch.similarity,
+            verification_method: 'semantic_match',
+            explanation: bestMatch.explanation,
+            verified_by: verifiedBy,
+            verified_at: verifiedBy ? new Date().toISOString() : null
+          })
+          .select()
+          .single()
+
+        matches.push(verification)
+
+        if (verifiedBy) autoMatched++
+        else queuedForReview++
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      autoMatched,
+      queuedForReview,
+      summary: {
+        promisesProcessed: promises.length,
+        actionsChecked: actions.length,
+        highConfidenceMatches: autoMatched,
+        mediumConfidenceMatches: queuedForReview,
+        avgSimilarity: matches.reduce((sum, m) => sum + m.match_confidence, 0) / matches.length
+      },
+      matches
+    })
+
+  } catch (error) {
+    return handleError(error, request)
+  }
+}
+```
+
+---
+
+### Calculate Consistency Scores
+Calculate promise-keeping consistency scores for politicians.
+
+**Endpoint:** `POST /api/promises/calculate-scores`
+
+**Authentication:** Admin role required
+
+**Request Body:**
+```typescript
+{
+  politicianId?: string,     // Specific politician (optional, defaults to all)
+  all?: boolean             // Calculate for all politicians
+}
+```
+
+**Response:**
+```typescript
+// Success (200)
+{
+  success: true,
+  updated: number,           // Politicians updated
+  failed: number,            // Failed calculations
+  duration: number,          // Seconds elapsed
+  scores: Array<{
+    politicianId: string,
+    overallScore: number,    // 0.00-100.00
+    promisesKept: number,
+    promisesBroken: number,
+    promisesPartial: number,
+    promisesPending: number,
+    attendanceRate: number,
+    lastCalculated: string
+  }>
+}
+```
+
+**Implementation:**
+```typescript
+export async function POST(request: NextRequest) {
+  try {
+    const user = await requireRole(request, ['admin'])
+    const { politicianId, all = false } = await request.json()
+
+    const calculator = new ConsistencyCalculator()
+    const politicians = all ?
+      await fetchAllPoliticians() :
+      [await fetchPolitician(politicianId)]
+
+    const scores = []
+    let updated = 0
+    let failed = 0
+    const startTime = Date.now()
+
+    for (const politician of politicians) {
+      try {
+        const score = await calculator.calculateConsistencyScore(politician.id)
+
+        const { error } = await supabase
+          .from('consistency_scores')
+          .upsert({
+            politician_id: politician.id,
+            overall_score: score.overallScore,
+            promises_kept: score.kept,
+            promises_broken: score.broken,
+            promises_partial: score.partial,
+            promises_pending: score.pending,
+            attendance_rate: score.attendanceRate,
+            last_calculated_at: new Date().toISOString()
+          })
+
+        if (!error) {
+          updated++
+          scores.push(score)
+        } else {
+          failed++
+        }
+
+      } catch (err) {
+        failed++
+      }
+    }
+
+    const duration = Math.round((Date.now() - startTime) / 1000)
+
+    return NextResponse.json({
+      success: true,
+      updated,
+      failed,
+      duration,
+      scores
+    })
+
+  } catch (error) {
+    return handleError(error, request)
+  }
+}
+```
+
+---
+
+### Data Collection
+Trigger parliamentary data collection from official French government sources.
+
+**Endpoint:** `POST /api/data-collection/collect`
+
+**Authentication:** Admin role required for POST, public for GET status
+
+**Request Body (POST):**
+```typescript
+{
+  type: 'full' | 'deputies' | 'senators' | 'incremental',
+  limit?: number,            // Max records to collect
+  forceRefresh?: boolean     // Bypass cache
+}
+```
+
+**Response:**
+```typescript
+// Success (200)
+{
+  success: true,
+  jobId: string,
+  type: string,
+  status: 'running' | 'completed' | 'failed',
+  results: {
+    collected: number,       // Total records from API
+    saved: number,           // New records saved
+    updated: number,         // Existing records updated
+    errors: number
+  },
+  duration: number,          // Seconds elapsed
+  source: string             // API source name
+}
+
+// Rate Limited (429)
+{
+  error: "Daily collection limit reached"
+}
+```
+
+**GET Response (Status):**
+```typescript
+{
+  success: true,
+  summary: {
+    total_jobs: number,
+    completed: number,
+    failed: number,
+    running: number,
+    last_collection: string | null,
+    total_records_collected: number
+  },
+  recent_jobs: Job[]
+}
+```
+
+---
+
 This API documentation ensures that Politik Cred' maintains secure, consistent, and well-documented endpoints that support the platform's political transparency mission while adhering to French legal requirements and modern API best practices.
