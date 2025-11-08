@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "check-env": "tsx scripts/check-env.ts",
     "seed-politicians": "tsx scripts/seed-politicians.ts",
     "collect-promises": "tsx scripts/collect-promises.ts"
   },

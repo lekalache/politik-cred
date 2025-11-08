@@ -9,6 +9,23 @@
  *   tsx scripts/seed-politicians.ts
  */
 
+import { config } from 'dotenv'
+import { resolve } from 'path'
+
+// Load environment variables from .env.local
+config({ path: resolve(process.cwd(), '.env.local') })
+
+// Check if required environment variables are set
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  console.error('❌ Error: Supabase environment variables not set')
+  console.error('\nPlease create a .env.local file with:')
+  console.error('  NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co')
+  console.error('  NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here')
+  console.error('  SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here')
+  console.error('\nGet these from: https://app.supabase.com → Your Project → Settings → API\n')
+  process.exit(1)
+}
+
 import { supabase } from '../src/lib/supabase'
 
 interface PoliticianData {
