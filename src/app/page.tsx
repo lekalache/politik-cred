@@ -235,19 +235,12 @@ export default function Home() {
           </div>
 
           {/* POLITIKCRED Features */}
-          <div className="grid md:grid-cols-4 gap-6 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
             <Card className="text-center border-l-4 border-[#1E3A8A]">
               <CardContent className="p-4">
                 <Scale className="w-8 h-8 text-[#1E3A8A] mx-auto mb-2" />
                 <h3 className="font-semibold mb-1 text-[#1E3A8A]">Score de crédibilité</h3>
                 <p className="text-sm text-gray-600">0 à 200 points</p>
-              </CardContent>
-            </Card>
-            <Card className="text-center border-l-4 border-[#059669]">
-              <CardContent className="p-4">
-                <Users className="w-8 h-8 text-[#059669] mx-auto mb-2" />
-                <h3 className="font-semibold mb-1 text-[#059669]">Votes du public</h3>
-                <p className="text-sm text-gray-600">La communauté check et vote</p>
               </CardContent>
             </Card>
             <Card className="text-center border-l-4 border-[#D97706]">
@@ -264,42 +257,6 @@ export default function Home() {
                 <p className="text-sm text-gray-600">Tu vois tout, on cache rien</p>
               </CardContent>
             </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* How it Works - POLITIKCRED Style */}
-      <section className="py-12 bg-[#FAFAFA]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center mb-8 text-[#1E3A8A]">Le process Politik <span className="text-[#DC2626]">Cred'</span></h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-[#DC2626] rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-xl font-bold text-white">1</span>
-              </div>
-              <h3 className="font-semibold mb-2 text-[#DC2626]">Tu votes avec des preuves</h3>
-              <p className="text-gray-600">
-                Balance ton vote avec des sources solides - articles, vidéos, documents officiels !
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="w-12 h-12 bg-[#D97706] rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-xl font-bold text-white">2</span>
-              </div>
-              <h3 className="font-semibold mb-2 text-[#D97706]">On check tout</h3>
-              <p className="text-gray-600">
-                Nos modérateurs vérifient que c'est du solide - pas de fake news ici !
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="w-12 h-12 bg-[#059669] rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-xl font-bold text-white">3</span>
-              </div>
-              <h3 className="font-semibold mb-2 text-[#059669]">Score actualisé</h3>
-              <p className="text-gray-600">
-                Le score de crédibilité bouge selon les preuves validées - mathématiques pures !
-              </p>
-            </div>
           </div>
         </div>
       </section>
@@ -411,14 +368,14 @@ export default function Home() {
                   </h3>
                   <p className="text-gray-800 text-sm mb-3">
                     On respecte la loi française à fond ! Liberté d&apos;expression, anti-diffamation, transparence totale.
-                    Tous les votes sont checkés et les preuves vérifiées par nos modérateurs.
+                    Toutes les données sont vérifiées et sourcées.
                   </p>
                   <div className="flex flex-wrap gap-2">
                     <Badge variant="outline" className="bg-[#FAFAFA] text-[#DC2626] border-[#DC2626]">
                       Droit de réponse
                     </Badge>
                     <Badge variant="outline" className="bg-[#FAFAFA] text-[#059669] border-[#059669]">
-                      Modération hardcore
+                      Vérification multi-sources
                     </Badge>
                     <Badge variant="outline" className="bg-[#FAFAFA] text-[#D97706] border-[#D97706]">
                       Sources béton
