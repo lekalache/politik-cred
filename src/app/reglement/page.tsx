@@ -134,20 +134,15 @@ export default function ReglementPage() {
             <h3 className="text-lg font-semibold text-gray-800 mb-3">Extraction des promesses</h3>
             <p className="mb-4">
               Les promesses politiques sont extraites de sources publiques (interviews, débats, programmes, réseaux sociaux) via :
-              <br />• IA de classification (95% de précision) qui détecte les engagements actionnables
+              <br />• IA de classification qui détecte les engagements actionnables
               <br />• Extraction manuelle par les administrateurs pour les promesses importantes
             </p>
             <h3 className="text-lg font-semibold text-gray-800 mb-3">Vérification contre actions parlementaires</h3>
-            <ul className="mb-4 space-y-2">
-              <li>Chaque promesse est automatiquement comparée aux actions parlementaires réelles (votes, amendements, propositions de loi)</li>
-              <li>Données officielles récupérées depuis l&apos;API de l&apos;Assemblée Nationale et du Sénat</li>
-              <li>Matching sémantique via IA multilingue (Hugging Face) : 71% de similarité détectée</li>
-            </ul>
-            <h3 className="text-lg font-semibold text-gray-800 mb-3">Système de fallback</h3>
             <ul className="mb-6 space-y-2">
-              <li>Si l&apos;IA est indisponible, un système de similarité Jaccard prend le relais (100% de disponibilité)</li>
-              <li>Chaque vérification indique sa méthode et son niveau de confiance (0-100%)</li>
-              <li>Les vérifications à faible confiance (&lt;70%) sont marquées pour revue humaine</li>
+              <li>Chaque promesse est automatiquement comparée aux actions parlementaires réelles (votes, amendements, propositions de loi)</li>
+              <li>Données officielles récupérées depuis l&apos;Assemblée Nationale et le Sénat</li>
+              <li>Système d&apos;analyse sémantique pour détecter les correspondances et contradictions</li>
+              <li>Chaque vérification indique son niveau de confiance et ses sources</li>
             </ul>
 
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">3. Statuts de Vérification</h2>
@@ -164,25 +159,25 @@ export default function ReglementPage() {
             </div>
 
             <ul className="mb-6 space-y-2">
-              <li><strong>Promesse tenue (kept) :</strong> Action parlementaire cohérente avec la promesse → +3 à +7 points selon importance</li>
-              <li><strong>Promesse non tenue (broken) :</strong> Action parlementaire contradictoire ou absence d&apos;action → -5 à -11 points</li>
-              <li><strong>Promesse partielle (partial) :</strong> Action partiellement conforme → +1 point</li>
-              <li><strong>En cours (in_progress) :</strong> Promesse en cours de réalisation → +0.5 point</li>
-              <li><strong>En attente (pending) :</strong> Promesse non encore vérifiable → aucun impact sur le score</li>
+              <li><strong>Promesse tenue :</strong> Action parlementaire cohérente avec la promesse → impact positif sur le score</li>
+              <li><strong>Promesse non tenue :</strong> Action parlementaire contradictoire ou absence d&apos;action → impact négatif sur le score</li>
+              <li><strong>Promesse partielle :</strong> Action partiellement conforme → impact positif modéré</li>
+              <li><strong>En cours :</strong> Promesse en cours de réalisation → impact positif léger</li>
+              <li><strong>En attente :</strong> Promesse non encore vérifiable → aucun impact sur le score</li>
             </ul>
 
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">4. Processus de Vérification Automatisée</h2>
             <h3 className="text-lg font-semibold text-gray-800 mb-3">Étape 1 : Extraction et classification</h3>
             <ul className="mb-4 space-y-2">
               <li>L&apos;IA analyse les déclarations publiques et extrait les promesses actionnables</li>
-              <li>Score de confiance attribué (0-100%) basé sur la clarté de l&apos;engagement</li>
-              <li>Catégorisation automatique : économie, social, environnement, sécurité, etc.</li>
+              <li>Niveau de confiance attribué basé sur la clarté de l&apos;engagement</li>
+              <li>Catégorisation automatique par thématique (économie, social, environnement, etc.)</li>
             </ul>
-            <h3 className="text-lg font-semibold text-gray-800 mb-3">Étape 2 : Matching parlementaire</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-3">Étape 2 : Comparaison avec les actions réelles</h3>
             <ul className="mb-4 space-y-2">
-              <li>Comparaison sémantique avec les votes, amendements et propositions de loi</li>
-              <li>Détection des correspondances (71% de précision) et contradictions</li>
-              <li>Calcul automatique du niveau de réalisation (tenue/non tenue/partielle)</li>
+              <li>Analyse sémantique pour identifier les correspondances avec les votes et amendements</li>
+              <li>Détection des cohérences et contradictions entre promesses et actions</li>
+              <li>Évaluation automatique du niveau de réalisation (tenue/non tenue/partielle)</li>
             </ul>
             <h3 className="text-lg font-semibold text-gray-800 mb-3">Étape 3 : Mise à jour automatique du score</h3>
             <ul className="mb-6 space-y-2">
@@ -229,9 +224,9 @@ export default function ReglementPage() {
             <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
               <p className="text-blue-800 mb-3"><strong>Système triple vérification :</strong></p>
               <ul className="space-y-1 text-blue-800">
-                <li>• <strong>IA sémantique :</strong> Matching automatique (Hugging Face) avec 71% de précision</li>
+                <li>• <strong>IA sémantique :</strong> Analyse automatique des correspondances promesses/actions</li>
                 <li>• <strong>Vigie du mensonge :</strong> Vérification communautaire collaborative</li>
-                <li>• <strong>Données officielles :</strong> API Assemblée Nationale et Sénat</li>
+                <li>• <strong>Données officielles :</strong> Assemblée Nationale et Sénat</li>
               </ul>
             </div>
             <h3 className="text-lg font-semibold text-gray-800 mb-3">Garanties de fiabilité</h3>
@@ -242,7 +237,7 @@ export default function ReglementPage() {
               <li>Système de contestation disponible pour corrections</li>
             </ul>
 
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">7. Calcul du Score de Crédibilité</h2>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-4">7. Score de Crédibilité</h2>
 
             {/* Mobile Image 4 */}
             <div className="md:hidden mb-6 flex justify-start">
@@ -255,25 +250,24 @@ export default function ReglementPage() {
               </div>
             </div>
 
-            <h3 className="text-lg font-semibold text-gray-800 mb-3">Score de base (baseline)</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-3">Principe de base</h3>
             <ul className="mb-4 space-y-2">
               <li><strong>Tous les politiciens démarrent à 100 points</strong> sur une échelle de 0 à 200</li>
-              <li>Score neutre : ni positif ni négatif au départ</li>
+              <li>Score neutre au départ : ni bonus ni malus</li>
               <li>Évolution basée uniquement sur vérifications factuelles</li>
             </ul>
-            <h3 className="text-lg font-semibold text-gray-800 mb-3">Formule de calcul</h3>
-            <p className="mb-3">L&apos;impact d&apos;une promesse sur le score dépend de :</p>
+            <h3 className="text-lg font-semibold text-gray-800 mb-3">Facteurs d&apos;évolution</h3>
+            <p className="mb-3">Le score évolue selon :</p>
             <ul className="mb-4 space-y-2">
-              <li><strong>Base :</strong> Promesse tenue = +3 pts | Non tenue = -5 pts | Partielle = +1 pt</li>
-              <li><strong>Multiplicateur de confiance :</strong> × niveau de confiance (0.0 à 1.0)</li>
-              <li><strong>Multiplicateur d&apos;importance :</strong> × importance (0.75 à 1.5)</li>
-              <li><strong>Formule :</strong> score_change = base × confiance × importance</li>
+              <li><strong>Le statut de la promesse :</strong> tenue (positif), non tenue (négatif), partielle (positif modéré)</li>
+              <li><strong>Le niveau de confiance :</strong> plus la vérification est certaine, plus l&apos;impact est fort</li>
+              <li><strong>L&apos;importance de la promesse :</strong> une promesse majeure a plus d&apos;impact qu&apos;une promesse mineure</li>
             </ul>
-            <h3 className="text-lg font-semibold text-gray-800 mb-3">Exemple concret</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-3">Transparence des calculs</h3>
             <ul className="mb-6 space-y-2">
-              <li>Promesse importante (1.5×) tenue avec haute confiance (0.95) : +3 × 0.95 × 1.5 = <strong>+4.28 points</strong></li>
-              <li>Promesse moyenne (1.0×) non tenue avec certitude (1.0) : -5 × 1.0 × 1.0 = <strong>-5 points</strong></li>
-              <li>Promesse mineure (0.75×) partielle avec bonne confiance (0.8) : +1 × 0.8 × 0.75 = <strong>+0.6 point</strong></li>
+              <li>Chaque changement de score affiche clairement son impact et sa justification</li>
+              <li>L&apos;historique complet est consultable publiquement</li>
+              <li>Les algorithmes sont documentés et auditables</li>
             </ul>
 
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">8. Droit de réponse et recours</h2>
