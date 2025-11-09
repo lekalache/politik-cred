@@ -4,6 +4,12 @@
  * Validates that all required environment variables are set
  */
 
+import dotenv from 'dotenv'
+import path from 'path'
+
+// Load .env.local file
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local') })
+
 interface EnvCheck {
   name: string
   value: string | undefined

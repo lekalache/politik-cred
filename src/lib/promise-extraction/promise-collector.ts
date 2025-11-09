@@ -11,7 +11,29 @@
  */
 
 import { promiseClassifier, PromiseCandidate } from './promise-classifier'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
+
+/**
+ * Create Supabase client for server-side use
+ * This is a separate client to avoid build-time placeholder issues
+ * Uses service role key if available for bypassing RLS in scripts
+ */
+function getSupabaseClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  // Prefer service role key for server-side operations, fall back to anon key
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error('Supabase credentials not configured')
+  }
+
+  return createClient(supabaseUrl, supabaseKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  })
+}
 
 export interface PromiseSource {
   url: string
@@ -98,6 +120,7 @@ export class PromiseCollector {
   ): Promise<{ stored: number; errors: string[] }> {
     const errors: string[] = []
     let stored = 0
+    const supabase = getSupabaseClient()
 
     for (const promise of promises) {
       try {
@@ -153,6 +176,7 @@ export class PromiseCollector {
    * Get politician ID by name
    */
   async getPoliticianIdByName(name: string): Promise<string | null> {
+    const supabase = getSupabaseClient()
     const { data, error } = await supabase
       .from('politicians')
       .select('id')

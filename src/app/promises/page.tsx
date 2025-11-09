@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/components/auth/auth-provider'
+import { Navigation } from '@/components/navigation'
+import { Footer } from '@/components/footer'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -120,7 +122,10 @@ export default function PromisesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+      {/* Navigation */}
+      <Navigation />
+
+      {/* Page Header */}
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-between">
@@ -353,6 +358,9 @@ export default function PromisesPage() {
         onOpenChange={setShowSubmissionDialog}
         onSuccess={fetchPromises}
       />
+
+      {/* Footer */}
+      <Footer />
     </div>
   )
 }
