@@ -223,6 +223,32 @@ src/
 - **Content Quality**: Moderation success metrics
 - **News Relevance**: Article engagement tracking
 
+## Data Sources & Integrations
+
+### External Data Sources
+- **Vigie du mensonge** (https://www.vigiedumensonge.fr): Collaborative fact-checking platform
+  - Community-verified promises
+  - Multi-source verification
+  - Historical promise tracking
+  - Integration: Migration 007 (schema support added)
+
+- **Assemblée Nationale API** (NosDéputés.fr): Official parliamentary data
+  - Voting records
+  - Bill sponsorship
+  - Attendance tracking
+  - Amendment proposals
+
+- **Hugging Face API**: Semantic analysis
+  - Promise-to-action matching
+  - Multilingual embeddings
+  - 71% similarity detection
+
+### Multi-Source Verification
+Politik Cred' combines three independent verification methods:
+1. **AI-Assisted**: Automated semantic matching (Hugging Face)
+2. **Community**: Vigie du mensonge fact-checking
+3. **Official**: Parliamentary voting records (Assemblée Nationale)
+
 ## Current Status & Recent Changes
 
 ### Major Features (November 2024 - January 2025)

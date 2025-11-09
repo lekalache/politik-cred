@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, Suspense } from "react"
 import { useRouter } from "next/navigation"
 import { Navigation } from "@/components/navigation"
+import { Footer } from "@/components/footer"
 import { PoliticianList } from "@/components/politician-list"
 import { VoteDialog } from "@/components/vote-dialog"
 import { WelcomeBanner } from "@/components/welcome-banner"
@@ -303,6 +304,100 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Data Sources & Partners - POLITIKCRED Style */}
+      <section className="py-12 bg-white border-t-2 border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-[#1E3A8A] mb-4">
+              Nos Sources de Données
+            </h2>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              On combine plusieurs sources indépendantes pour te donner la vue la plus complète.
+              De l&apos;IA à la vérification communautaire, tout est transparent !
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {/* Vigie du mensonge */}
+            <a
+              href="https://www.vigiedumensonge.fr"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group"
+            >
+              <Card className="text-center hover:shadow-lg transition-shadow border-2 hover:border-[#DC2626] h-full">
+                <CardContent className="p-6">
+                  <div className="w-16 h-16 bg-gradient-to-br from-[#DC2626] to-[#B91C1C] rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Eye className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="font-bold text-xl mb-2 text-[#1E3A8A] group-hover:text-[#DC2626] transition-colors">
+                    Vigie du mensonge
+                  </h3>
+                  <p className="text-sm text-gray-600 mb-3">
+                    Plateforme collaborative de fact-checking avec vérification communautaire des promesses politiques.
+                  </p>
+                  <Badge variant="outline" className="bg-[#DC2626] text-white border-[#DC2626]">
+                    Vérification Humaine
+                  </Badge>
+                </CardContent>
+              </Card>
+            </a>
+
+            {/* Assemblée Nationale */}
+            <a
+              href="https://www.assemblee-nationale.fr"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group"
+            >
+              <Card className="text-center hover:shadow-lg transition-shadow border-2 hover:border-[#1E3A8A] h-full">
+                <CardContent className="p-6">
+                  <div className="w-16 h-16 bg-gradient-to-br from-[#1E3A8A] to-[#1E40AF] rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Scale className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="font-bold text-xl mb-2 text-[#1E3A8A] group-hover:text-[#1E40AF] transition-colors">
+                    Assemblée Nationale
+                  </h3>
+                  <p className="text-sm text-gray-600 mb-3">
+                    Données officielles des votes, amendements et actions parlementaires pour la vérification objective.
+                  </p>
+                  <Badge variant="outline" className="bg-[#1E3A8A] text-white border-[#1E3A8A]">
+                    Données Officielles
+                  </Badge>
+                </CardContent>
+              </Card>
+            </a>
+
+            {/* Politik Cred' AI */}
+            <Card className="text-center border-2 border-[#059669] h-full">
+              <CardContent className="p-6">
+                <div className="w-16 h-16 bg-gradient-to-br from-[#059669] to-[#047857] rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Shield className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="font-bold text-xl mb-2 text-[#1E3A8A]">
+                  Politik Cred&apos; IA
+                </h3>
+                <p className="text-sm text-gray-600 mb-3">
+                  Notre IA analyse sémantiquement les promesses et les compare aux actions parlementaires réelles.
+                </p>
+                <Badge variant="outline" className="bg-[#059669] text-white border-[#059669]">
+                  Matching IA
+                </Badge>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Attribution footer */}
+          <div className="mt-8 text-center">
+            <p className="text-sm text-gray-500">
+              Nous utilisons des données de sources multiples pour garantir une vérification indépendante et objective.
+              <br />
+              Merci à <a href="https://www.vigiedumensonge.fr" target="_blank" rel="noopener noreferrer" className="text-[#DC2626] hover:underline font-semibold">Vigie du mensonge</a> pour leur travail de fact-checking communautaire.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Legal Notice - POLITIKCRED Style */}
       <section className="py-8 bg-[#1E3A8A]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -355,23 +450,8 @@ export default function Home() {
         onClose={() => setSelectedPolitician(null)}
       />
 
-      {/* Footer POLITIKCRED */}
-      <footer className="bg-[#1E3A8A] text-white py-8 mt-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <div className="flex items-center justify-center space-x-2 mb-4">
-              <Shield className="w-6 h-6 text-[#DC2626]" />
-              <span className="text-lg font-semibold">Politik Cred'</span>
-            </div>
-            <p className="text-gray-300 text-sm">
-              Il est crédible lui ? - La vérité sans filtre, la science sans langue de bois
-            </p>
-            <p className="text-gray-400 text-xs mt-2">
-              Version Beta - Street Science Platform
-            </p>
-          </div>
-        </div>
-      </footer>
+      {/* Footer */}
+      <Footer />
     </div>
   )
 }
