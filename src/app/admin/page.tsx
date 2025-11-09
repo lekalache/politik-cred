@@ -6,6 +6,7 @@ import { ModerationDashboard } from '@/components/admin/moderation-dashboard'
 import { ThreatMonitoring } from '@/components/admin/threat-monitoring'
 import { NewsManagement } from '@/components/admin/news-management'
 import { UserManagement } from '@/components/admin/user-management'
+import { PromiseVerification } from '@/components/admin/promise-verification'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -21,7 +22,8 @@ import {
   Database,
   Activity,
   Eye,
-  Newspaper
+  Newspaper,
+  FileText
 } from 'lucide-react'
 
 interface AdminStats {
@@ -41,7 +43,7 @@ interface RecentActivity {
 
 export default function AdminPage() {
   const { user, loading } = useAuth()
-  const [activeTab, setActiveTab] = useState<'overview' | 'moderation' | 'threats' | 'news' | 'users' | 'analytics' | 'settings'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'moderation' | 'threats' | 'promises' | 'news' | 'users' | 'analytics' | 'settings'>('overview')
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([])
   const [statsLoading, setStatsLoading] = useState(true)
@@ -225,6 +227,7 @@ export default function AdminPage() {
               { key: 'overview', label: 'Vue d\'ensemble', icon: <BarChart3 className="w-4 h-4" />, adminOnly: false },
               { key: 'moderation', label: 'Modération', icon: <Shield className="w-4 h-4" />, adminOnly: false },
               { key: 'threats', label: 'Menaces IA', icon: <Eye className="w-4 h-4" />, adminOnly: false },
+              { key: 'promises', label: 'Promesses', icon: <FileText className="w-4 h-4" />, adminOnly: false },
               { key: 'news', label: 'Actualités', icon: <Newspaper className="w-4 h-4" />, adminOnly: true },
               { key: 'users', label: 'Utilisateurs', icon: <Users className="w-4 h-4" />, adminOnly: true },
               { key: 'analytics', label: 'Analytics', icon: <TrendingUp className="w-4 h-4" />, adminOnly: true },
@@ -366,6 +369,14 @@ export default function AdminPage() {
                     <Button
                       className="w-full justify-start"
                       variant="outline"
+                      onClick={() => setActiveTab('promises')}
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      Vérifier les promesses
+                    </Button>
+                    <Button
+                      className="w-full justify-start"
+                      variant="outline"
                       onClick={() => setActiveTab('news')}
                     >
                       <Newspaper className="w-4 h-4 mr-2" />
@@ -407,6 +418,10 @@ export default function AdminPage() {
 
         {activeTab === 'threats' && (
           <ThreatMonitoring />
+        )}
+
+        {activeTab === 'promises' && (
+          <PromiseVerification />
         )}
 
         {activeTab === 'news' && isAdmin && (

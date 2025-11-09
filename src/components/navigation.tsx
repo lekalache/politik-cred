@@ -76,6 +76,10 @@ export function Navigation() {
                 Promesses
               </a>
               <span className="text-gray-300">|</span>
+              <a href="/score" className="text-gray-600 hover:text-gray-900 transition-colors">
+                Classement
+              </a>
+              <span className="text-gray-300">|</span>
               <a href="/legal" className="text-gray-600 hover:text-gray-900 transition-colors">
                 Conformité légale
               </a>
@@ -197,6 +201,13 @@ export function Navigation() {
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Promesses
+                </a>
+                <a
+                  href="/score"
+                  className="text-sm text-gray-600 hover:text-gray-900 transition-colors block"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Classement
                 </a>
                 <a
                   href="/legal"
