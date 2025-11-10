@@ -16,6 +16,7 @@ import {
   validateRequest,
   formatValidationErrors
 } from '@/lib/validation/schemas'
+import { validateURL, getURLUpdateData } from '@/lib/validation/url-validator'
 
 export async function POST(request: NextRequest) {
   return withRateLimit(request, RateLimitPresets.moderate, async () => {
@@ -34,14 +35,44 @@ export async function POST(request: NextRequest) {
 
         const { politicianId, text, sourceUrl, sourceType, date } = validation.data
 
-        // Extract promises from text
-        const promises = promiseClassifier.extractPromises(text, sourceUrl)
+        // STEP 1: Validate source URL before processing
+        console.log(`Validating source URL: ${sourceUrl}`)
+        const urlValidation = await validateURL(sourceUrl)
+
+        if (!urlValidation.isAccessible) {
+          return NextResponse.json(
+            {
+              error: 'Source URL is not accessible',
+              details: urlValidation.errorMessage,
+              status: urlValidation.status,
+              httpStatus: urlValidation.httpStatus,
+              archiveUrl: urlValidation.archiveUrl,
+              suggestion: urlValidation.archiveUrl
+                ? 'An archived version is available. Use the archive URL instead.'
+                : 'Please provide a valid, accessible source URL.'
+            },
+            { status: 400 }
+          )
+        }
+
+        // Use redirect URL if available (permanent redirect)
+        const effectiveUrl = urlValidation.redirectUrl || sourceUrl
 
         console.log(
-          `Extracted ${promises.length} promises from ${sourceUrl} by ${authContext.user.email}`
+          `URL validation: ${urlValidation.status} (HTTP ${urlValidation.httpStatus}, ${urlValidation.responseTime}ms)`
         )
 
-        // Store promises in database
+        // STEP 2: Extract promises from text
+        const promises = promiseClassifier.extractPromises(text, effectiveUrl)
+
+        console.log(
+          `Extracted ${promises.length} promises from ${effectiveUrl} by ${authContext.user.email}`
+        )
+
+        // STEP 3: Get URL health data for storage
+        const urlHealthData = await getURLUpdateData(urlValidation, 0)
+
+        // STEP 4: Store promises in database with URL health tracking
         const storedPromises = []
 
         for (const promise of promises) {
@@ -53,12 +84,20 @@ export async function POST(request: NextRequest) {
                 promise_text: promise.text,
                 promise_date: date || new Date().toISOString(),
                 category: promise.category,
-                source_url: sourceUrl,
+                source_url: effectiveUrl, // Use effective URL (after redirect)
                 source_type: sourceType,
                 extraction_method: 'ai_extracted',
                 confidence_score: promise.confidence,
                 verification_status: 'pending',
-                is_actionable: promise.isActionable
+                is_actionable: promise.isActionable,
+                // URL health tracking fields
+                source_url_status: urlHealthData.source_url_status,
+                source_url_http_status: urlHealthData.source_url_http_status,
+                source_url_last_checked: urlHealthData.source_url_last_checked,
+                source_url_redirect_url: urlHealthData.source_url_redirect_url,
+                source_url_archive_url: urlHealthData.source_url_archive_url,
+                source_url_error_message: urlHealthData.source_url_error_message,
+                url_check_attempts: urlHealthData.url_check_attempts
               })
               .select()
               .single()
@@ -79,7 +118,14 @@ export async function POST(request: NextRequest) {
           extracted: promises.length,
           stored: storedPromises.length,
           promises: storedPromises,
-          message: `Successfully extracted and stored ${storedPromises.length} promises`
+          urlValidation: {
+            status: urlValidation.status,
+            httpStatus: urlValidation.httpStatus,
+            responseTime: urlValidation.responseTime,
+            effectiveUrl: effectiveUrl,
+            archiveUrl: urlValidation.archiveUrl
+          },
+          message: `Successfully extracted and stored ${storedPromises.length} promises from verified source`
         })
       } catch (error) {
         console.error('Promise extraction error:', error)
