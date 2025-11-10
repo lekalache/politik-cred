@@ -434,15 +434,118 @@ export default function AdminPage() {
 
         {activeTab === 'analytics' && isAdmin && (
           <div className="space-y-6">
+            {/* Analytics Setup Guide */}
+            <Card className="border-blue-200 bg-blue-50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-blue-900">
+                  <TrendingUp className="w-5 h-5" />
+                  Netlify Analytics - Suivi des visites
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="text-blue-800">
+                <div className="space-y-4">
+                  <p className="text-sm">
+                    <strong>Netlify Analytics</strong> est déjà intégré à votre site. Pour activer le suivi des visites :
+                  </p>
+
+                  <div className="bg-white p-4 rounded-lg space-y-3">
+                    <div className="flex items-start gap-2">
+                      <Badge className="bg-blue-100 text-blue-800 border-blue-300 mt-1">1</Badge>
+                      <div>
+                        <p className="font-semibold">Connectez-vous au Dashboard Netlify</p>
+                        <p className="text-sm text-gray-600">Accédez à votre site sur <a href="https://app.netlify.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">app.netlify.com</a></p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Badge className="bg-blue-100 text-blue-800 border-blue-300 mt-1">2</Badge>
+                      <div>
+                        <p className="font-semibold">Activez Analytics</p>
+                        <p className="text-sm text-gray-600">Site Settings → Analytics → Enable Analytics</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Badge className="bg-blue-100 text-blue-800 border-blue-300 mt-1">3</Badge>
+                      <div>
+                        <p className="font-semibold">Consultez les statistiques</p>
+                        <p className="text-sm text-gray-600">Dashboard → Analytics pour voir :</p>
+                        <ul className="text-sm text-gray-600 ml-4 mt-1 list-disc">
+                          <li>Nombre de visiteurs uniques</li>
+                          <li>Pages vues par page</li>
+                          <li>Bande passante utilisée</li>
+                          <li>Top pages visitées</li>
+                          <li>Ressources les plus demandées</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-green-50 border border-green-200 p-3 rounded-lg">
+                    <p className="text-sm text-green-800 font-medium">✅ Avantages de Netlify Analytics :</p>
+                    <ul className="text-sm text-green-700 mt-1 ml-4 list-disc">
+                      <li>Respectueux de la vie privée (pas de cookies)</li>
+                      <li>Pas de JavaScript requis (données serveur)</li>
+                      <li>Aucune impact sur les performances</li>
+                      <li>Bloque-pub proof (collecte côté serveur)</li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
+                    <p className="text-sm text-yellow-800">
+                      <strong>Note :</strong> Netlify Analytics coûte 9$/mois mais offre des données précises sans compromettre la confidentialité des utilisateurs.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Alternative: Custom Analytics */}
             <Card>
               <CardHeader>
-                <CardTitle>Analytics avancées</CardTitle>
+                <CardTitle>Option alternative : Analytics personnalisé</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-12 text-gray-500">
-                  <TrendingUp className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                  <h3 className="font-medium mb-2">Analytics détaillées</h3>
-                  <p className="text-sm">Analyses approfondies en développement.</p>
+                <div className="space-y-4 text-gray-700">
+                  <p className="text-sm">
+                    Si vous préférez ne pas payer pour Netlify Analytics, vous pouvez implémenter un système gratuit :
+                  </p>
+
+                  <div className="space-y-2">
+                    <details className="border p-3 rounded-lg">
+                      <summary className="cursor-pointer font-semibold">Option 1 : Plausible Analytics (Gratuit self-hosted)</summary>
+                      <div className="mt-2 text-sm space-y-2">
+                        <p>Solution open-source respectueuse de la vie privée</p>
+                        <ul className="ml-4 list-disc">
+                          <li>Installation : <code className="bg-gray-100 px-2 py-1 rounded">npm install plausible-tracker</code></li>
+                          <li>Gratuit si self-hosted</li>
+                          <li>Conforme RGPD</li>
+                        </ul>
+                      </div>
+                    </details>
+
+                    <details className="border p-3 rounded-lg">
+                      <summary className="cursor-pointer font-semibold">Option 2 : Supabase Realtime (Déjà intégré)</summary>
+                      <div className="mt-2 text-sm space-y-2">
+                        <p>Créer une table <code className="bg-gray-100 px-2 py-1 rounded">page_views</code> et logger les visites</p>
+                        <ul className="ml-4 list-disc">
+                          <li>Gratuit (inclus dans Supabase)</li>
+                          <li>Contrôle total des données</li>
+                          <li>Requiert développement custom</li>
+                        </ul>
+                      </div>
+                    </details>
+
+                    <details className="border p-3 rounded-lg">
+                      <summary className="cursor-pointer font-semibold">Option 3 : Umami (Open-source)</summary>
+                      <div className="mt-2 text-sm space-y-2">
+                        <p>Alternative simple et open-source à Google Analytics</p>
+                        <ul className="ml-4 list-disc">
+                          <li>Hébergement gratuit disponible</li>
+                          <li>Interface simple</li>
+                          <li>Respecte la vie privée</li>
+                        </ul>
+                      </div>
+                    </details>
+                  </div>
                 </div>
               </CardContent>
             </Card>
