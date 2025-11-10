@@ -32,7 +32,7 @@ BEGIN
   SELECT COUNT(*) INTO promises_count FROM political_promises;
   SELECT COUNT(*) INTO verifications_count FROM promise_verifications;
   SELECT COUNT(*) INTO scores_count FROM consistency_scores;
-  SELECT COUNT(*) INTO parliamentary_actions INTO actions_count FROM parliamentary_actions;
+  SELECT COUNT(*) INTO actions_count FROM parliamentary_actions;
 
   RAISE NOTICE 'Backup created:';
   RAISE NOTICE '  - Promises: %', promises_count;
