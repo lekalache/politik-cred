@@ -52,7 +52,7 @@ export async function extractPromisesFromNews(
 
   // Step 1: Fetch news articles
   let query = supabase
-    .from('news_articles')
+    .from('articles')
     .select('id, title, description, url, content, published_at, author')
     .order('published_at', { ascending: false })
 
