@@ -46,11 +46,11 @@ CREATE INDEX IF NOT EXISTS idx_promises_url_unchecked
   ON political_promises(source_url_status, created_at DESC)
   WHERE source_url_status = 'unchecked';
 
--- Index for finding URLs needing re-validation (checked more than 7 days ago)
+-- Index for finding URLs needing re-validation
+-- Note: We index by status and last_checked, but check the 7-day condition at query time
 CREATE INDEX IF NOT EXISTS idx_promises_url_needs_recheck
-  ON political_promises(source_url_last_checked)
-  WHERE source_url_status IN ('valid', 'redirect')
-  AND source_url_last_checked < NOW() - INTERVAL '7 days';
+  ON political_promises(source_url_status, source_url_last_checked)
+  WHERE source_url_status IN ('valid', 'redirect');
 
 -- ============================================================================
 -- Helper function to get URL health summary
