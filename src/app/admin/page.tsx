@@ -7,6 +7,7 @@ import { ThreatMonitoring } from '@/components/admin/threat-monitoring'
 import { NewsManagement } from '@/components/admin/news-management'
 import { UserManagement } from '@/components/admin/user-management'
 import { PromiseVerification } from '@/components/admin/promise-verification'
+import { URLHealthMonitor } from '@/components/admin/url-health-monitor'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -23,7 +24,8 @@ import {
   Activity,
   Eye,
   Newspaper,
-  FileText
+  FileText,
+  ExternalLink
 } from 'lucide-react'
 
 interface AdminStats {
@@ -43,7 +45,7 @@ interface RecentActivity {
 
 export default function AdminPage() {
   const { user, loading } = useAuth()
-  const [activeTab, setActiveTab] = useState<'overview' | 'moderation' | 'threats' | 'promises' | 'news' | 'users' | 'analytics' | 'settings'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'moderation' | 'threats' | 'promises' | 'news' | 'users' | 'url-health' | 'analytics' | 'settings'>('overview')
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([])
   const [statsLoading, setStatsLoading] = useState(true)
@@ -228,6 +230,7 @@ export default function AdminPage() {
               { key: 'moderation', label: 'Modération', icon: <Shield className="w-4 h-4" />, adminOnly: false },
               { key: 'threats', label: 'Menaces IA', icon: <Eye className="w-4 h-4" />, adminOnly: false },
               { key: 'promises', label: 'Promesses', icon: <FileText className="w-4 h-4" />, adminOnly: false },
+              { key: 'url-health', label: 'Santé des URLs', icon: <ExternalLink className="w-4 h-4" />, adminOnly: true },
               { key: 'news', label: 'Actualités', icon: <Newspaper className="w-4 h-4" />, adminOnly: true },
               { key: 'users', label: 'Utilisateurs', icon: <Users className="w-4 h-4" />, adminOnly: true },
               { key: 'analytics', label: 'Analytics', icon: <TrendingUp className="w-4 h-4" />, adminOnly: true },
@@ -374,6 +377,16 @@ export default function AdminPage() {
                       <FileText className="w-4 h-4 mr-2" />
                       Vérifier les promesses
                     </Button>
+                    {isAdmin && (
+                      <Button
+                        className="w-full justify-start"
+                        variant="outline"
+                        onClick={() => setActiveTab('url-health')}
+                      >
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        Santé des URLs sources
+                      </Button>
+                    )}
                     <Button
                       className="w-full justify-start"
                       variant="outline"
@@ -422,6 +435,10 @@ export default function AdminPage() {
 
         {activeTab === 'promises' && (
           <PromiseVerification />
+        )}
+
+        {activeTab === 'url-health' && isAdmin && (
+          <URLHealthMonitor />
         )}
 
         {activeTab === 'news' && isAdmin && (
