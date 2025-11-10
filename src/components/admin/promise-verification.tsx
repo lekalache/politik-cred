@@ -388,14 +388,30 @@ export function PromiseVerification() {
                         {promise.source_url && (
                           <>
                             <span>•</span>
-                            <a
-                              href={promise.source_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 hover:underline flex items-center gap-1"
-                            >
-                              Source <ExternalLink className="w-3 h-3" />
-                            </a>
+                            {(() => {
+                              try {
+                                new URL(promise.source_url)
+                                return (
+                                  <a
+                                    href={promise.source_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 hover:underline flex items-center gap-1"
+                                  >
+                                    Source <ExternalLink className="w-3 h-3" />
+                                  </a>
+                                )
+                              } catch {
+                                return (
+                                  <span
+                                    className="text-gray-400 flex items-center gap-1 cursor-help"
+                                    title={`URL invalide: ${promise.source_url}`}
+                                  >
+                                    Source invalide <ExternalLink className="w-3 h-3 opacity-50" />
+                                  </span>
+                                )
+                              }
+                            })()}
                           </>
                         )}
                       </div>

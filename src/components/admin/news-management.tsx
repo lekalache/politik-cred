@@ -145,18 +145,27 @@ export function NewsManagement() {
         await fetchNews()
         await fetchStats()
       } else {
-        const error = await response.json()
-        throw new Error(error.error || 'Refresh failed')
+        const errorData = await response.json().catch(() => ({ error: 'Erreur réseau' }))
+        const errorMsg = response.status === 429
+          ? 'Limite API atteinte. Réessayez plus tard.'
+          : response.status === 401
+          ? 'Authentification échouée. Reconnectez-vous.'
+          : errorData.error || 'Erreur de récupération'
+
+        alert(errorMsg)
+        throw new Error(errorMsg)
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Refresh failed:', error)
+      const errorMessage = error?.message || 'Erreur inconnue'
       setRefreshResult({
         id: 'error',
         jobId: 'error',
         refreshType: 'error',
         results: { collected: 0, saved: 0, duplicates: 0, invalid: 0 },
-        stats: { totalArticles: 0, todayArticles: 0, averageRelevance: 0, sourcesCount: 0 }
-      })
+        stats: { totalArticles: 0, todayArticles: 0, averageRelevance: 0, sourcesCount: 0 },
+        error: errorMessage
+      } as any)
     } finally {
       setRefreshing(false)
     }

@@ -5,51 +5,50 @@ import { Navigation } from '@/components/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress'
 import { supabase } from '@/lib/supabase'
 import {
   Eye,
-  BarChart3,
   Calendar,
   TrendingUp,
   TrendingDown,
-  Users,
   FileText,
   CheckCircle,
-  Clock,
   XCircle,
   ExternalLink,
-  Download
+  Download,
+  Shield,
+  AlertCircle
 } from 'lucide-react'
 
-interface AuditRecord {
+interface CredibilityChange {
   id: string
   politician_name: string
-  vote_type: 'positive' | 'negative'
-  points: number
-  evidence_title: string
-  evidence_description: string
+  previous_score: number
+  new_score: number
+  score_change: number
+  change_reason: string
+  description: string
+  verification_sources: string[]
+  verification_confidence: number
   evidence_url: string | null
-  evidence_type: string
-  status: string
   created_at: string
-  moderated_at: string | null
+  is_disputed: boolean
 }
 
 interface Stats {
-  total_votes: number
-  pending_votes: number
-  approved_votes: number
-  rejected_votes: number
+  total_changes: number
   total_politicians: number
-  active_users: number
+  avg_score: number
+  promises_kept: number
+  promises_broken: number
+  promises_partial: number
 }
 
 export default function TransparencyPage() {
-  const [auditRecords, setAuditRecords] = useState<AuditRecord[]>([])
+  const [credibilityChanges, setCredibilityChanges] = useState<CredibilityChange[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<'all' | 'approved' | 'rejected'>('all')
+  const [filter, setFilter] = useState<'all' | 'kept' | 'broken' | 'partial'>('all')
   const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d')
 
   useEffect(() => {
@@ -60,29 +59,34 @@ export default function TransparencyPage() {
     try {
       setLoading(true)
 
-      // Fetch audit records (approved votes with politician info)
-      let auditQuery = supabase
-        .from('votes')
+      // Fetch credibility history with politician info
+      let historyQuery = supabase
+        .from('credibility_history')
         .select(`
           id,
-          vote_type,
-          points,
-          evidence_title,
-          evidence_description,
+          previous_score,
+          new_score,
+          score_change,
+          change_reason,
+          description,
+          verification_sources,
+          verification_confidence,
           evidence_url,
-          evidence_type,
-          status,
           created_at,
-          moderated_at,
+          is_disputed,
           politician:politicians(name)
         `)
         .order('created_at', { ascending: false })
         .limit(100)
 
+      // Filter by change reason
       if (filter !== 'all') {
-        auditQuery = auditQuery.eq('status', filter)
-      } else {
-        auditQuery = auditQuery.in('status', ['approved', 'rejected'])
+        const reasonMap = {
+          'kept': 'promise_kept',
+          'broken': 'promise_broken',
+          'partial': 'promise_partial'
+        }
+        historyQuery = historyQuery.eq('change_reason', reasonMap[filter])
       }
 
       // Date filtering
@@ -90,39 +94,41 @@ export default function TransparencyPage() {
         const daysAgo = parseInt(dateRange.replace('d', ''))
         const cutoffDate = new Date()
         cutoffDate.setDate(cutoffDate.getDate() - daysAgo)
-        auditQuery = auditQuery.gte('created_at', cutoffDate.toISOString())
+        historyQuery = historyQuery.gte('created_at', cutoffDate.toISOString())
       }
 
-      const { data: auditData, error: auditError } = await auditQuery
+      const { data: historyData, error: historyError } = await historyQuery
 
-      if (auditError) {
-        console.error('Error fetching audit records:', auditError)
+      if (historyError) {
+        console.error('Error fetching credibility history:', historyError)
         return
       }
 
       // Transform the data
-      const transformedRecords = (auditData || []).map(record => ({
+      const transformedRecords = (historyData || []).map(record => ({
         ...record,
         politician_name: (record.politician as any)?.name || 'Politicien inconnu'
       }))
 
-      setAuditRecords(transformedRecords)
+      setCredibilityChanges(transformedRecords)
 
       // Fetch statistics
-      const [votesResponse, politiciansResponse] = await Promise.all([
-        supabase.from('votes').select('status'),
-        supabase.from('politicians').select('id')
+      const [allChangesResponse, politiciansResponse] = await Promise.all([
+        supabase.from('credibility_history').select('change_reason, score_change'),
+        supabase.from('politicians').select('credibility_score')
       ])
 
-      if (votesResponse.data && politiciansResponse.data) {
-        const votes = votesResponse.data
+      if (allChangesResponse.data && politiciansResponse.data) {
+        const changes = allChangesResponse.data
+        const politicians = politiciansResponse.data
+
         setStats({
-          total_votes: votes.length,
-          pending_votes: votes.filter(v => v.status === 'pending').length,
-          approved_votes: votes.filter(v => v.status === 'approved').length,
-          rejected_votes: votes.filter(v => v.status === 'rejected').length,
-          total_politicians: politiciansResponse.data.length,
-          active_users: 0 // Would need user activity tracking
+          total_changes: changes.length,
+          total_politicians: politicians.length,
+          avg_score: politicians.reduce((sum, p) => sum + (p.credibility_score || 100), 0) / politicians.length || 100,
+          promises_kept: changes.filter(c => c.change_reason === 'promise_kept').length,
+          promises_broken: changes.filter(c => c.change_reason === 'promise_broken').length,
+          promises_partial: changes.filter(c => c.change_reason === 'promise_partial').length
         })
       }
 
@@ -135,23 +141,49 @@ export default function TransparencyPage() {
 
   const exportData = () => {
     const csvContent = [
-      ['Date', 'Politicien', 'Type de vote', 'Points', 'Titre preuve', 'Statut', 'Modéré le'].join(','),
-      ...auditRecords.map(record => [
+      ['Date', 'Politicien', 'Score précédent', 'Nouveau score', 'Changement', 'Raison', 'Description'].join(','),
+      ...credibilityChanges.map(record => [
         new Date(record.created_at).toLocaleDateString('fr-FR'),
         record.politician_name,
-        record.vote_type === 'positive' ? 'Positif' : 'Négatif',
-        record.points,
-        `"${record.evidence_title.replace(/"/g, '""')}"`,
-        record.status,
-        record.moderated_at ? new Date(record.moderated_at).toLocaleDateString('fr-FR') : 'N/A'
+        record.previous_score,
+        record.new_score,
+        record.score_change > 0 ? `+${record.score_change}` : record.score_change,
+        record.change_reason,
+        `"${record.description.replace(/"/g, '""')}"`
       ].join(','))
     ].join('\n')
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
     const link = document.createElement('a')
     link.href = URL.createObjectURL(blob)
-    link.download = `politics-trust-audit-${new Date().toISOString().split('T')[0]}.csv`
+    link.download = `politik-cred-transparency-${new Date().toISOString().split('T')[0]}.csv`
     link.click()
+  }
+
+  const getReasonLabel = (reason: string) => {
+    const labels: Record<string, string> = {
+      'promise_kept': 'Promesse tenue',
+      'promise_broken': 'Promesse non tenue',
+      'promise_partial': 'Promesse partielle',
+      'statement_verified': 'Déclaration vérifiée',
+      'statement_contradicted': 'Déclaration contredite',
+      'manual_adjustment': 'Ajustement manuel',
+      'initial_score': 'Score initial'
+    }
+    return labels[reason] || reason
+  }
+
+  const getReasonColor = (reason: string) => {
+    if (reason === 'promise_kept' || reason === 'statement_verified') {
+      return 'bg-green-50 text-green-700 border-green-200'
+    }
+    if (reason === 'promise_broken' || reason === 'statement_contradicted') {
+      return 'bg-red-50 text-red-700 border-red-200'
+    }
+    if (reason === 'promise_partial') {
+      return 'bg-orange-50 text-orange-700 border-orange-200'
+    }
+    return 'bg-gray-50 text-gray-700 border-gray-200'
   }
 
   return (
@@ -168,7 +200,7 @@ export default function TransparencyPage() {
                 Transparence et audit
               </h1>
               <p className="text-gray-600">
-                Consultez l'historique complet des votes et les statistiques de la plateforme
+                Consultez l'historique complet des vérifications de promesses et l'évolution des scores de crédibilité
               </p>
             </div>
           </div>
@@ -179,40 +211,38 @@ export default function TransparencyPage() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
             <Card>
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-blue-600">{stats.total_votes}</div>
-                <div className="text-sm text-gray-600">Votes totaux</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-yellow-600">{stats.pending_votes}</div>
-                <div className="text-sm text-gray-600">En attente</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-green-600">{stats.approved_votes}</div>
-                <div className="text-sm text-gray-600">Approuvés</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-red-600">{stats.rejected_votes}</div>
-                <div className="text-sm text-gray-600">Rejetés</div>
+                <div className="text-2xl font-bold text-blue-600">{stats.total_changes}</div>
+                <div className="text-sm text-gray-600">Vérifications totales</div>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-4 text-center">
                 <div className="text-2xl font-bold text-purple-600">{stats.total_politicians}</div>
-                <div className="text-sm text-gray-600">Politiciens</div>
+                <div className="text-sm text-gray-600">Politiciens suivis</div>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-orange-600">
-                  {Math.round((stats.approved_votes / Math.max(stats.total_votes - stats.pending_votes, 1)) * 100)}%
-                </div>
-                <div className="text-sm text-gray-600">Taux approbation</div>
+                <div className="text-2xl font-bold text-indigo-600">{stats.avg_score.toFixed(1)}</div>
+                <div className="text-sm text-gray-600">Score moyen</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 text-center">
+                <div className="text-2xl font-bold text-green-600">{stats.promises_kept}</div>
+                <div className="text-sm text-gray-600">Promesses tenues</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 text-center">
+                <div className="text-2xl font-bold text-red-600">{stats.promises_broken}</div>
+                <div className="text-sm text-gray-600">Promesses non tenues</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 text-center">
+                <div className="text-2xl font-bold text-orange-600">{stats.promises_partial}</div>
+                <div className="text-sm text-gray-600">Promesses partielles</div>
               </CardContent>
             </Card>
           </div>
@@ -225,9 +255,10 @@ export default function TransparencyPage() {
               {/* Status Filter */}
               <div className="flex space-x-2">
                 {[
-                  { key: 'all', label: 'Tous' },
-                  { key: 'approved', label: 'Approuvés' },
-                  { key: 'rejected', label: 'Rejetés' }
+                  { key: 'all', label: 'Toutes' },
+                  { key: 'kept', label: 'Tenues' },
+                  { key: 'broken', label: 'Non tenues' },
+                  { key: 'partial', label: 'Partielles' }
                 ].map((option) => (
                   <Button
                     key={option.key}
@@ -267,7 +298,7 @@ export default function TransparencyPage() {
           </div>
         </div>
 
-        {/* Audit Records */}
+        {/* Credibility Changes */}
         {loading ? (
           <div className="space-y-4">
             {[...Array(5)].map((_, i) => (
@@ -282,7 +313,7 @@ export default function TransparencyPage() {
               </Card>
             ))}
           </div>
-        ) : auditRecords.length === 0 ? (
+        ) : credibilityChanges.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent>
               <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -290,70 +321,74 @@ export default function TransparencyPage() {
                 Aucun enregistrement trouvé
               </h3>
               <p className="text-gray-600">
-                Aucun vote correspondant aux critères sélectionnés.
+                Aucune vérification correspondant aux critères sélectionnés.
               </p>
             </CardContent>
           </Card>
         ) : (
           <div className="space-y-4">
-            {auditRecords.map((record) => (
+            {credibilityChanges.map((record) => (
               <Card key={record.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between mb-4">
-                    <div className="space-y-2">
+                    <div className="space-y-2 flex-1">
                       <div className="flex items-center space-x-3">
                         <h3 className="font-semibold text-lg">{record.politician_name}</h3>
                         <Badge
                           variant="outline"
-                          className={`${
-                            record.vote_type === 'positive'
-                              ? 'bg-green-50 text-green-700 border-green-200'
-                              : 'bg-red-50 text-red-700 border-red-200'
-                          }`}
+                          className={getReasonColor(record.change_reason)}
                         >
-                          {record.vote_type === 'positive' ? (
-                            <TrendingUp className="w-3 h-3 mr-1" />
-                          ) : (
-                            <TrendingDown className="w-3 h-3 mr-1" />
-                          )}
-                          {record.vote_type === 'positive' ? 'Positif' : 'Négatif'} (+{record.points})
+                          {getReasonLabel(record.change_reason)}
                         </Badge>
-                        <Badge
-                          variant="outline"
-                          className={`${
-                            record.status === 'approved'
-                              ? 'bg-green-50 text-green-700 border-green-200'
-                              : 'bg-red-50 text-red-700 border-red-200'
-                          }`}
-                        >
-                          {record.status === 'approved' ? (
-                            <CheckCircle className="w-3 h-3 mr-1" />
-                          ) : (
-                            <XCircle className="w-3 h-3 mr-1" />
-                          )}
-                          {record.status === 'approved' ? 'Approuvé' : 'Rejeté'}
-                        </Badge>
+                        {record.is_disputed && (
+                          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                            <AlertCircle className="w-3 h-3 mr-1" />
+                            Contesté
+                          </Badge>
+                        )}
                       </div>
                       <div className="flex items-center space-x-4 text-sm text-gray-600">
                         <div className="flex items-center space-x-1">
                           <Calendar className="w-4 h-4" />
-                          <span>Soumis le {new Date(record.created_at).toLocaleDateString('fr-FR')}</span>
+                          <span>{new Date(record.created_at).toLocaleDateString('fr-FR')}</span>
                         </div>
-                        {record.moderated_at && (
+                        {record.verification_sources && record.verification_sources.length > 0 && (
                           <div className="flex items-center space-x-1">
-                            <Clock className="w-4 h-4" />
-                            <span>Modéré le {new Date(record.moderated_at).toLocaleDateString('fr-FR')}</span>
+                            <Shield className="w-4 h-4" />
+                            <span>{record.verification_sources.length} source(s)</span>
                           </div>
                         )}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="flex items-center space-x-2">
+                        {record.score_change > 0 ? (
+                          <TrendingUp className="w-5 h-5 text-green-600" />
+                        ) : (
+                          <TrendingDown className="w-5 h-5 text-red-600" />
+                        )}
+                        <span className={`text-2xl font-bold ${
+                          record.score_change > 0 ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {record.score_change > 0 ? '+' : ''}{record.score_change}
+                        </span>
+                      </div>
+                      <div className="text-sm text-gray-500 mt-1">
+                        {record.previous_score.toFixed(1)} → {record.new_score.toFixed(1)}
                       </div>
                     </div>
                   </div>
 
                   <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-                    <h4 className="font-medium text-gray-900">{record.evidence_title}</h4>
                     <p className="text-sm text-gray-700 leading-relaxed">
-                      {record.evidence_description}
+                      {record.description}
                     </p>
+                    {record.verification_confidence && (
+                      <div className="flex items-center space-x-2 text-xs text-gray-600">
+                        <CheckCircle className="w-3 h-3" />
+                        <span>Confiance : {(record.verification_confidence * 100).toFixed(0)}%</span>
+                      </div>
+                    )}
                     {record.evidence_url && (
                       <a
                         href={record.evidence_url}
@@ -383,9 +418,10 @@ export default function TransparencyPage() {
                 </h3>
                 <p className="text-blue-800 text-sm">
                   Conformément à nos obligations légales et à notre engagement pour la transparence,
-                  tous les votes modérés sont conservés dans cet historique public.
+                  tous les changements de score de crédibilité sont conservés dans cet historique public.
+                  Chaque vérification est documentée avec ses sources, sa méthode et son niveau de confiance.
                   Les données personnelles des utilisateurs ne sont jamais exposées.
-                  Cet audit trail permet de vérifier l'intégrité de notre processus de modération
+                  Cet audit trail permet de vérifier l'intégrité de notre processus de vérification des promesses
                   et la légitimité des scores de crédibilité.
                 </p>
               </div>
