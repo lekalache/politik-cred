@@ -175,12 +175,13 @@ async function logApiUsage(params: {
  */
 async function updateKeyLastUsed(keyId: string, ipAddress: string): Promise<void> {
   try {
+    // Note: total_requests counter is incremented via database trigger
+    // We only update last_used_at and last_used_ip here
     await supabase
       .from('api_keys')
       .update({
         last_used_at: new Date().toISOString(),
-        last_used_ip: ipAddress,
-        total_requests: supabase.raw('total_requests + 1')
+        last_used_ip: ipAddress
       })
       .eq('id', keyId)
   } catch (error) {
