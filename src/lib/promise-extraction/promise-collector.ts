@@ -11,6 +11,7 @@
  */
 
 import { promiseClassifier, PromiseCandidate } from './promise-classifier'
+import { validateURL, getURLUpdateData } from '../validation/url-validator'
 import { createClient } from '@supabase/supabase-js'
 
 /**
@@ -112,16 +113,43 @@ export class PromiseCollector {
   /**
    * Store collected promises in database
    * Requires politician ID from database
+   * NOW WITH URL VALIDATION
    */
   async storePromises(
     politicianId: string,
     promises: PromiseCandidate[],
     source: PromiseSource
-  ): Promise<{ stored: number; errors: string[] }> {
+  ): Promise<{ stored: number; errors: string[]; urlValidation?: any }> {
     const errors: string[] = []
     let stored = 0
     const supabase = getSupabaseClient()
 
+    // STEP 1: Validate source URL before storing promises
+    console.log(`Validating source URL: ${source.url}`)
+    const urlValidation = await validateURL(source.url)
+
+    if (!urlValidation.isAccessible) {
+      const errorMsg = `Source URL is not accessible: ${urlValidation.errorMessage} (${urlValidation.status})`
+      console.error(errorMsg)
+      errors.push(errorMsg)
+
+      if (urlValidation.archiveUrl) {
+        console.log(`ℹ️  Archive available: ${urlValidation.archiveUrl}`)
+        errors.push(`Archive available at: ${urlValidation.archiveUrl}`)
+      }
+
+      return { stored: 0, errors, urlValidation }
+    }
+
+    console.log(`✅ URL validated: ${urlValidation.status} (HTTP ${urlValidation.httpStatus})`)
+
+    // Use redirect URL if available (permanent redirect)
+    const effectiveUrl = urlValidation.redirectUrl || source.url
+
+    // Get URL health data for storage
+    const urlHealthData = await getURLUpdateData(urlValidation, 0)
+
+    // STEP 2: Store promises with URL health tracking
     for (const promise of promises) {
       try {
         const { error } = await supabase.from('political_promises').insert({
@@ -129,13 +157,21 @@ export class PromiseCollector {
           promise_text: promise.text,
           promise_date: source.date || new Date().toISOString(),
           category: promise.category,
-          source_url: source.url,
+          source_url: effectiveUrl, // Use effective URL (after redirect)
           source_type: source.type,
           extraction_method: 'ai_extracted',
           confidence_score: promise.confidence,
           verification_status: promise.isActionable ? 'actionable' : 'non_actionable',
           is_actionable: promise.isActionable,
-          context: `Keywords: ${promise.keywords.join(', ')}`
+          context: `Keywords: ${promise.keywords.join(', ')}`,
+          // URL health tracking fields
+          source_url_status: urlHealthData.source_url_status,
+          source_url_http_status: urlHealthData.source_url_http_status,
+          source_url_last_checked: urlHealthData.source_url_last_checked,
+          source_url_redirect_url: urlHealthData.source_url_redirect_url,
+          source_url_archive_url: urlHealthData.source_url_archive_url,
+          source_url_error_message: urlHealthData.source_url_error_message,
+          url_check_attempts: urlHealthData.url_check_attempts
         })
 
         if (error) {
@@ -152,7 +188,7 @@ export class PromiseCollector {
       }
     }
 
-    return { stored, errors }
+    return { stored, errors, urlValidation }
   }
 
   /**

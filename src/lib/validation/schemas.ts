@@ -107,3 +107,45 @@ export function formatValidationErrors(error: z.ZodError<any>): {
     }))
   }
 }
+
+/**
+ * API Key Creation Schema
+ */
+export const ApiKeyCreationSchema = z.object({
+  name: z.string().min(3, 'Name must be at least 3 characters').max(100, 'Name must not exceed 100 characters'),
+  tier: z.enum(['free', 'standard', 'premium', 'enterprise']),
+  scopes: z.array(z.string()).min(1, 'At least one scope is required'),
+  expires_at: z.string().datetime('Invalid date format. Use ISO 8601 format.').optional(),
+  allowed_ips: z.array(z.string().ip('Invalid IP address format')).optional(),
+  metadata: z.record(z.any()).optional()
+})
+
+export type ApiKeyCreationInput = z.infer<typeof ApiKeyCreationSchema>
+
+/**
+ * API Key Update Schema
+ */
+export const ApiKeyUpdateSchema = z.object({
+  name: z.string().min(3, 'Name must be at least 3 characters').max(100, 'Name must not exceed 100 characters').optional(),
+  tier: z.enum(['free', 'standard', 'premium', 'enterprise']).optional(),
+  scopes: z.array(z.string()).min(1, 'At least one scope is required').optional(),
+  is_active: z.boolean().optional(),
+  expires_at: z.string().datetime('Invalid date format. Use ISO 8601 format.').nullable().optional(),
+  allowed_ips: z.array(z.string().ip('Invalid IP address format')).nullable().optional(),
+  rate_limit_minute: z.number().int('Must be an integer').min(1, 'Must be at least 1').nullable().optional(),
+  rate_limit_hour: z.number().int('Must be an integer').min(1, 'Must be at least 1').nullable().optional(),
+  rate_limit_day: z.number().int('Must be an integer').min(1, 'Must be at least 1').nullable().optional(),
+  metadata: z.record(z.any()).optional()
+})
+
+export type ApiKeyUpdateInput = z.infer<typeof ApiKeyUpdateSchema>
+
+/**
+ * Pagination Schema for Public API
+ */
+export const PaginationSchema = z.object({
+  page: z.coerce.number().int('Page must be an integer').min(1, 'Page must be at least 1').default(1),
+  limit: z.coerce.number().int('Limit must be an integer').min(1, 'Limit must be at least 1').max(100, 'Limit must not exceed 100').default(20)
+})
+
+export type PaginationInput = z.infer<typeof PaginationSchema>
