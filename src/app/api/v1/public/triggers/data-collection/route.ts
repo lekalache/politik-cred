@@ -48,15 +48,21 @@ export async function POST(request: NextRequest) {
 
       switch (type) {
         case 'full':
-          result = await orchestrator.runFullCollection(limit)
+          result = await orchestrator.runFullCollection()
           break
 
         case 'deputies':
-          result = await orchestrator.collectDeputiesData(forceRefresh)
+          result = await orchestrator.collectDeputiesData()
           break
 
         case 'incremental':
-          result = await orchestrator.runIncrementalUpdate(limit || 50)
+          // For incremental, collect votes and activity with a limit
+          const votesResult = await orchestrator.collectDeputiesVotes(limit || 50)
+          const activityResult = await orchestrator.collectDeputiesActivity(limit || 50)
+          result = {
+            votes: votesResult,
+            activity: activityResult
+          }
           break
 
         case 'senators':
