@@ -20,31 +20,6 @@ interface PromiseSource {
 
 // Example promise sources from real French political contexts
 const exampleSources: PromiseSource[] = [
-  {
-    politicianId: 'YOUR_POLITICIAN_ID_HERE',
-    politicianName: 'Example Politician',
-    sourceUrl: 'https://www.vie-publique.fr',
-    sourceType: 'interview',
-    date: '2024-01-15',
-    text: `
-      Je m'engage à augmenter le budget de la santé de 20% d'ici 2025.
-      Nous allons également créer 10 000 emplois dans le secteur public.
-      Mon objectif est de réduire le chômage de 2 points dans les 2 ans.
-    `,
-    description: 'Interview on health and employment policy'
-  },
-  {
-    politicianId: 'YOUR_POLITICIAN_ID_HERE',
-    politicianName: 'Example Politician',
-    sourceUrl: 'https://www.assemblee-nationale.fr',
-    sourceType: 'debate',
-    date: '2024-02-01',
-    text: `
-      Nous promettons d'investir 5 milliards d'euros dans les énergies renouvelables.
-      Notre plan prévoit la création de 50 000 logements sociaux par an.
-    `,
-    description: 'Parliamentary debate on environment and housing'
-  }
 ]
 
 /**
