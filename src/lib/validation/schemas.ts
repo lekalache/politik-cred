@@ -109,6 +109,11 @@ export function formatValidationErrors(error: z.ZodError<any>): {
 }
 
 /**
+ * IP address validation regex (IPv4)
+ */
+const ipv4Regex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
+
+/**
  * API Key Creation Schema
  */
 export const ApiKeyCreationSchema = z.object({
@@ -116,8 +121,8 @@ export const ApiKeyCreationSchema = z.object({
   tier: z.enum(['free', 'standard', 'premium', 'enterprise']),
   scopes: z.array(z.string()).min(1, 'At least one scope is required'),
   expires_at: z.string().datetime('Invalid date format. Use ISO 8601 format.').optional(),
-  allowed_ips: z.array(z.string().ip('Invalid IP address format')).optional(),
-  metadata: z.record(z.any()).optional()
+  allowed_ips: z.array(z.string().regex(ipv4Regex, 'Invalid IP address format')).optional(),
+  metadata: z.record(z.string(), z.any()).optional()
 })
 
 export type ApiKeyCreationInput = z.infer<typeof ApiKeyCreationSchema>
@@ -131,11 +136,11 @@ export const ApiKeyUpdateSchema = z.object({
   scopes: z.array(z.string()).min(1, 'At least one scope is required').optional(),
   is_active: z.boolean().optional(),
   expires_at: z.string().datetime('Invalid date format. Use ISO 8601 format.').nullable().optional(),
-  allowed_ips: z.array(z.string().ip('Invalid IP address format')).nullable().optional(),
+  allowed_ips: z.array(z.string().regex(ipv4Regex, 'Invalid IP address format')).nullable().optional(),
   rate_limit_minute: z.number().int('Must be an integer').min(1, 'Must be at least 1').nullable().optional(),
   rate_limit_hour: z.number().int('Must be an integer').min(1, 'Must be at least 1').nullable().optional(),
   rate_limit_day: z.number().int('Must be an integer').min(1, 'Must be at least 1').nullable().optional(),
-  metadata: z.record(z.any()).optional()
+  metadata: z.record(z.string(), z.any()).optional()
 })
 
 export type ApiKeyUpdateInput = z.infer<typeof ApiKeyUpdateSchema>
