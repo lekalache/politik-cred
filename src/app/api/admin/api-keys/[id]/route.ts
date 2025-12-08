@@ -34,13 +34,12 @@ const supabase = createClient(
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   return withRateLimit(request, RateLimitPresets.moderate, async () => {
     return withAdminAuth(request, async (req, authContext) => {
       try {
-        const { id } = params
-
         // Validate ID format
         if (!id || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
           return NextResponse.json(
@@ -137,13 +136,12 @@ export async function PATCH(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   return withRateLimit(request, RateLimitPresets.moderate, async () => {
     return withAdminAuth(request, async (req, authContext) => {
       try {
-        const { id } = params
-
         // Validate ID format
         if (!id || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
           return NextResponse.json(

@@ -16,7 +16,7 @@ interface CollectionResult {
   duration: number
 }
 
-class DataCollectionOrchestrator {
+export class DataCollectionOrchestrator {
   /**
    * Collect all deputies and their data
    */

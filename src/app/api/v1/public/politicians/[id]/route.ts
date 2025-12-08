@@ -28,14 +28,13 @@ const supabase = createClient(
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   const middleware = composeApiKeyMiddleware(['read:politicians'])
 
   return middleware(request, async (req, context) => {
     try {
-      const { id } = params
-
       // Validate ID format
       if (!id || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
         return NextResponse.json(
