@@ -46,8 +46,6 @@ const PoliticianAuditSchema = z.object({
   generateReport: z.boolean().optional().default(true)
 })
 
-type PoliticianAuditInput = z.infer<typeof PoliticianAuditSchema>
-
 /**
  * Search for recent news about the politician
  */
