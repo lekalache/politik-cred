@@ -201,6 +201,28 @@ export default function ScorePage() {
                         promisesBroken={politician.promises_broken_count || 0}
                         promisesPartial={politician.promises_partial_count || 0}
                       />
+
+                      {/* AI Score Display */}
+                      {politician.ai_score !== null && (
+                        <div className="mt-4 p-3 bg-indigo-50 rounded-lg border border-indigo-100">
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-sm font-semibold text-indigo-900">Score IA (Audit)</span>
+                            <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 hover:bg-indigo-200">
+                              {politician.ai_score}/100
+                            </Badge>
+                          </div>
+                          <div className="w-full bg-indigo-200 rounded-full h-2">
+                            <div
+                              className="bg-indigo-600 h-2 rounded-full transition-all duration-500"
+                              style={{ width: `${politician.ai_score}%` }}
+                            />
+                          </div>
+                          <p className="text-xs text-indigo-600 mt-1">
+                            Basé sur l&apos;analyse automatique des promesses
+                            {politician.ai_last_audited_at && ` (MAJ: ${new Date(politician.ai_last_audited_at).toLocaleDateString()})`}
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     {/* Right: Stats */}
