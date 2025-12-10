@@ -411,6 +411,7 @@ export async function POST(request: NextRequest) {
       const metrics = await consistencyCalculator.calculateConsistencyScore(politicianId)
       auditResults.steps.scoreCalculation = {
         overallScore: metrics.overallScore,
+        aiScore: Math.round(metrics.overallScore), // Explicitly expose as aiScore
         promisesKept: metrics.promisesKept,
         promisesBroken: metrics.promisesBroken,
         promisesPartial: metrics.promisesPartial,
@@ -439,11 +440,19 @@ export async function POST(request: NextRequest) {
       })
     } catch (error) {
       console.error('Politician audit error:', error)
+      // Log full error details for debugging
+      if (error instanceof Error) {
+        console.error('Error stack:', error.stack)
+        console.error('Error name:', error.name)
+        console.error('Error message:', error.message)
+      }
+
       return NextResponse.json(
         {
           error: 'Audit failed',
           code: 'AUDIT_ERROR',
-          details: error instanceof Error ? error.message : 'Unknown error'
+          details: error instanceof Error ? error.message : 'Unknown error',
+          stack: process.env.NODE_ENV === 'development' && error instanceof Error ? error.stack : undefined
         },
         { status: 500 }
       )

@@ -1,0 +1,46 @@
+[
+  {
+    "entryId": "205",
+    "politician": "Emmanuel Macron",
+    "promiseText": "Ne prétend ne jamais avoir légitimé Didier Raoult",
+    "date": "2020-04-01",
+    "category": "healthcare",
+    "outcome": "broken",
+    "sourceType": "interview",
+    "votes": 512,
+    "confidence": 0.89
+  },
+  {
+    "entryId": "208",
+    "politician": "Emmanuel Macron",
+    "promiseText": "Utilise un slogan d'extrême droite en février 2017 alors qu'il promet de faire reculer l'extrême droite",
+    "date": "2017-02-15",
+    "category": "other",
+    "outcome": "broken",
+    "sourceType": "campaign_site",
+    "votes": 340,
+    "confidence": 0.92
+  },
+  {
+    "entryId": "116",
+    "politician": "Marine Le Pen",
+    "promiseText": "Le nombre d'homicides a été multiplié par quatre en 15 ans en France",
+    "date": "2022-03-15",
+    "category": "security",
+    "outcome": "broken",
+    "sourceType": "debate",
+    "votes": 680,
+    "confidence": 0.95
+  },
+  {
+    "entryId": "37",
+    "politician": "Gérald Darmanin",
+    "promiseText": "Utilisation d'armes de guerre à Sainte Soline",
+    "date": "2023-03-27",
+    "category": "security",
+    "outcome": "broken",
+    "sourceType": "press_release",
+    "votes": 890,
+    "confidence": 0.97
+  }
+]

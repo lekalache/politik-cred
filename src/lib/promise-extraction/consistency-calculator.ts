@@ -235,6 +235,7 @@ export class ConsistencyCalculator {
    * Store calculated metrics in database
    */
   async storeConsistencyScore(metrics: ConsistencyMetrics): Promise<void> {
+    // 1. Store detailed metrics in consistency_scores table
     await supabase.from('consistency_scores').upsert(
       {
         politician_id: metrics.politicianId,
@@ -258,6 +259,15 @@ export class ConsistencyCalculator {
         onConflict: 'politician_id'
       }
     )
+
+    // 2. Update summary score in politicians table
+    await supabase
+      .from('politicians')
+      .update({
+        ai_score: Math.round(metrics.overallScore),
+        ai_last_audited_at: metrics.lastCalculatedAt.toISOString()
+      })
+      .eq('id', metrics.politicianId)
   }
 
   /**
@@ -420,6 +430,18 @@ export class ConsistencyCalculator {
       await supabase
         .from('consistency_scores')
         .upsert(metricsToStore, { onConflict: 'politician_id' })
+
+      // Update politicians table (one by one for now as bulk update is complex without RPC)
+      // This is acceptable as batch size is usually small (e.g. 10-20)
+      for (const metric of metrics) {
+        await supabase
+          .from('politicians')
+          .update({
+            ai_score: Math.round(metric.overallScore),
+            ai_last_audited_at: metric.lastCalculatedAt.toISOString()
+          })
+          .eq('id', metric.politicianId)
+      }
     }
 
     return metrics
