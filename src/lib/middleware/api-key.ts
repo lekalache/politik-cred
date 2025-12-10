@@ -234,23 +234,11 @@ export async function withApiKey(
     // Step 3: Hash and lookup key
     const keyHash = hashApiKey(apiKey)
 
-    // DEBUG LOGGING - REMOVE AFTER FIXING
-    console.log(`[API Key Debug] Key Prefix: ${apiKey.substring(0, 10)}...`)
-    console.log(`[API Key Debug] Generated Hash: ${keyHash}`)
-
     const { data: keyData, error: keyError } = await supabase
       .from('api_keys')
       .select('*')
       .eq('key_hash', keyHash)
       .single()
-
-    if (keyError) {
-      console.error(`[API Key Debug] DB Error: ${JSON.stringify(keyError)}`)
-    }
-    if (!keyData) {
-      console.error(`[API Key Debug] Key not found in DB for hash: ${keyHash}`)
-    }
-    // END DEBUG LOGGING
 
     if (keyError || !keyData) {
       return NextResponse.json(
