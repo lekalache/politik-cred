@@ -133,12 +133,14 @@ async function verifyApiKey(apiKey: string) {
 
     // Display rate limits
     console.log('\nRate Limits:')
-    const tierLimits = {
+    const limitsMap = {
       free: { minute: 10, hour: 100, day: 1000 },
       standard: { minute: 60, hour: 1000, day: 10000 },
       premium: { minute: 120, hour: 5000, day: 50000 },
       enterprise: { minute: 300, hour: 20000, day: 200000 }
-    }[keyData.tier as keyof typeof tierLimits] || { minute: 10, hour: 100, day: 1000 }
+    }
+
+    const tierLimits = limitsMap[keyData.tier as keyof typeof limitsMap] || { minute: 10, hour: 100, day: 1000 }
 
     console.log(`  Per Minute: ${keyData.rate_limit_minute ?? tierLimits.minute}`)
     console.log(`  Per Hour: ${keyData.rate_limit_hour ?? tierLimits.hour}`)
