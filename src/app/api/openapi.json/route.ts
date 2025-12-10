@@ -38,6 +38,30 @@ export async function GET() {
                         is_active: { type: 'boolean' }
                     }
                 },
+                Promise: {
+                    type: 'object',
+                    properties: {
+                        id: { type: 'string', format: 'uuid' },
+                        politician_id: { type: 'string', format: 'uuid' },
+                        promise_text: { type: 'string' },
+                        promise_date: { type: 'string', format: 'date-time' },
+                        category: { type: 'string' },
+                        confidence_score: { type: 'number' },
+                        verification_status: { type: 'string' }
+                    }
+                },
+                ConsistencyScores: {
+                    type: 'object',
+                    properties: {
+                        politicianId: { type: 'string', format: 'uuid' },
+                        overallScore: { type: 'number' },
+                        promisesKept: { type: 'integer' },
+                        promisesBroken: { type: 'integer' },
+                        promisesPartial: { type: 'integer' },
+                        promisesPending: { type: 'integer' },
+                        lastCalculatedAt: { type: 'string', format: 'date-time' }
+                    }
+                },
                 AuditResult: {
                     type: 'object',
                     properties: {
@@ -135,6 +159,200 @@ export async function GET() {
                     }
                 }
             },
+            '/api/v1/public/politicians/{id}': {
+                get: {
+                    operationId: 'getPolitician',
+                    summary: 'Get politician details',
+                    description: 'Retrieve detailed information about a specific politician.',
+                    parameters: [
+                        {
+                            name: 'id',
+                            in: 'path',
+                            required: true,
+                            schema: { type: 'string', format: 'uuid' }
+                        }
+                    ],
+                    responses: {
+                        '200': {
+                            description: 'Successful response',
+                            content: {
+                                'application/json': {
+                                    schema: {
+                                        type: 'object',
+                                        properties: {
+                                            success: { type: 'boolean' },
+                                            data: { $ref: '#/components/schemas/Politician' }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        '404': {
+                            description: 'Politician not found'
+                        }
+                    }
+                }
+            },
+            '/api/v1/public/politicians/{id}/scores': {
+                get: {
+                    operationId: 'getPoliticianScores',
+                    summary: 'Get politician scores',
+                    description: 'Retrieve consistency scores and metrics for a politician.',
+                    parameters: [
+                        {
+                            name: 'id',
+                            in: 'path',
+                            required: true,
+                            schema: { type: 'string', format: 'uuid' }
+                        }
+                    ],
+                    responses: {
+                        '200': {
+                            description: 'Successful response',
+                            content: {
+                                'application/json': {
+                                    schema: {
+                                        type: 'object',
+                                        properties: {
+                                            success: { type: 'boolean' },
+                                            data: { $ref: '#/components/schemas/ConsistencyScores' }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        '404': {
+                            description: 'Scores not found'
+                        }
+                    }
+                }
+            },
+            '/api/v1/public/promises': {
+                get: {
+                    operationId: 'listPromises',
+                    summary: 'List promises',
+                    description: 'Retrieve a list of political promises with filtering.',
+                    parameters: [
+                        {
+                            name: 'politicianId',
+                            in: 'query',
+                            schema: { type: 'string', format: 'uuid' }
+                        },
+                        {
+                            name: 'page',
+                            in: 'query',
+                            schema: { type: 'integer', default: 1 }
+                        },
+                        {
+                            name: 'limit',
+                            in: 'query',
+                            schema: { type: 'integer', default: 20 }
+                        }
+                    ],
+                    responses: {
+                        '200': {
+                            description: 'Successful response',
+                            content: {
+                                'application/json': {
+                                    schema: {
+                                        type: 'object',
+                                        properties: {
+                                            success: { type: 'boolean' },
+                                            data: {
+                                                type: 'array',
+                                                items: { $ref: '#/components/schemas/Promise' }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                post: {
+                    operationId: 'extractPromises',
+                    summary: 'Extract promises',
+                    description: 'Extract political promises from text or URL.',
+                    requestBody: {
+                        required: true,
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    type: 'object',
+                                    required: ['politicianId', 'text', 'sourceUrl'],
+                                    properties: {
+                                        politicianId: { type: 'string', format: 'uuid' },
+                                        text: { type: 'string' },
+                                        sourceUrl: { type: 'string', format: 'uri' },
+                                        sourceType: { type: 'string' },
+                                        date: { type: 'string', format: 'date-time' }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    responses: {
+                        '201': {
+                            description: 'Promises extracted successfully',
+                            content: {
+                                'application/json': {
+                                    schema: {
+                                        type: 'object',
+                                        properties: {
+                                            success: { type: 'boolean' },
+                                            extracted: { type: 'integer' },
+                                            stored: { type: 'integer' }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            '/api/news/collect': {
+                post: {
+                    operationId: 'collectNews',
+                    summary: 'Collect news',
+                    description: 'Trigger news collection from external sources.',
+                    requestBody: {
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    type: 'object',
+                                    properties: {
+                                        searchText: { type: 'string' },
+                                        limit: { type: 'integer' },
+                                        forceRefresh: { type: 'boolean' }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    responses: {
+                        '200': {
+                            description: 'Collection started',
+                            content: {
+                                'application/json': {
+                                    schema: {
+                                        type: 'object',
+                                        properties: {
+                                            success: { type: 'boolean' },
+                                            results: {
+                                                type: 'object',
+                                                properties: {
+                                                    collected: { type: 'integer' },
+                                                    saved: { type: 'integer' }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
             '/api/v1/public/triggers/data-collection': {
                 post: {
                     operationId: 'triggerDataCollection',
@@ -176,6 +394,123 @@ export async function GET() {
                                         properties: {
                                             success: { type: 'boolean' },
                                             message: { type: 'string' }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                get: {
+                    operationId: 'getDataCollectionInfo',
+                    summary: 'Get data collection info',
+                    description: 'Get information about available data collection types.',
+                    responses: {
+                        '200': {
+                            description: 'Successful response',
+                            content: {
+                                'application/json': {
+                                    schema: {
+                                        type: 'object',
+                                        properties: {
+                                            success: { type: 'boolean' },
+                                            data: {
+                                                type: 'object',
+                                                properties: {
+                                                    availableTypes: {
+                                                        type: 'array',
+                                                        items: {
+                                                            type: 'object',
+                                                            properties: {
+                                                                type: { type: 'string' },
+                                                                description: { type: 'string' }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            '/api/v1/public/triggers/match-promises': {
+                post: {
+                    operationId: 'matchPromises',
+                    summary: 'Match promises',
+                    description: 'Trigger semantic matching of promises to parliamentary actions.',
+                    requestBody: {
+                        required: true,
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    type: 'object',
+                                    required: ['politicianId'],
+                                    properties: {
+                                        politicianId: { type: 'string', format: 'uuid' },
+                                        minConfidence: { type: 'number', default: 0.6 }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    responses: {
+                        '200': {
+                            description: 'Matching completed',
+                            content: {
+                                'application/json': {
+                                    schema: {
+                                        type: 'object',
+                                        properties: {
+                                            success: { type: 'boolean' },
+                                            data: {
+                                                type: 'object',
+                                                properties: {
+                                                    matched: { type: 'integer' },
+                                                    autoVerified: { type: 'integer' },
+                                                    needsReview: { type: 'integer' }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            '/api/v1/public/triggers/calculate-scores': {
+                post: {
+                    operationId: 'calculateScores',
+                    summary: 'Calculate scores',
+                    description: 'Trigger consistency score calculation for a politician.',
+                    requestBody: {
+                        required: true,
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    type: 'object',
+                                    required: ['politicianId'],
+                                    properties: {
+                                        politicianId: { type: 'string', format: 'uuid' }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    responses: {
+                        '200': {
+                            description: 'Calculation completed',
+                            content: {
+                                'application/json': {
+                                    schema: {
+                                        type: 'object',
+                                        properties: {
+                                            success: { type: 'boolean' },
+                                            data: { $ref: '#/components/schemas/ConsistencyScores' }
                                         }
                                     }
                                 }
