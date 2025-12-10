@@ -80,6 +80,7 @@ export async function GET() {
         paths: {
             '/api/v1/public/politicians': {
                 get: {
+                    operationId: 'listPoliticians',
                     summary: 'List politicians',
                     description: 'Retrieve a list of politicians with filtering and pagination.',
                     parameters: [
@@ -136,6 +137,7 @@ export async function GET() {
             },
             '/api/v1/public/triggers/data-collection': {
                 post: {
+                    operationId: 'triggerDataCollection',
                     summary: 'Trigger data collection',
                     description: 'Trigger automated data collection from parliamentary sources.',
                     requestBody: {
@@ -184,6 +186,7 @@ export async function GET() {
             },
             '/api/v1/public/triggers/politician-audit': {
                 post: {
+                    operationId: 'triggerPoliticianAudit',
                     summary: 'Trigger politician audit',
                     description: 'Run a comprehensive audit for a specific politician, including news search, promise extraction, and scoring.',
                     requestBody: {
