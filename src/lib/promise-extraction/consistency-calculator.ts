@@ -38,7 +38,7 @@ export class ConsistencyCalculator {
     const { data: verifications } = await supabase
       .from('promise_verifications')
       .select('match_type, match_confidence')
-      .eq('verified_at', 'IS NOT NULL')
+      .not('verified_at', 'is', null)
       .eq('is_disputed', false)
       .in('promise_id', [
         supabase

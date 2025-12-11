@@ -21,30 +21,46 @@ interface Politician {
   total_votes: number
   created_at: string
   updated_at: string
+  promises_kept?: number
+  promises_broken?: number
+  promises_partial?: number
 }
 
-interface PoliticianListProps {
-  onVoteClick: (politicianId: string) => void
-}
-
-export function PoliticianList({ onVoteClick }: PoliticianListProps) {
+export function PoliticianList() {
   const [politicians, setPoliticians] = useState<Politician[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function fetchPoliticians() {
       try {
-        const { data, error } = await supabase
+        // Fetch politicians
+        const { data: politiciansData, error: polError } = await supabase
           .from('politicians')
           .select('*')
           .order('credibility_score', { ascending: false })
 
-        if (error) {
-          console.error('Error fetching politicians:', error)
+        if (polError) {
+          console.error('Error fetching politicians:', polError)
           return
         }
 
-        setPoliticians(data || [])
+        // Fetch consistency scores
+        const { data: scoresData } = await supabase
+          .from('consistency_scores')
+          .select('politician_id, promises_kept, promises_broken, promises_partial')
+
+        // Merge data
+        const mergedData = politiciansData?.map(pol => {
+          const scores = scoresData?.find(s => s.politician_id === pol.id)
+          return {
+            ...pol,
+            promises_kept: scores?.promises_kept || 0,
+            promises_broken: scores?.promises_broken || 0,
+            promises_partial: scores?.promises_partial || 0
+          }
+        }) || []
+
+        setPoliticians(mergedData)
       } catch (error) {
         console.error('Error:', error)
       } finally {
@@ -180,20 +196,14 @@ export function PoliticianList({ onVoteClick }: PoliticianListProps) {
               </div>
             )}
 
-            <div className="flex items-center justify-between text-sm text-gray-600">
-              <div className="flex items-center space-x-1">
-                <Calendar className="w-4 h-4" />
-                <span>{politician.total_votes} votes</span>
+            {politician.ai_score !== null && politician.ai_score !== undefined && (
+              <div className="flex items-center text-sm text-gray-600">
+                <Calendar className="w-4 h-4 mr-1" />
+                <span>
+                  {(politician.promises_kept || 0) + (politician.promises_broken || 0) + (politician.promises_partial || 0)} promesses vérifiées
+                </span>
               </div>
-              <Button
-                onClick={() => onVoteClick(politician.id)}
-                size="sm"
-                variant="outline"
-                className="hover:bg-blue-50 hover:border-blue-300"
-              >
-                Voter
-              </Button>
-            </div>
+            )}
           </CardContent>
         </Card>
       ))}

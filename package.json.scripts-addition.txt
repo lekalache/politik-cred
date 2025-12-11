@@ -1,0 +1,9 @@
+Add this to your package.json "scripts" section:
+
+"scripts": {
+  ...existing scripts...
+
+  "setup:cron": "bash scripts/setup-cron.sh",
+  "setup:cron-db": "npx tsx scripts/setup-cron-database.ts",
+  "test:cron": "curl -X POST http://localhost:3000/api/cron/test-audit -H 'Authorization: Bearer '$(grep CRON_SECRET_TOKEN .env.local | cut -d= -f2) -H 'Content-Type: application/json'"
+}

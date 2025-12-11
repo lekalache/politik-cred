@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
+import Link from 'next/link'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { Navigation } from '@/components/navigation'
 import { Footer } from '@/components/footer'
@@ -8,7 +9,7 @@ import { CredibilityBadge, CredibilityScoreCard } from '@/components/credibility
 import { CredibilityHistory } from '@/components/credibility/credibility-history'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { TrendingUp, TrendingDown, Shield, Award, AlertCircle, Loader2 } from 'lucide-react'
+import { TrendingUp, TrendingDown, Shield, Award, AlertCircle, Loader2, CheckCircle, Info } from 'lucide-react'
 
 function ScoreRankBadge({ rank }: { rank: number }) {
   if (rank === 1) {
@@ -42,28 +43,52 @@ export default function ScorePage() {
 
       const supabase = createSupabaseClient(supabaseUrl, supabaseAnonKey)
 
-      const { data, error } = await supabase
-        .from('politician_credibility_summary')
-        .select('*')
-        .order('credibility_score', { ascending: false })
+      // Fetch politicians with their AI scores from consistency_scores
+      const { data: politiciansData, error: polError } = await supabase
+        .from('politicians')
+        .select('id, name, party, ai_score, ai_last_audited_at')
+        .not('ai_score', 'is', null)
+        .order('ai_score', { ascending: false })
 
-      if (error) {
-        console.error('Failed to fetch politicians:', error)
-      } else {
-        setPoliticians(data || [])
+      if (polError) {
+        console.error('Failed to fetch politicians:', polError)
+        setLoading(false)
+        return
       }
 
+      // Fetch consistency scores for each politician
+      const { data: scoresData, error: scoresError } = await supabase
+        .from('consistency_scores')
+        .select('*')
+        .in('politician_id', politiciansData?.map(p => p.id) || [])
+
+      if (scoresError) {
+        console.error('Failed to fetch consistency scores:', scoresError)
+      }
+
+      // Merge the data
+      const mergedData = politiciansData?.map(pol => {
+        const scores = scoresData?.find(s => s.politician_id === pol.id)
+        return {
+          ...pol,
+          ...scores
+        }
+      }) || []
+
+      setPoliticians(mergedData)
       setLoading(false)
     }
 
     loadPoliticians()
   }, [])
 
-  // Calculate stats
+  // Calculate stats based on AI scores
   const totalPoliticians = politicians.length
-  const avgScore = politicians.reduce((sum, p) => sum + (p.credibility_score || 100), 0) / totalPoliticians || 100
-  const highestScore = politicians[0]?.credibility_score || 100
-  const lowestScore = politicians[politicians.length - 1]?.credibility_score || 100
+  const avgScore = politicians.reduce((sum, p) => sum + (p.ai_score || 0), 0) / totalPoliticians || 0
+  const highestScore = politicians[0]?.ai_score || 0
+  const lowestScore = politicians[politicians.length - 1]?.ai_score || 0
+  const avgAttendance = politicians.reduce((sum, p) => sum + (p.attendance_rate || 0), 0) / totalPoliticians || 0
+  const avgActivity = politicians.reduce((sum, p) => sum + (p.legislative_activity_score || 0), 0) / totalPoliticians || 0
 
   if (loading) {
     return (
@@ -90,36 +115,37 @@ export default function ScorePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="flex items-center gap-3 mb-4">
             <Shield className="w-10 h-10" />
-            <h1 className="text-4xl font-bold">Classement Crédibilité</h1>
+            <h1 className="text-4xl font-bold">Scores IA - Audit Politique</h1>
           </div>
           <p className="text-blue-100 text-lg max-w-3xl">
-            Scores de crédibilité basés sur la vérification factuelle des promesses vs actions parlementaires.
-            Tous les scores sont calculés objectivement à partir de données vérifiables.
+            Scores calculés par IA basés sur la vérification factuelle des promesses vs actions parlementaires.
+            100% objectif, 0% subjectif. Données vérifiables issues de sources officielles.
           </p>
 
           {/* Stats Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-8">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mt-8">
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-              <div className="text-blue-200 text-sm">Politicians analysés</div>
+              <div className="text-blue-200 text-sm">Politicians audités</div>
               <div className="text-3xl font-bold mt-1">{totalPoliticians}</div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-              <div className="text-blue-200 text-sm">Score moyen</div>
-              <div className="text-3xl font-bold mt-1">{avgScore.toFixed(1)}/200</div>
+              <div className="text-blue-200 text-sm">Cohérence moy.</div>
+              <div className="text-3xl font-bold mt-1">{avgScore.toFixed(1)}/100</div>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+              <div className="text-blue-200 text-sm">Présence moy.</div>
+              <div className="text-3xl font-bold mt-1">{avgAttendance.toFixed(1)}%</div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
               <div className="text-blue-200 text-sm flex items-center gap-1">
                 <TrendingUp className="w-4 h-4" />
                 Meilleur score
               </div>
-              <div className="text-3xl font-bold mt-1">{highestScore.toFixed(1)}/200</div>
+              <div className="text-3xl font-bold mt-1">{highestScore.toFixed(1)}/100</div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-              <div className="text-blue-200 text-sm flex items-center gap-1">
-                <TrendingDown className="w-4 h-4" />
-                Plus bas score
-              </div>
-              <div className="text-3xl font-bold mt-1">{lowestScore.toFixed(1)}/200</div>
+              <div className="text-blue-200 text-sm">Activité moy.</div>
+              <div className="text-3xl font-bold mt-1">{avgActivity.toFixed(1)}/100</div>
             </div>
           </div>
         </div>
@@ -132,17 +158,17 @@ export default function ScorePage() {
           <div className="flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
             <div>
-              <h3 className="font-semibold text-blue-900">Comment fonctionne le score de crédibilité ?</h3>
+              <h3 className="font-semibold text-blue-900">Les 4 Scores IA - Audit Objectif</h3>
               <p className="text-sm text-blue-700 mt-1">
-                • <strong>Baseline 100/200</strong> : Tous les politiciens commencent à 100 points (neutre)
+                • <strong>Score de Cohérence (0-100)</strong> : Promesses tenues vs brisées. Formule: (tenues×100 + partielles×50) / total
                 <br />
-                • <strong>Promesses tenues</strong> : +3 à +7 points selon la vérification
+                • <strong>Taux de Présence (0-100%)</strong> : Présence aux votes parlementaires (données officielles Assemblée Nationale)
                 <br />
-                • <strong>Promesses non tenues</strong> : -5 à -11 points selon la gravité
+                • <strong>Score d&apos;Activité Législative (0-100)</strong> : Lois proposées, amendements, débats, questions (pondéré)
                 <br />
-                • <strong>Vérification multi-sources</strong> : L&apos;impact est amplifié quand plusieurs sources confirment (IA + Vigie + Parlement)
+                • <strong>Qualité des Données (0-100%)</strong> : Complétude des données disponibles pour l&apos;audit
                 <br />
-                • <strong>Langage factuel</strong> : Nous suivons les actions, pas les caractères (&quot;promesse non tenue&quot; ≠ &quot;est un menteur&quot;)
+                • <strong>100% Objectif</strong> : Aucun jugement subjectif, que des mathématiques et des sources vérifiables
               </p>
             </div>
           </div>
@@ -162,8 +188,9 @@ export default function ScorePage() {
             </Card>
           ) : (
             politicians.map((politician, index) => (
-              <Card key={politician.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                <CardHeader className="bg-gradient-to-r from-gray-50 to-white border-b">
+              <Link key={politician.id} href={`/politicians/${politician.id}`}>
+                <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
+                  <CardHeader className="bg-gradient-to-r from-indigo-50 to-white border-b border-indigo-100">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
@@ -178,125 +205,147 @@ export default function ScorePage() {
                           {politician.party}
                         </Badge>
                       )}
-                    </div>
-                    <div className="text-right">
-                      <CredibilityBadge
-                        score={politician.credibility_score || 100}
-                        showTrend={true}
-                        recentChange={politician.score_change_last_30_days}
-                        size="large"
-                      />
+                      {politician.ai_last_audited_at && (
+                        <p className="text-xs text-gray-500 mt-2">
+                          Dernière analyse : {new Date(politician.ai_last_audited_at).toLocaleDateString('fr-FR')}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </CardHeader>
 
                 <CardContent className="p-6">
-                  <div className="grid md:grid-cols-2 gap-6">
-                    {/* Left: Score Card */}
-                    <div>
-                      <CredibilityScoreCard
-                        score={politician.credibility_score || 100}
-                        politicianName={politician.name}
-                        promisesKept={politician.promises_kept_count || 0}
-                        promisesBroken={politician.promises_broken_count || 0}
-                        promisesPartial={politician.promises_partial_count || 0}
-                      />
-
-                      {/* AI Score Display */}
-                      {politician.ai_score !== null && (
-                        <div className="mt-4 p-3 bg-indigo-50 rounded-lg border border-indigo-100">
-                          <div className="flex justify-between items-center mb-1">
-                            <span className="text-sm font-semibold text-indigo-900">Score IA (Audit)</span>
-                            <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 hover:bg-indigo-200">
-                              {politician.ai_score}/100
-                            </Badge>
-                          </div>
-                          <div className="w-full bg-indigo-200 rounded-full h-2">
-                            <div
-                              className="bg-indigo-600 h-2 rounded-full transition-all duration-500"
-                              style={{ width: `${politician.ai_score}%` }}
-                            />
-                          </div>
-                          <p className="text-xs text-indigo-600 mt-1">
-                            Basé sur l&apos;analyse automatique des promesses
-                            {politician.ai_last_audited_at && ` (MAJ: ${new Date(politician.ai_last_audited_at).toLocaleDateString()})`}
-                          </p>
-                        </div>
-                      )}
+                  {/* 4 AI Scores Grid */}
+                  <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    {/* Score 1: Consistency Score */}
+                    <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-lg p-4 border border-indigo-200">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-semibold text-indigo-700 uppercase">Cohérence</span>
+                        <Shield className="w-4 h-4 text-indigo-600" />
+                      </div>
+                      <div className="text-3xl font-bold text-indigo-900 mb-1">
+                        {politician.overall_score?.toFixed(1) || politician.ai_score || '—'}<span className="text-lg">/100</span>
+                      </div>
+                      <div className="w-full bg-indigo-200 rounded-full h-2 mb-2">
+                        <div
+                          className="bg-indigo-600 h-2 rounded-full transition-all duration-500"
+                          style={{ width: `${politician.overall_score || politician.ai_score || 0}%` }}
+                        />
+                      </div>
+                      <div className="text-xs text-indigo-600 space-y-0.5">
+                        <div>✓ Tenues: {politician.promises_kept || 0}</div>
+                        <div>✗ Brisées: {politician.promises_broken || 0}</div>
+                        <div>◐ Partielles: {politician.promises_partial || 0}</div>
+                      </div>
                     </div>
 
-                    {/* Right: Stats */}
-                    <div className="space-y-4">
-                      <div>
-                        <h4 className="font-semibold text-gray-700 mb-3">Statistiques</h4>
-                        <div className="space-y-2">
-                          <div className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                            <span className="text-sm text-gray-600">Changements totaux</span>
-                            <span className="font-semibold">{politician.credibility_change_count || 0}</span>
-                          </div>
-                          <div className="flex justify-between items-center p-2 bg-green-50 rounded">
-                            <span className="text-sm text-green-700">Gains totaux</span>
-                            <span className="font-semibold text-green-700">
-                              +{(politician.total_gains || 0).toFixed(1)} pts
-                            </span>
-                          </div>
-                          <div className="flex justify-between items-center p-2 bg-red-50 rounded">
-                            <span className="text-sm text-red-700">Pertes totales</span>
-                            <span className="font-semibold text-red-700">
-                              {(politician.total_losses || 0).toFixed(1)} pts
-                            </span>
-                          </div>
-                          <div className="flex justify-between items-center p-2 bg-blue-50 rounded">
-                            <span className="text-sm text-blue-700">Changements (30j)</span>
-                            <span className="font-semibold text-blue-700">
-                              {politician.changes_last_30_days || 0}
-                            </span>
-                          </div>
-                        </div>
+                    {/* Score 2: Attendance Rate */}
+                    <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-semibold text-green-700 uppercase">Présence</span>
+                        <CheckCircle className="w-4 h-4 text-green-600" />
                       </div>
+                      <div className="text-3xl font-bold text-green-900 mb-1">
+                        {politician.attendance_rate !== null ? `${politician.attendance_rate.toFixed(1)}%` : '—'}
+                      </div>
+                      <div className="w-full bg-green-200 rounded-full h-2 mb-2">
+                        <div
+                          className="bg-green-600 h-2 rounded-full transition-all duration-500"
+                          style={{ width: `${politician.attendance_rate || 0}%` }}
+                        />
+                      </div>
+                      <div className="text-xs text-green-600">
+                        {politician.sessions_attended || 0}/{politician.sessions_scheduled || 0} sessions
+                      </div>
+                    </div>
 
-                      {/* Activity Indicator */}
-                      {politician.last_change_date && (
-                        <div className="text-xs text-gray-500">
-                          Dernière mise à jour :{' '}
-                          {new Date(politician.last_change_date).toLocaleDateString('fr-FR')}
-                        </div>
-                      )}
+                    {/* Score 3: Legislative Activity */}
+                    <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg p-4 border border-amber-200">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-semibold text-amber-700 uppercase">Activité</span>
+                        <TrendingUp className="w-4 h-4 text-amber-600" />
+                      </div>
+                      <div className="text-3xl font-bold text-amber-900 mb-1">
+                        {politician.legislative_activity_score !== null ? `${politician.legislative_activity_score.toFixed(1)}` : '—'}<span className="text-lg">/100</span>
+                      </div>
+                      <div className="w-full bg-amber-200 rounded-full h-2 mb-2">
+                        <div
+                          className="bg-amber-600 h-2 rounded-full transition-all duration-500"
+                          style={{ width: `${politician.legislative_activity_score || 0}%` }}
+                        />
+                      </div>
+                      <div className="text-xs text-amber-600 space-y-0.5">
+                        <div>Lois: {politician.bills_sponsored || 0}</div>
+                        <div>Amendements: {politician.amendments_proposed || 0}</div>
+                      </div>
+                    </div>
+
+                    {/* Score 4: Data Quality */}
+                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-semibold text-gray-700 uppercase">Données</span>
+                        <Info className="w-4 h-4 text-gray-600" />
+                      </div>
+                      <div className="text-3xl font-bold text-gray-900 mb-1">
+                        {politician.data_quality_score !== null ? `${(politician.data_quality_score * 100).toFixed(0)}%` : '—'}
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                        <div
+                          className="bg-gray-600 h-2 rounded-full transition-all duration-500"
+                          style={{ width: `${(politician.data_quality_score || 0) * 100}%` }}
+                        />
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        Complétude de l&apos;audit
+                      </div>
                     </div>
                   </div>
 
-                  {/* History Timeline */}
-                  {politician.credibility_change_count > 0 && (
-                    <div className="mt-6 pt-6 border-t">
-                      <h4 className="font-semibold text-gray-700 mb-4">Historique des changements</h4>
-                      <Suspense
-                        fallback={
-                          <div className="text-center py-4 text-gray-500">Chargement de l&apos;historique...</div>
-                        }
-                      >
-                        <CredibilityHistory
-                          politicianId={politician.id}
-                          politicianName={politician.name}
-                          limit={5}
-                        />
-                      </Suspense>
+                  {/* Additional Details */}
+                  <div className="grid md:grid-cols-2 gap-4 pt-4 border-t">
+                    <div>
+                      <h4 className="font-semibold text-gray-700 mb-2 text-sm">Détails Promesses</h4>
+                      <div className="space-y-1 text-xs">
+                        <div className="flex justify-between p-2 bg-gray-50 rounded">
+                          <span>Total promesses</span>
+                          <span className="font-semibold">{(politician.promises_kept || 0) + (politician.promises_broken || 0) + (politician.promises_partial || 0)}</span>
+                        </div>
+                        <div className="flex justify-between p-2 bg-gray-50 rounded">
+                          <span>En attente</span>
+                          <span className="font-semibold">{politician.promises_pending || 0}</span>
+                        </div>
+                      </div>
                     </div>
-                  )}
+                    <div>
+                      <h4 className="font-semibold text-gray-700 mb-2 text-sm">Activité Parlementaire</h4>
+                      <div className="space-y-1 text-xs">
+                        <div className="flex justify-between p-2 bg-gray-50 rounded">
+                          <span>Débats</span>
+                          <span className="font-semibold">{politician.debates_participated || 0}</span>
+                        </div>
+                        <div className="flex justify-between p-2 bg-gray-50 rounded">
+                          <span>Questions</span>
+                          <span className="font-semibold">{politician.questions_asked || 0}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
+            </Link>
             ))
           )}
         </div>
 
         {/* Legal Disclaimer */}
         <div className="mt-8 p-4 bg-gray-100 rounded-lg text-xs text-gray-600">
-          <p className="font-semibold mb-1">Méthodologie et transparence :</p>
+          <p className="font-semibold mb-1">Méthodologie AI-Driven et Transparence :</p>
           <p>
-            Les scores de crédibilité sont calculés objectivement à partir de la vérification des promesses contre
-            les actions parlementaires officielles. Nous utilisons un langage factuel qui décrit les actions (ex:
-            &quot;promesse non tenue&quot;) et non des jugements de caractère. Toutes les données sont vérifiées par
-            plusieurs sources indépendantes (IA, communauté Vigie du mensonge, données parlementaires) et chaque
-            changement de score est documenté avec des preuves accessibles publiquement.
+            Les 4 scores sont calculés automatiquement par IA à partir de données officielles vérifiables (Assemblée Nationale,
+            Vigie du mensonge, sources gouvernementales). <strong>100% objectif, 0% subjectif</strong> : pas de jugements humains,
+            que des mathématiques et des faits documentés. Formules de calcul publiques, sources accessibles, audit transparent.
+            Le langage utilisé est factuel (ex: &quot;promesse non tenue&quot;) et non un jugement de caractère.
+            Conformité légale française : droit de réponse, protection contre la diffamation, vérification multi-sources.
           </p>
         </div>
       </div>

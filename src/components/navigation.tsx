@@ -60,36 +60,16 @@ export function Navigation() {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-4">
             <div className="flex items-center space-x-2 text-sm">
-              {user && user.user_metadata?.role !== 'admin' && user.user_metadata?.role !== 'moderator' && (
-                <>
-                  <a href="/mes-votes" className="text-gray-600 hover:text-gray-900 transition-colors">
-                    Mes Votes
-                  </a>
-                  <span className="text-gray-300">|</span>
-                </>
-              )}
-              <a href="/analytics" className="text-gray-600 hover:text-gray-900 transition-colors">
-                Analytics
+              <a href="/score" className="text-gray-600 hover:text-gray-900 transition-colors">
+                Classement
               </a>
               <span className="text-gray-300">|</span>
               <a href="/promises" className="text-gray-600 hover:text-gray-900 transition-colors">
                 Promesses
               </a>
               <span className="text-gray-300">|</span>
-              <a href="/score" className="text-gray-600 hover:text-gray-900 transition-colors">
-                Classement
-              </a>
-              <span className="text-gray-300">|</span>
-              <a href="/legal" className="text-gray-600 hover:text-gray-900 transition-colors">
-                Conformité légale
-              </a>
-              <span className="text-gray-300">|</span>
               <a href="/transparency" className="text-gray-600 hover:text-gray-900 transition-colors">
                 Transparence
-              </a>
-              <span className="text-gray-300">|</span>
-              <a href="/reglement" className="text-gray-600 hover:text-gray-900 transition-colors">
-                Le Règlement
               </a>
             </div>
             <Badge variant="outline" className="bg-[#DC2626] text-white border-[#DC2626]">
@@ -189,11 +169,11 @@ export function Navigation() {
               {/* Mobile Navigation Links */}
               <div className="space-y-3 pt-3 border-t border-gray-100">
                 <a
-                  href="/analytics"
+                  href="/score"
                   className="text-sm text-gray-600 hover:text-gray-900 transition-colors block"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  Analytics
+                  Classement
                 </a>
                 <a
                   href="/promises"
@@ -203,32 +183,11 @@ export function Navigation() {
                   Promesses
                 </a>
                 <a
-                  href="/score"
-                  className="text-sm text-gray-600 hover:text-gray-900 transition-colors block"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Classement
-                </a>
-                <a
-                  href="/legal"
-                  className="text-sm text-gray-600 hover:text-gray-900 transition-colors block"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Conformité légale
-                </a>
-                <a
                   href="/transparency"
                   className="text-sm text-gray-600 hover:text-gray-900 transition-colors block"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Transparence
-                </a>
-                <a
-                  href="/reglement"
-                  className="text-sm text-gray-600 hover:text-gray-900 transition-colors block"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Le Règlement
                 </a>
               </div>
 

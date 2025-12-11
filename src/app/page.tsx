@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation"
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { PoliticianList } from "@/components/politician-list"
-import { VoteDialog } from "@/components/vote-dialog"
 import { WelcomeBanner } from "@/components/welcome-banner"
 import { NewsBanner } from "@/components/news-banner"
 import { Card, CardContent } from "@/components/ui/card"
@@ -20,14 +19,9 @@ import {
 } from "lucide-react"
 
 export default function Home() {
-  const [selectedPolitician, setSelectedPolitician] = useState<string | null>(null)
   const [videoError, setVideoError] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const router = useRouter()
-
-  const handleVoteClick = (politicianId: string) => {
-    setSelectedPolitician(politicianId)
-  }
 
   const handleReglementClick = () => {
     router.push('/reglement')
@@ -399,13 +393,8 @@ export default function Home() {
           </p>
         </div>
 
-        <PoliticianList onVoteClick={handleVoteClick} />
+        <PoliticianList />
       </main>
-
-      <VoteDialog
-        politicianId={selectedPolitician}
-        onClose={() => setSelectedPolitician(null)}
-      />
 
       {/* Footer */}
       <Footer />
