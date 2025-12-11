@@ -33,15 +33,21 @@ export type PromiseExtractionInput = z.infer<typeof PromiseExtractionSchema>
  * Promise Matching Schema
  */
 export const PromiseMatchingSchema = z.object({
-  politicianId: z.string().uuid('Invalid politician ID format'),
+  politicianId: z.string().uuid('Invalid politician ID format').optional(),
   promiseId: z.string().uuid('Invalid promise ID format').optional(),
   minConfidence: z
     .number()
     .min(0, 'Confidence must be between 0 and 1')
     .max(1, 'Confidence must be between 0 and 1')
     .optional()
-    .default(0.6)
-})
+    .default(0.6),
+  all: z.boolean().optional().default(false)
+}).refine(
+  (data) => data.politicianId || data.all,
+  {
+    message: 'Must provide either politicianId or all=true'
+  }
+)
 
 export type PromiseMatchingInput = z.infer<typeof PromiseMatchingSchema>
 

@@ -44,15 +44,29 @@ interface Stats {
   promises_partial: number
 }
 
+interface AISystemStats {
+  totalPoliticians: number
+  politiciansWithScores: number
+  totalPromises: number
+  politiciansWithPromises: number
+  parliamentaryActions: number
+  promiseVerifications: number
+  consistencyScores: number
+  avgConsistencyScore: number
+  lastAuditDate: string | null
+}
+
 export default function TransparencyPage() {
   const [credibilityChanges, setCredibilityChanges] = useState<CredibilityChange[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
+  const [aiStats, setAiStats] = useState<AISystemStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'kept' | 'broken' | 'partial'>('all')
   const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d')
 
   useEffect(() => {
     fetchData()
+    fetchAISystemStats()
   }, [filter, dateRange])
 
   const fetchData = async () => {
@@ -139,6 +153,55 @@ export default function TransparencyPage() {
     }
   }
 
+  const fetchAISystemStats = async () => {
+    try {
+      // Fetch all AI system statistics in parallel
+      const [
+        { count: totalPols },
+        { count: polsWithScores },
+        { data: allPromises },
+        { count: totalActions },
+        { count: totalVerifications },
+        { count: totalScores },
+        { data: scoresData },
+        { data: auditLogs }
+      ] = await Promise.all([
+        supabase.from('politicians').select('*', { count: 'exact', head: true }),
+        supabase.from('politicians').select('*', { count: 'exact', head: true }).not('ai_score', 'is', null),
+        supabase.from('political_promises').select('politician_id'),
+        supabase.from('parliamentary_actions').select('*', { count: 'exact', head: true }),
+        supabase.from('promise_verifications').select('*', { count: 'exact', head: true }),
+        supabase.from('consistency_scores').select('*', { count: 'exact', head: true }),
+        supabase.from('consistency_scores').select('overall_score'),
+        supabase.from('audit_logs').select('created_at').eq('activity', 'daily-audit').eq('status', 'completed').order('created_at', { ascending: false }).limit(1)
+      ])
+
+      // Calculate unique politicians with promises
+      const uniquePoliticiansWithPromises = allPromises
+        ? new Set(allPromises.map(p => p.politician_id)).size
+        : 0
+
+      // Calculate average consistency score
+      const avgScore = scoresData && scoresData.length > 0
+        ? scoresData.reduce((sum, s) => sum + (s.overall_score || 0), 0) / scoresData.length
+        : 0
+
+      setAiStats({
+        totalPoliticians: totalPols || 0,
+        politiciansWithScores: polsWithScores || 0,
+        totalPromises: allPromises?.length || 0,
+        politiciansWithPromises: uniquePoliticiansWithPromises,
+        parliamentaryActions: totalActions || 0,
+        promiseVerifications: totalVerifications || 0,
+        consistencyScores: totalScores || 0,
+        avgConsistencyScore: avgScore,
+        lastAuditDate: auditLogs && auditLogs.length > 0 ? auditLogs[0].created_at : null
+      })
+    } catch (error) {
+      console.error('Error fetching AI system stats:', error)
+    }
+  }
+
   const exportData = () => {
     const csvContent = [
       ['Date', 'Politicien', 'Score précédent', 'Nouveau score', 'Changement', 'Raison', 'Description'].join(','),
@@ -205,6 +268,118 @@ export default function TransparencyPage() {
             </div>
           </div>
         </div>
+
+        {/* AI-Powered System Statistics */}
+        {aiStats && (
+          <Card className="mb-8 border-2 border-indigo-200 bg-gradient-to-br from-indigo-50 to-white">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-3 text-indigo-900">
+                <Shield className="w-6 h-6" />
+                Statistiques du Système IA - En Direct
+              </CardTitle>
+              <p className="text-sm text-indigo-700 mt-2">
+                🚧 <strong>Système en construction</strong> - Données collectées automatiquement par IA.
+                Scores actuels non représentatifs : données insuffisantes pour audit de qualité.
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="bg-white rounded-lg p-4 border border-indigo-200">
+                  <div className="text-sm text-indigo-600 mb-1">Politicians Audités</div>
+                  <div className="text-3xl font-bold text-indigo-900">
+                    {aiStats.politiciansWithScores}/{aiStats.totalPoliticians}
+                  </div>
+                  <div className="text-xs text-indigo-600 mt-1">avec scores IA</div>
+                </div>
+
+                <div className="bg-white rounded-lg p-4 border border-green-200">
+                  <div className="text-sm text-green-600 mb-1">Promesses Extraites</div>
+                  <div className="text-3xl font-bold text-green-900">{aiStats.totalPromises}</div>
+                  <div className="text-xs text-green-600 mt-1">
+                    {aiStats.politiciansWithPromises} politicians
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-lg p-4 border border-blue-200">
+                  <div className="text-sm text-blue-600 mb-1">Actions Parlementaires</div>
+                  <div className="text-3xl font-bold text-blue-900">{aiStats.parliamentaryActions}</div>
+                  <div className="text-xs text-blue-600 mt-1">votes & activités</div>
+                </div>
+
+                <div className="bg-white rounded-lg p-4 border border-purple-200">
+                  <div className="text-sm text-purple-600 mb-1">Vérifications IA</div>
+                  <div className="text-3xl font-bold text-purple-900">{aiStats.promiseVerifications}</div>
+                  <div className="text-xs text-purple-600 mt-1">promesses vérifiées</div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-white rounded-lg p-4 border border-amber-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-sm text-amber-600 mb-1">Score Moyen de Cohérence</div>
+                      <div className="text-2xl font-bold text-amber-900">
+                        {aiStats.avgConsistencyScore.toFixed(1)}/100
+                      </div>
+                    </div>
+                    <TrendingUp className="w-8 h-8 text-amber-500" />
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-lg p-4 border border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-sm text-gray-600 mb-1">Dernier Audit Automatique</div>
+                      <div className="text-lg font-semibold text-gray-900">
+                        {aiStats.lastAuditDate
+                          ? new Date(aiStats.lastAuditDate).toLocaleDateString('fr-FR', {
+                              day: 'numeric',
+                              month: 'short',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })
+                          : 'Aucun audit'}
+                      </div>
+                    </div>
+                    <Calendar className="w-8 h-8 text-gray-500" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Data Quality Warning */}
+              <div className="mt-4 p-4 bg-yellow-50 rounded-lg border-2 border-yellow-300">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-6 h-6 text-yellow-700 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-yellow-900">
+                    <strong className="block mb-2">⚠️ Qualité des Données - Phase de Collecte Initiale</strong>
+                    <ul className="space-y-1 list-disc list-inside">
+                      <li>Seulement <strong>{aiStats.politiciansWithPromises}/{aiStats.totalPoliticians}</strong> politicians ont des promesses extraites</li>
+                      <li>Moyenne de <strong>{(aiStats.totalPromises / Math.max(aiStats.politiciansWithPromises, 1)).toFixed(1)}</strong> promesses par politicien (minimum recommandé : 20+)</li>
+                      <li><strong>59 politicians ont un score de 0</strong> (pas de données collectées)</li>
+                      <li>Les scores actuels ne sont <strong>PAS représentatifs</strong> - Données insuffisantes pour un audit fiable</li>
+                      <li>Besoin de 3-6 mois de collecte continue pour des scores de qualité</li>
+                    </ul>
+                    <div className="mt-3 pt-3 border-t border-yellow-300">
+                      <strong>Ce que nous construisons :</strong> Système automatisé qui collectera quotidiennement
+                      promesses + actions parlementaires pour produire des scores objectifs basés sur des données complètes.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 p-3 bg-indigo-100 rounded-lg border border-indigo-200">
+                <div className="flex items-start gap-2">
+                  <CheckCircle className="w-5 h-5 text-indigo-600 mt-0.5" />
+                  <div className="text-sm text-indigo-900">
+                    <strong>Infrastructure automatisée en place :</strong> Collecte quotidienne des données parlementaires (6h00),
+                    extraction IA des promesses, matching sémantique, calcul objectif des scores.
+                    Zéro intervention humaine dans le scoring.
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Statistics Cards */}
         {stats && (

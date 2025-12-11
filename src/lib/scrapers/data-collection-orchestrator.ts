@@ -1,10 +1,24 @@
 /**
  * Data Collection Orchestrator
- * Coordinates scraping from multiple sources and stores in database
+ * Coordinates data collection from multiple official sources:
+ *
+ * 1. NosDéputés.fr - Deputies votes, questions, amendments, attendance
+ * 2. NosSénateurs.fr - Senators votes, questions, amendments
+ * 3. RNE (data.gouv.fr) - Official elected officials registry
+ * 4. data.assemblee-nationale.fr - Official AN open data
+ * 5. Vigie du Mensonge - Community-verified promises
  */
 
 import { assembleeNationaleClient } from './assemblee-nationale-client'
+import { senatClient } from './senat-client'
+import { rneClient } from './rne-client'
+import { assembleeOpendataClient } from './assemblee-opendata-client'
+import { vigieClient, VigieImportResult } from './vigie-client'
 import { supabase } from '@/lib/supabase'
+
+// ============================================================================
+// Type Definitions
+// ============================================================================
 
 interface CollectionResult {
   success: boolean
@@ -16,373 +30,390 @@ interface CollectionResult {
   duration: number
 }
 
+interface FullCollectionStats {
+  rne: { deputies: number; senators: number; errors: number }
+  deputies: { politicians: number; votes: number; questions: number; amendments: number; errors: number }
+  senators: { politicians: number; votes: number; questions: number; amendments: number; errors: number }
+  opendata: { scrutins: number; votes: number; errors: number }
+  vigie: { imported: number; skipped: number; errors: number }
+  duration: number
+}
+
+// ============================================================================
+// Main Orchestrator Class
+// ============================================================================
+
 export class DataCollectionOrchestrator {
-  /**
-   * Collect all deputies and their data
-   */
-  async collectDeputiesData(): Promise<CollectionResult> {
-    const startTime = Date.now()
-    const errors: string[] = []
-    let recordsCollected = 0
-    let recordsNew = 0
-    let recordsUpdated = 0
 
-    // Create job tracking
-    const jobId = await assembleeNationaleClient.trackCollectionJob(
-      'assemblee_deputies_full',
-      'running'
-    )
-
-    try {
-      console.log('Starting deputies data collection...')
-
-      // Get all deputies
-      const deputies = await assembleeNationaleClient.getAllDeputies()
-      console.log(`Found ${deputies.length} deputies to process`)
-
-      // Process each deputy
-      for (const deputy of deputies) {
-        try {
-          // Check if exists
-          const { data: existing } = await supabase
-            .from('politicians')
-            .select('id')
-            .eq('name', deputy.nom)
-            .single()
-
-          // Store deputy info
-          await assembleeNationaleClient.storeDeputyInDatabase(deputy)
-
-          if (existing) {
-            recordsUpdated++
-          } else {
-            recordsNew++
-          }
-
-          recordsCollected++
-
-          // Rate limiting: wait 500ms between requests
-          await this.sleep(500)
-        } catch (error) {
-          const errorMsg = `Failed to process deputy ${deputy.nom}: ${error}`
-          console.error(errorMsg)
-          errors.push(errorMsg)
-        }
-      }
-
-      const duration = Math.round((Date.now() - startTime) / 1000)
-
-      // Update job status
-      await assembleeNationaleClient.updateCollectionJob(jobId, {
-        status: 'completed',
-        records_collected: recordsCollected,
-        records_new: recordsNew,
-        records_updated: recordsUpdated,
-        completed_at: new Date().toISOString(),
-        duration_seconds: duration
-      })
-
-      console.log(`Deputies collection completed: ${recordsCollected} processed (${recordsNew} new, ${recordsUpdated} updated)`)
-
-      return {
-        success: true,
-        jobId,
-        recordsCollected,
-        recordsNew,
-        recordsUpdated,
-        errors,
-        duration
-      }
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : 'Unknown error'
-      const duration = Math.round((Date.now() - startTime) / 1000)
-
-      await assembleeNationaleClient.updateCollectionJob(jobId, {
-        status: 'failed',
-        error_message: errorMsg,
-        records_collected: recordsCollected,
-        records_new: recordsNew,
-        records_updated: recordsUpdated,
-        completed_at: new Date().toISOString(),
-        duration_seconds: duration
-      })
-
-      return {
-        success: false,
-        jobId,
-        recordsCollected,
-        recordsNew,
-        recordsUpdated,
-        errors: [...errors, errorMsg],
-        duration
-      }
-    }
+  private async sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms))
   }
 
-  /**
-   * Collect votes for all deputies
-   */
-  async collectDeputiesVotes(limit?: number): Promise<CollectionResult> {
-    const startTime = Date.now()
-    const errors: string[] = []
-    let recordsCollected = 0
-    let recordsNew = 0
-    let recordsUpdated = 0
-
-    const jobId = await assembleeNationaleClient.trackCollectionJob(
-      'assemblee_votes',
-      'running'
-    )
-
-    try {
-      console.log('Starting votes collection...')
-
-      // Get all politicians who are deputies
-      const { data: politicians } = await supabase
-        .from('politicians')
-        .select('id, name')
-        .eq('position', 'Député')
-        .limit(limit || 100)
-
-      if (!politicians || politicians.length === 0) {
-        throw new Error('No deputies found in database')
-      }
-
-      console.log(`Processing votes for ${politicians.length} deputies`)
-
-      for (const politician of politicians) {
-        try {
-          // Get slug from name (convert to lowercase, replace spaces with dashes)
-          const slug = this.nameToSlug(politician.name)
-
-          // Get votes for this deputy
-          const votes = await assembleeNationaleClient.getDeputyVotes(slug)
-
-          if (votes.length > 0) {
-            // Store in database
-            await assembleeNationaleClient.storeParliamentaryActions(
-              politician.id,
-              votes,
-              []
-            )
-
-            recordsCollected += votes.length
-            recordsNew += votes.length // Simplified: assume all are new
-          }
-
-          // Rate limiting
-          await this.sleep(1000)
-        } catch (error) {
-          const errorMsg = `Failed to process votes for ${politician.name}: ${error}`
-          console.error(errorMsg)
-          errors.push(errorMsg)
-        }
-      }
-
-      const duration = Math.round((Date.now() - startTime) / 1000)
-
-      await assembleeNationaleClient.updateCollectionJob(jobId, {
-        status: 'completed',
-        records_collected: recordsCollected,
-        records_new: recordsNew,
-        records_updated: recordsUpdated,
-        completed_at: new Date().toISOString(),
-        duration_seconds: duration
-      })
-
-      console.log(`Votes collection completed: ${recordsCollected} votes collected`)
-
-      return {
-        success: true,
-        jobId,
-        recordsCollected,
-        recordsNew,
-        recordsUpdated,
-        errors,
-        duration
-      }
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : 'Unknown error'
-      const duration = Math.round((Date.now() - startTime) / 1000)
-
-      await assembleeNationaleClient.updateCollectionJob(jobId, {
-        status: 'failed',
-        error_message: errorMsg,
-        records_collected: recordsCollected,
-        completed_at: new Date().toISOString(),
-        duration_seconds: duration
-      })
-
-      return {
-        success: false,
-        jobId,
-        recordsCollected,
-        recordsNew,
-        recordsUpdated,
-        errors: [...errors, errorMsg],
-        duration
-      }
-    }
-  }
-
-  /**
-   * Collect activity and attendance for all deputies
-   */
-  async collectDeputiesActivity(limit?: number): Promise<CollectionResult> {
-    const startTime = Date.now()
-    const errors: string[] = []
-    let recordsCollected = 0
-    let recordsNew = 0
-    let recordsUpdated = 0
-
-    const jobId = await assembleeNationaleClient.trackCollectionJob(
-      'assemblee_activity',
-      'running'
-    )
-
-    try {
-      console.log('Starting activity collection...')
-
-      const { data: politicians } = await supabase
-        .from('politicians')
-        .select('id, name')
-        .eq('position', 'Député')
-        .limit(limit || 100)
-
-      if (!politicians || politicians.length === 0) {
-        throw new Error('No deputies found in database')
-      }
-
-      console.log(`Processing activity for ${politicians.length} deputies`)
-
-      for (const politician of politicians) {
-        try {
-          const slug = this.nameToSlug(politician.name)
-
-          // Get activity
-          const activities = await assembleeNationaleClient.getDeputyActivity(slug)
-          const attendance = await assembleeNationaleClient.getDeputyAttendance(slug)
-
-          // Store activities
-          if (activities.length > 0) {
-            await assembleeNationaleClient.storeParliamentaryActions(
-              politician.id,
-              [],
-              activities
-            )
-            recordsCollected += activities.length
-            recordsNew += activities.length
-          }
-
-          // Update politician attendance stats
-          await supabase
-            .from('politicians')
-            .update({
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', politician.id)
-
-          // Rate limiting
-          await this.sleep(1000)
-        } catch (error) {
-          const errorMsg = `Failed to process activity for ${politician.name}: ${error}`
-          console.error(errorMsg)
-          errors.push(errorMsg)
-        }
-      }
-
-      const duration = Math.round((Date.now() - startTime) / 1000)
-
-      await assembleeNationaleClient.updateCollectionJob(jobId, {
-        status: 'completed',
-        records_collected: recordsCollected,
-        records_new: recordsNew,
-        records_updated: recordsUpdated,
-        completed_at: new Date().toISOString(),
-        duration_seconds: duration
-      })
-
-      console.log(`Activity collection completed: ${recordsCollected} activities collected`)
-
-      return {
-        success: true,
-        jobId,
-        recordsCollected,
-        recordsNew,
-        recordsUpdated,
-        errors,
-        duration
-      }
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : 'Unknown error'
-      const duration = Math.round((Date.now() - startTime) / 1000)
-
-      await assembleeNationaleClient.updateCollectionJob(jobId, {
-        status: 'failed',
-        error_message: errorMsg,
-        records_collected: recordsCollected,
-        completed_at: new Date().toISOString(),
-        duration_seconds: duration
-      })
-
-      return {
-        success: false,
-        jobId,
-        recordsCollected,
-        recordsNew,
-        recordsUpdated,
-        errors: [...errors, errorMsg],
-        duration
-      }
-    }
-  }
-
-  /**
-   * Run full data collection (deputies + votes + activity)
-   */
-  async runFullCollection(): Promise<{
-    deputies: CollectionResult
-    votes: CollectionResult
-    activity: CollectionResult
-  }> {
-    console.log('Starting full data collection...')
-
-    // Step 1: Collect deputies
-    const deputies = await this.collectDeputiesData()
-
-    // Step 2: Collect votes
-    const votes = await this.collectDeputiesVotes(50) // Limit to 50 for testing
-
-    // Step 3: Collect activity
-    const activity = await this.collectDeputiesActivity(50)
-
-    console.log('Full collection completed!')
-    console.log('Summary:', {
-      deputies: `${deputies.recordsCollected} processed (${deputies.recordsNew} new)`,
-      votes: `${votes.recordsCollected} votes collected`,
-      activity: `${activity.recordsCollected} activities collected`
-    })
-
-    return { deputies, votes, activity }
-  }
-
-  /**
-   * Helper: Convert name to NosDéputés slug format
-   */
   private nameToSlug(name: string): string {
     return name
       .toLowerCase()
       .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '') // Remove accents
+      .replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '')
   }
 
+  // ==========================================================================
+  // RNE Collection (Primary Source for Politicians List)
+  // ==========================================================================
+
   /**
-   * Helper: Sleep utility
+   * Sync all elected officials from RNE (Répertoire National des Élus)
+   * This is the authoritative source from the French government
    */
-  private sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms))
+  async collectRNEData(): Promise<{ deputies: number; senators: number; errors: number }> {
+    console.log('\n══════════════════════════════════════════════════════════════')
+    console.log('📋 PHASE: RNE (Répertoire National des Élus)')
+    console.log('══════════════════════════════════════════════════════════════\n')
+
+    try {
+      const stats = await rneClient.syncToDatabase()
+      return stats
+    } catch (error) {
+      console.error('RNE collection failed:', error)
+      return { deputies: 0, senators: 0, errors: 1 }
+    }
+  }
+
+  // ==========================================================================
+  // Deputies Collection (NosDéputés.fr)
+  // ==========================================================================
+
+  /**
+   * Collect all deputies with their votes, questions, and amendments
+   */
+  async collectDeputiesFullData(options?: { limit?: number }): Promise<{
+    politicians: number
+    votes: number
+    questions: number
+    amendments: number
+    errors: number
+  }> {
+    console.log('\n══════════════════════════════════════════════════════════════')
+    console.log('🏛️ PHASE: Deputies (NosDéputés.fr)')
+    console.log('══════════════════════════════════════════════════════════════\n')
+
+    const stats = { politicians: 0, votes: 0, questions: 0, amendments: 0, errors: 0 }
+
+    try {
+      // Get all deputies
+      const deputies = await assembleeNationaleClient.getAllDeputies()
+      const limit = options?.limit || deputies.length
+
+      console.log(`👥 Processing ${Math.min(limit, deputies.length)} deputies...`)
+
+      for (const deputy of deputies.slice(0, limit)) {
+        try {
+          // Store deputy info
+          const politicianId = await assembleeNationaleClient.storeDeputyInDatabase(deputy)
+          stats.politicians++
+
+          // Store parliamentary actions (votes, questions, amendments)
+          const actionStats = await assembleeNationaleClient.storeParliamentaryActions(
+            politicianId,
+            deputy.slug
+          )
+
+          stats.votes += actionStats.votes
+          stats.questions += actionStats.questions
+          stats.amendments += actionStats.amendments
+
+          console.log(`✅ ${deputy.nom}: ${actionStats.votes}v, ${actionStats.questions}q, ${actionStats.amendments}a`)
+        } catch (error) {
+          console.error(`❌ Error processing ${deputy.nom}:`, error)
+          stats.errors++
+        }
+      }
+
+      // Also fetch synthesis data for aggregate stats
+      try {
+        const synthesis = await assembleeNationaleClient.getActivitySynthesis()
+        console.log(`📊 Got synthesis data for ${synthesis.length} deputies`)
+
+        for (const s of synthesis) {
+          // Find matching politician and store synthesis
+          const { data: politician } = await supabase
+            .from('politicians')
+            .select('id')
+            .eq('external_id', s.depute.slug)
+            .single()
+
+          if (politician) {
+            await assembleeNationaleClient.storeSynthesisData(politician.id, s.depute)
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching synthesis:', error)
+      }
+
+    } catch (error) {
+      console.error('Deputies collection failed:', error)
+      stats.errors++
+    }
+
+    console.log(`\n📊 Deputies: ${stats.politicians} politicians, ${stats.votes} votes, ${stats.questions} questions, ${stats.amendments} amendments`)
+    return stats
+  }
+
+  // ==========================================================================
+  // Senators Collection (NosSénateurs.fr)
+  // ==========================================================================
+
+  /**
+   * Collect all senators with their votes, questions, and amendments
+   */
+  async collectSenatorsFullData(options?: { limit?: number }): Promise<{
+    politicians: number
+    votes: number
+    questions: number
+    amendments: number
+    errors: number
+  }> {
+    console.log('\n══════════════════════════════════════════════════════════════')
+    console.log('🏛️ PHASE: Senators (NosSénateurs.fr)')
+    console.log('══════════════════════════════════════════════════════════════\n')
+
+    try {
+      const result = await senatClient.collectAllData(options)
+      // Map 'senators' to 'politicians' for consistency
+      return {
+        politicians: result.senators,
+        votes: result.votes,
+        questions: result.questions,
+        amendments: result.amendments,
+        errors: result.errors
+      }
+    } catch (error) {
+      console.error('Senators collection failed:', error)
+      return { politicians: 0, votes: 0, questions: 0, amendments: 0, errors: 1 }
+    }
+  }
+
+  // ==========================================================================
+  // Official Open Data Collection (data.assemblee-nationale.fr)
+  // ==========================================================================
+
+  /**
+   * Collect official scrutins and vote data from AN Open Data
+   */
+  async collectOfficialOpenData(options?: { limit?: number }): Promise<{
+    scrutins: number
+    votes: number
+    errors: number
+  }> {
+    console.log('\n══════════════════════════════════════════════════════════════')
+    console.log('📊 PHASE: Official Open Data (data.assemblee-nationale.fr)')
+    console.log('══════════════════════════════════════════════════════════════\n')
+
+    try {
+      const stats = await assembleeOpendataClient.collectAllData(options)
+      return { scrutins: stats.scrutins, votes: stats.votes, errors: stats.errors }
+    } catch (error) {
+      console.error('Official open data collection failed:', error)
+      return { scrutins: 0, votes: 0, errors: 1 }
+    }
+  }
+
+  // ==========================================================================
+  // Vigie du Mensonge Collection
+  // ==========================================================================
+
+  /**
+   * Collect verified promises from Vigie du mensonge
+   */
+  async collectVigiePromises(politicianNames?: string[]): Promise<VigieImportResult> {
+    console.log('\n══════════════════════════════════════════════════════════════')
+    console.log('👁️ PHASE: Vigie du Mensonge')
+    console.log('══════════════════════════════════════════════════════════════\n')
+
+    // If no politicians specified, get top politicians from database
+    if (!politicianNames || politicianNames.length === 0) {
+      const { data: politicians } = await supabase
+        .from('politicians')
+        .select('name')
+        .eq('is_active', true)
+        .order('credibility_score', { ascending: false, nullsFirst: false })
+        .limit(20)
+
+      politicianNames = politicians?.map(p => p.name) || []
+    }
+
+    if (politicianNames.length === 0) {
+      console.log('⚠️ No politicians found to import')
+      return {
+        success: false,
+        jobId: 'none',
+        promisesFound: 0,
+        promisesImported: 0,
+        promisesSkipped: 0,
+        errors: ['No politicians found'],
+        duration: 0
+      }
+    }
+
+    console.log(`🔍 Searching Vigie for ${politicianNames.length} politicians...`)
+    return await vigieClient.importPromises(politicianNames)
+  }
+
+  // ==========================================================================
+  // Full Collection Pipeline
+  // ==========================================================================
+
+  /**
+   * Run the complete data collection pipeline
+   */
+  async runFullCollection(options?: {
+    skipRNE?: boolean
+    skipDeputies?: boolean
+    skipSenators?: boolean
+    skipOpenData?: boolean
+    skipVigie?: boolean
+    limit?: number
+  }): Promise<FullCollectionStats> {
+    const startTime = Date.now()
+
+    console.log('\n╔════════════════════════════════════════════════════════════════════╗')
+    console.log('║  🇫🇷 POLITIK CRED\' - Complete Data Collection Pipeline              ║')
+    console.log('╚════════════════════════════════════════════════════════════════════╝\n')
+
+    const stats: FullCollectionStats = {
+      rne: { deputies: 0, senators: 0, errors: 0 },
+      deputies: { politicians: 0, votes: 0, questions: 0, amendments: 0, errors: 0 },
+      senators: { politicians: 0, votes: 0, questions: 0, amendments: 0, errors: 0 },
+      opendata: { scrutins: 0, votes: 0, errors: 0 },
+      vigie: { imported: 0, skipped: 0, errors: 0 },
+      duration: 0
+    }
+
+    // Phase 1: RNE (Authoritative politicians list)
+    if (!options?.skipRNE) {
+      stats.rne = await this.collectRNEData()
+    }
+
+    // Phase 2: Deputies (NosDéputés.fr)
+    if (!options?.skipDeputies) {
+      stats.deputies = await this.collectDeputiesFullData({ limit: options?.limit })
+    }
+
+    // Phase 3: Senators (NosSénateurs.fr)
+    if (!options?.skipSenators) {
+      stats.senators = await this.collectSenatorsFullData({ limit: options?.limit })
+    }
+
+    // Phase 4: Official Open Data
+    if (!options?.skipOpenData) {
+      stats.opendata = await this.collectOfficialOpenData({ limit: options?.limit })
+    }
+
+    // Phase 5: Vigie du Mensonge
+    if (!options?.skipVigie) {
+      const vigieResult = await this.collectVigiePromises()
+      stats.vigie = {
+        imported: vigieResult.promisesImported,
+        skipped: vigieResult.promisesSkipped,
+        errors: vigieResult.errors.length
+      }
+    }
+
+    stats.duration = Math.round((Date.now() - startTime) / 1000)
+
+    // Print summary
+    console.log('\n╔════════════════════════════════════════════════════════════════════╗')
+    console.log('║  📊 COLLECTION SUMMARY                                              ║')
+    console.log('╠════════════════════════════════════════════════════════════════════╣')
+    console.log(`║  RNE: ${stats.rne.deputies} deputies, ${stats.rne.senators} senators`)
+    console.log(`║  Deputies: ${stats.deputies.politicians} politicians, ${stats.deputies.votes} votes`)
+    console.log(`║  Senators: ${stats.senators.politicians} politicians, ${stats.senators.votes} votes`)
+    console.log(`║  Open Data: ${stats.opendata.scrutins} scrutins, ${stats.opendata.votes} votes`)
+    console.log(`║  Vigie: ${stats.vigie.imported} promises imported`)
+    console.log('╠════════════════════════════════════════════════════════════════════╣')
+    console.log(`║  ⏱️  Duration: ${stats.duration} seconds`)
+    console.log('╚════════════════════════════════════════════════════════════════════╝\n')
+
+    return stats
+  }
+
+  // ==========================================================================
+  // Legacy Methods (for backward compatibility)
+  // ==========================================================================
+
+  /**
+   * @deprecated Use collectDeputiesFullData instead
+   */
+  async collectDeputiesData(): Promise<CollectionResult> {
+    const stats = await this.collectDeputiesFullData()
+    return {
+      success: stats.errors === 0,
+      jobId: 'legacy',
+      recordsCollected: stats.politicians,
+      recordsNew: stats.politicians,
+      recordsUpdated: 0,
+      errors: [],
+      duration: 0
+    }
+  }
+
+  /**
+   * @deprecated Use collectDeputiesFullData instead
+   */
+  async collectDeputiesVotes(limit?: number): Promise<CollectionResult> {
+    const stats = await this.collectDeputiesFullData({ limit })
+    return {
+      success: stats.errors === 0,
+      jobId: 'legacy',
+      recordsCollected: stats.votes,
+      recordsNew: stats.votes,
+      recordsUpdated: 0,
+      errors: [],
+      duration: 0
+    }
+  }
+
+  /**
+   * @deprecated Use collectDeputiesFullData instead
+   */
+  async collectDeputiesActivity(limit?: number): Promise<CollectionResult> {
+    const stats = await this.collectDeputiesFullData({ limit })
+    return {
+      success: stats.errors === 0,
+      jobId: 'legacy',
+      recordsCollected: stats.questions + stats.amendments,
+      recordsNew: stats.questions + stats.amendments,
+      recordsUpdated: 0,
+      errors: [],
+      duration: 0
+    }
+  }
+
+  /**
+   * @deprecated Use runFullCollection instead
+   */
+  async runFullCollection_Legacy(): Promise<{
+    deputies: CollectionResult
+    votes: CollectionResult
+    activity: CollectionResult
+  }> {
+    const stats = await this.collectDeputiesFullData({ limit: 50 })
+    const result = {
+      success: stats.errors === 0,
+      jobId: 'legacy',
+      recordsCollected: 0,
+      recordsNew: 0,
+      recordsUpdated: 0,
+      errors: [],
+      duration: 0
+    }
+
+    return {
+      deputies: { ...result, recordsCollected: stats.politicians },
+      votes: { ...result, recordsCollected: stats.votes },
+      activity: { ...result, recordsCollected: stats.questions + stats.amendments }
+    }
   }
 }
 

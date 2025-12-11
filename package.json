@@ -17,7 +17,10 @@
     "collect:wikipedia": "tsx scripts/collect-from-wikipedia.ts",
     "clear-promises": "tsx scripts/clear-promises.ts",
     "migration-006": "tsx scripts/apply-migration-006.ts",
-    "migration-007": "tsx scripts/apply-migration-007.ts"
+    "migration-007": "tsx scripts/apply-migration-007.ts",
+    "analyze": "tsx scripts/run-full-analysis.ts",
+    "analyze:dry": "tsx scripts/run-full-analysis.ts --dry-run",
+    "analyze:quick": "tsx scripts/run-full-analysis.ts --limit=10 --skip-vigie --skip-news"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

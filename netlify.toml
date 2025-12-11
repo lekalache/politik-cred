@@ -49,6 +49,14 @@
   [redirects.headers]
     X-Function-Timeout = "120"  # 2 minutes
 
+[[redirects]]
+  from = "/api/admin/full-analysis"
+  to = "/.netlify/functions/api/admin/full-analysis"
+  status = 200
+  force = true
+  [redirects.headers]
+    X-Function-Timeout = "600"  # 10 minutes for full data collection
+
 # Environment variables documentation
 # Required environment variables:
 # - NEXT_PUBLIC_SUPABASE_URL

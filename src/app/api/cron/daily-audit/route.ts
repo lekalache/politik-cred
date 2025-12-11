@@ -74,12 +74,19 @@ async function collectParliamentaryData(): Promise<JobResult> {
 
   try {
     console.log('📊 Step 1: Collecting parliamentary data...')
+    console.log('🔍 DEBUG: CRON_SECRET available:', !!CRON_SECRET)
+    console.log('🔍 DEBUG: CRON_SECRET (first 10):', CRON_SECRET?.substring(0, 10))
 
     const response = await fetch(`${process.env.URL || 'http://localhost:3000'}/api/data-collection/collect`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
-      }
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${CRON_SECRET}`
+      },
+      body: JSON.stringify({
+        type: 'incremental',
+        limit: 50
+      })
     })
 
     if (!response.ok) {
@@ -117,8 +124,12 @@ async function matchPromisesToActions(): Promise<JobResult> {
     const response = await fetch(`${process.env.URL || 'http://localhost:3000'}/api/promises/match`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
-      }
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${CRON_SECRET}`
+      },
+      body: JSON.stringify({
+        all: true
+      })
     })
 
     if (!response.ok) {
@@ -156,8 +167,12 @@ async function calculateScores(): Promise<JobResult> {
     const response = await fetch(`${process.env.URL || 'http://localhost:3000'}/api/promises/calculate-scores`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
-      }
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${CRON_SECRET}`
+      },
+      body: JSON.stringify({
+        all: true
+      })
     })
 
     if (!response.ok) {
@@ -203,19 +218,21 @@ async function generateReport(results: JobResult[]): Promise<JobResult> {
       .from('promise_verifications')
       .select('id, created_at')
 
-    const report = {
+    // Create summary without circular references
+    const summary = {
       date: new Date().toISOString(),
       politicians_with_scores: politicians?.length || 0,
       total_verifications: verifications?.length || 0,
-      pipeline_results: [...results],
+      steps_completed: results.filter(r => r.status === 'success').length,
+      steps_failed: results.filter(r => r.status === 'error').length,
       top_politicians: politicians?.slice(0, 5).map(p => ({
         name: p.name,
         score: p.ai_score
       }))
     }
 
-    // Log to database
-    await logAuditActivity('daily-audit-completed', 'completed', report)
+    // Log to database (without pipeline_results to avoid circular ref)
+    await logAuditActivity('daily-audit-completed', 'completed', summary)
 
     const duration = Date.now() - startTime
 
@@ -223,7 +240,7 @@ async function generateReport(results: JobResult[]): Promise<JobResult> {
       step: 'generate-report',
       status: 'success',
       duration,
-      details: report
+      details: summary
     }
   } catch (error) {
     return {

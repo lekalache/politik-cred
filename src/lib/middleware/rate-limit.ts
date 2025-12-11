@@ -57,6 +57,16 @@ export async function withRateLimit(
   config: RateLimitConfig,
   handler: () => Promise<NextResponse> | NextResponse
 ): Promise<NextResponse> {
+  // Check for cron secret bypass
+  const authHeader = request.headers.get('authorization')
+  if (
+    authHeader?.startsWith('Bearer ') &&
+    process.env.CRON_SECRET_TOKEN &&
+    authHeader.substring(7) === process.env.CRON_SECRET_TOKEN
+  ) {
+    return await handler()
+  }
+
   const key = getRateLimitKey(request)
   const now = Date.now()
 

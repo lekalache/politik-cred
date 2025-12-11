@@ -345,6 +345,27 @@ export class ConsistencyCalculator {
         if (verifications.length === 0) {
           const emptyMetric = this.getEmptyMetrics(politicianId)
           metrics.push(emptyMetric)
+
+          // Store empty metric so politician gets ai_score = 0
+          metricsToStore.push({
+            politician_id: emptyMetric.politicianId,
+            overall_score: emptyMetric.overallScore,
+            promises_kept: emptyMetric.promisesKept,
+            promises_broken: emptyMetric.promisesBroken,
+            promises_partial: emptyMetric.promisesPartial,
+            promises_pending: emptyMetric.promisesPending,
+            attendance_rate: emptyMetric.attendanceRate,
+            sessions_attended: emptyMetric.sessionsAttended,
+            sessions_scheduled: emptyMetric.sessionsScheduled,
+            legislative_activity_score: emptyMetric.legislativeActivityScore,
+            bills_sponsored: emptyMetric.billsSponsored,
+            amendments_proposed: emptyMetric.amendmentsProposed,
+            debates_participated: emptyMetric.debatesParticipated,
+            questions_asked: emptyMetric.questionsAsked,
+            data_quality_score: emptyMetric.dataQualityScore,
+            last_calculated_at: emptyMetric.lastCalculatedAt.toISOString()
+          })
+
           continue
         }
 
@@ -448,7 +469,8 @@ export class ConsistencyCalculator {
   }
 
   /**
-   * Calculate scores for all politicians with promises
+   * Calculate scores for ALL politicians (not just those with promises)
+   * Politicians without promises get a score of 0 until data is collected
    * Optimized batch operation to eliminate N+1 queries
    */
   async calculateAllScores(): Promise<{
@@ -458,21 +480,21 @@ export class ConsistencyCalculator {
   }> {
     const startTime = Date.now()
 
-    // Get all politicians with promises
-    const { data: promises } = await supabase
-      .from('political_promises')
-      .select('politician_id')
+    // Get ALL politicians, not just those with promises
+    const { data: allPoliticians } = await supabase
+      .from('politicians')
+      .select('id')
 
-    if (!promises || promises.length === 0) {
+    if (!allPoliticians || allPoliticians.length === 0) {
       return { updated: 0, failed: 0, duration: 0 }
     }
 
-    // Get unique politician IDs
-    const politicianIds = [...new Set(promises.map((p: { politician_id: string }) => p.politician_id))]
+    const politicianIds = allPoliticians.map(p => p.id)
 
-    console.log(`Calculating scores for ${politicianIds.length} politicians using batch operation...`)
+    console.log(`Calculating scores for ${politicianIds.length} politicians (including those without promises)...`)
 
     // Use optimized batch calculation
+    // Politicians without promises will get score: 0, dataQuality: 0
     const results = await this.batchCalculate(politicianIds)
 
     const duration = Math.round((Date.now() - startTime) / 1000)

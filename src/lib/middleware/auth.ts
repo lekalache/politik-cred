@@ -39,6 +39,20 @@ export async function withAuth(
 
     const token = authHeader.substring(7)
 
+    // Check for cron secret bypass
+    if (
+      process.env.CRON_SECRET_TOKEN &&
+      token === process.env.CRON_SECRET_TOKEN
+    ) {
+      return await handler(request, {
+        user: {
+          id: 'system-cron',
+          email: 'cron@system'
+        },
+        role: 'admin'
+      })
+    }
+
     // Verify user authentication
     const {
       data: { user },

@@ -8,6 +8,7 @@ import { NewsManagement } from '@/components/admin/news-management'
 import { UserManagement } from '@/components/admin/user-management'
 import { PromiseVerification } from '@/components/admin/promise-verification'
 import { URLHealthMonitor } from '@/components/admin/url-health-monitor'
+import { FullAnalysisDashboard } from '@/components/admin/full-analysis-dashboard'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -25,7 +26,8 @@ import {
   Eye,
   Newspaper,
   FileText,
-  ExternalLink
+  ExternalLink,
+  Zap
 } from 'lucide-react'
 
 interface AdminStats {
@@ -45,7 +47,7 @@ interface RecentActivity {
 
 export default function AdminPage() {
   const { user, loading } = useAuth()
-  const [activeTab, setActiveTab] = useState<'overview' | 'moderation' | 'threats' | 'promises' | 'news' | 'users' | 'url-health' | 'analytics' | 'settings'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'moderation' | 'threats' | 'promises' | 'audit' | 'news' | 'users' | 'url-health' | 'analytics' | 'settings'>('overview')
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([])
   const [statsLoading, setStatsLoading] = useState(true)
@@ -230,6 +232,7 @@ export default function AdminPage() {
               { key: 'moderation', label: 'Modération', icon: <Shield className="w-4 h-4" />, adminOnly: false },
               { key: 'threats', label: 'Menaces IA', icon: <Eye className="w-4 h-4" />, adminOnly: false },
               { key: 'promises', label: 'Promesses', icon: <FileText className="w-4 h-4" />, adminOnly: false },
+              { key: 'audit', label: 'Audit Complet', icon: <Zap className="w-4 h-4" />, adminOnly: true },
               { key: 'url-health', label: 'Santé des URLs', icon: <ExternalLink className="w-4 h-4" />, adminOnly: true },
               { key: 'news', label: 'Actualités', icon: <Newspaper className="w-4 h-4" />, adminOnly: true },
               { key: 'users', label: 'Utilisateurs', icon: <Users className="w-4 h-4" />, adminOnly: true },
@@ -379,6 +382,16 @@ export default function AdminPage() {
                     </Button>
                     {isAdmin && (
                       <Button
+                        className="w-full justify-start bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100"
+                        variant="outline"
+                        onClick={() => setActiveTab('audit')}
+                      >
+                        <Zap className="w-4 h-4 mr-2" />
+                        Lancer l'audit complet
+                      </Button>
+                    )}
+                    {isAdmin && (
+                      <Button
                         className="w-full justify-start"
                         variant="outline"
                         onClick={() => setActiveTab('url-health')}
@@ -435,6 +448,10 @@ export default function AdminPage() {
 
         {activeTab === 'promises' && (
           <PromiseVerification />
+        )}
+
+        {activeTab === 'audit' && isAdmin && (
+          <FullAnalysisDashboard />
         )}
 
         {activeTab === 'url-health' && isAdmin && (

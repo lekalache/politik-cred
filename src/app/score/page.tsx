@@ -66,13 +66,18 @@ export default function ScorePage() {
         console.error('Failed to fetch consistency scores:', scoresError)
       }
 
-      // Merge the data
+      // Merge the data (exclude scores.id to prevent overwriting pol.id)
       const mergedData = politiciansData?.map(pol => {
         const scores = scoresData?.find(s => s.politician_id === pol.id)
-        return {
-          ...pol,
-          ...scores
+        if (scores) {
+          // Destructure to exclude 'id' from scores (it's the consistency_scores PK, not politician ID)
+          const { id: _scoresId, politician_id: _politicianId, ...scoreFields } = scores
+          return {
+            ...pol,
+            ...scoreFields
+          }
         }
+        return pol
       }) || []
 
       setPoliticians(mergedData)
@@ -121,6 +126,12 @@ export default function ScorePage() {
             Scores calculés par IA basés sur la vérification factuelle des promesses vs actions parlementaires.
             100% objectif, 0% subjectif. Données vérifiables issues de sources officielles.
           </p>
+          <div className="mt-4 p-3 bg-yellow-500/20 backdrop-blur-sm rounded-lg border border-yellow-300/50">
+            <p className="text-yellow-100 text-sm">
+              <strong>⚠️ Phase de collecte initiale :</strong> Données insuffisantes pour scores représentatifs.
+              Seulement 11/70 politicians ont des promesses extraites. Scores de qualité après 3-6 mois de collecte quotidienne.
+            </p>
+          </div>
 
           {/* Stats Overview */}
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mt-8">
@@ -191,148 +202,166 @@ export default function ScorePage() {
               <Link key={politician.id} href={`/politicians/${politician.id}`}>
                 <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
                   <CardHeader className="bg-gradient-to-r from-indigo-50 to-white border-b border-indigo-100">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="w-8 h-8 rounded-full bg-[#1E3A8A] text-white flex items-center justify-center font-bold">
-                          #{index + 1}
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="w-8 h-8 rounded-full bg-[#1E3A8A] text-white flex items-center justify-center font-bold">
+                            #{index + 1}
+                          </div>
+                          <CardTitle className="text-2xl">{politician.name}</CardTitle>
+                          <ScoreRankBadge rank={index + 1} />
                         </div>
-                        <CardTitle className="text-2xl">{politician.name}</CardTitle>
-                        <ScoreRankBadge rank={index + 1} />
-                      </div>
-                      {politician.party && (
-                        <Badge variant="outline" className="text-xs">
-                          {politician.party}
-                        </Badge>
-                      )}
-                      {politician.ai_last_audited_at && (
-                        <p className="text-xs text-gray-500 mt-2">
-                          Dernière analyse : {new Date(politician.ai_last_audited_at).toLocaleDateString('fr-FR')}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </CardHeader>
-
-                <CardContent className="p-6">
-                  {/* 4 AI Scores Grid */}
-                  <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                    {/* Score 1: Consistency Score */}
-                    <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-lg p-4 border border-indigo-200">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-semibold text-indigo-700 uppercase">Cohérence</span>
-                        <Shield className="w-4 h-4 text-indigo-600" />
-                      </div>
-                      <div className="text-3xl font-bold text-indigo-900 mb-1">
-                        {politician.overall_score?.toFixed(1) || politician.ai_score || '—'}<span className="text-lg">/100</span>
-                      </div>
-                      <div className="w-full bg-indigo-200 rounded-full h-2 mb-2">
-                        <div
-                          className="bg-indigo-600 h-2 rounded-full transition-all duration-500"
-                          style={{ width: `${politician.overall_score || politician.ai_score || 0}%` }}
-                        />
-                      </div>
-                      <div className="text-xs text-indigo-600 space-y-0.5">
-                        <div>✓ Tenues: {politician.promises_kept || 0}</div>
-                        <div>✗ Brisées: {politician.promises_broken || 0}</div>
-                        <div>◐ Partielles: {politician.promises_partial || 0}</div>
-                      </div>
-                    </div>
-
-                    {/* Score 2: Attendance Rate */}
-                    <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-semibold text-green-700 uppercase">Présence</span>
-                        <CheckCircle className="w-4 h-4 text-green-600" />
-                      </div>
-                      <div className="text-3xl font-bold text-green-900 mb-1">
-                        {politician.attendance_rate !== null ? `${politician.attendance_rate.toFixed(1)}%` : '—'}
-                      </div>
-                      <div className="w-full bg-green-200 rounded-full h-2 mb-2">
-                        <div
-                          className="bg-green-600 h-2 rounded-full transition-all duration-500"
-                          style={{ width: `${politician.attendance_rate || 0}%` }}
-                        />
-                      </div>
-                      <div className="text-xs text-green-600">
-                        {politician.sessions_attended || 0}/{politician.sessions_scheduled || 0} sessions
-                      </div>
-                    </div>
-
-                    {/* Score 3: Legislative Activity */}
-                    <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg p-4 border border-amber-200">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-semibold text-amber-700 uppercase">Activité</span>
-                        <TrendingUp className="w-4 h-4 text-amber-600" />
-                      </div>
-                      <div className="text-3xl font-bold text-amber-900 mb-1">
-                        {politician.legislative_activity_score !== null ? `${politician.legislative_activity_score.toFixed(1)}` : '—'}<span className="text-lg">/100</span>
-                      </div>
-                      <div className="w-full bg-amber-200 rounded-full h-2 mb-2">
-                        <div
-                          className="bg-amber-600 h-2 rounded-full transition-all duration-500"
-                          style={{ width: `${politician.legislative_activity_score || 0}%` }}
-                        />
-                      </div>
-                      <div className="text-xs text-amber-600 space-y-0.5">
-                        <div>Lois: {politician.bills_sponsored || 0}</div>
-                        <div>Amendements: {politician.amendments_proposed || 0}</div>
-                      </div>
-                    </div>
-
-                    {/* Score 4: Data Quality */}
-                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-semibold text-gray-700 uppercase">Données</span>
-                        <Info className="w-4 h-4 text-gray-600" />
-                      </div>
-                      <div className="text-3xl font-bold text-gray-900 mb-1">
-                        {politician.data_quality_score !== null ? `${(politician.data_quality_score * 100).toFixed(0)}%` : '—'}
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-                        <div
-                          className="bg-gray-600 h-2 rounded-full transition-all duration-500"
-                          style={{ width: `${(politician.data_quality_score || 0) * 100}%` }}
-                        />
-                      </div>
-                      <div className="text-xs text-gray-600">
-                        Complétude de l&apos;audit
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Additional Details */}
-                  <div className="grid md:grid-cols-2 gap-4 pt-4 border-t">
-                    <div>
-                      <h4 className="font-semibold text-gray-700 mb-2 text-sm">Détails Promesses</h4>
-                      <div className="space-y-1 text-xs">
-                        <div className="flex justify-between p-2 bg-gray-50 rounded">
-                          <span>Total promesses</span>
-                          <span className="font-semibold">{(politician.promises_kept || 0) + (politician.promises_broken || 0) + (politician.promises_partial || 0)}</span>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {politician.party && (
+                            <Badge variant="outline" className="text-xs">
+                              {politician.party}
+                            </Badge>
+                          )}
+                          {/* Data Quality Indicator */}
+                          {politician.data_quality_score !== undefined && (
+                            <Badge
+                              variant="outline"
+                              className={`text-xs ${
+                                politician.data_quality_score >= 0.7
+                                  ? 'bg-green-50 text-green-700 border-green-300'
+                                  : politician.data_quality_score >= 0.3
+                                  ? 'bg-yellow-50 text-yellow-700 border-yellow-300'
+                                  : 'bg-red-50 text-red-700 border-red-300'
+                              }`}
+                            >
+                              Données : {(politician.data_quality_score * 100).toFixed(0)}%
+                              {politician.data_quality_score < 0.3 && ' ⚠️'}
+                            </Badge>
+                          )}
                         </div>
-                        <div className="flex justify-between p-2 bg-gray-50 rounded">
-                          <span>En attente</span>
-                          <span className="font-semibold">{politician.promises_pending || 0}</span>
+                        {politician.ai_last_audited_at && (
+                          <p className="text-xs text-gray-500 mt-2">
+                            Dernière analyse : {new Date(politician.ai_last_audited_at).toLocaleDateString('fr-FR')}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="p-6">
+                    {/* 4 AI Scores Grid */}
+                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                      {/* Score 1: Consistency Score */}
+                      <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-lg p-4 border border-indigo-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-semibold text-indigo-700 uppercase">Cohérence</span>
+                          <Shield className="w-4 h-4 text-indigo-600" />
+                        </div>
+                        <div className="text-3xl font-bold text-indigo-900 mb-1">
+                          {politician.overall_score?.toFixed(1) || politician.ai_score || '—'}<span className="text-lg">/100</span>
+                        </div>
+                        <div className="w-full bg-indigo-200 rounded-full h-2 mb-2">
+                          <div
+                            className="bg-indigo-600 h-2 rounded-full transition-all duration-500"
+                            style={{ width: `${politician.overall_score || politician.ai_score || 0}%` }}
+                          />
+                        </div>
+                        <div className="text-xs text-indigo-600 space-y-0.5">
+                          <div>✓ Tenues: {politician.promises_kept || 0}</div>
+                          <div>✗ Brisées: {politician.promises_broken || 0}</div>
+                          <div>◐ Partielles: {politician.promises_partial || 0}</div>
                         </div>
                       </div>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-700 mb-2 text-sm">Activité Parlementaire</h4>
-                      <div className="space-y-1 text-xs">
-                        <div className="flex justify-between p-2 bg-gray-50 rounded">
-                          <span>Débats</span>
-                          <span className="font-semibold">{politician.debates_participated || 0}</span>
+
+                      {/* Score 2: Attendance Rate */}
+                      <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-semibold text-green-700 uppercase">Présence</span>
+                          <CheckCircle className="w-4 h-4 text-green-600" />
                         </div>
-                        <div className="flex justify-between p-2 bg-gray-50 rounded">
-                          <span>Questions</span>
-                          <span className="font-semibold">{politician.questions_asked || 0}</span>
+                        <div className="text-3xl font-bold text-green-900 mb-1">
+                          {typeof politician.attendance_rate === 'number' ? `${politician.attendance_rate.toFixed(1)}%` : '—'}
+                        </div>
+                        <div className="w-full bg-green-200 rounded-full h-2 mb-2">
+                          <div
+                            className="bg-green-600 h-2 rounded-full transition-all duration-500"
+                            style={{ width: `${politician.attendance_rate || 0}%` }}
+                          />
+                        </div>
+                        <div className="text-xs text-green-600">
+                          {politician.sessions_attended || 0}/{politician.sessions_scheduled || 0} sessions
+                        </div>
+                      </div>
+
+                      {/* Score 3: Legislative Activity */}
+                      <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg p-4 border border-amber-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-semibold text-amber-700 uppercase">Activité</span>
+                          <TrendingUp className="w-4 h-4 text-amber-600" />
+                        </div>
+                        <div className="text-3xl font-bold text-amber-900 mb-1">
+                          {typeof politician.legislative_activity_score === 'number' ? `${politician.legislative_activity_score.toFixed(1)}` : '—'}<span className="text-lg">/100</span>
+                        </div>
+                        <div className="w-full bg-amber-200 rounded-full h-2 mb-2">
+                          <div
+                            className="bg-amber-600 h-2 rounded-full transition-all duration-500"
+                            style={{ width: `${politician.legislative_activity_score || 0}%` }}
+                          />
+                        </div>
+                        <div className="text-xs text-amber-600 space-y-0.5">
+                          <div>Lois: {politician.bills_sponsored || 0}</div>
+                          <div>Amendements: {politician.amendments_proposed || 0}</div>
+                        </div>
+                      </div>
+
+                      {/* Score 4: Data Quality */}
+                      <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-semibold text-gray-700 uppercase">Données</span>
+                          <Info className="w-4 h-4 text-gray-600" />
+                        </div>
+                        <div className="text-3xl font-bold text-gray-900 mb-1">
+                          {typeof politician.data_quality_score === 'number' ? `${(politician.data_quality_score * 100).toFixed(0)}%` : '—'}
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                          <div
+                            className="bg-gray-600 h-2 rounded-full transition-all duration-500"
+                            style={{ width: `${(politician.data_quality_score || 0) * 100}%` }}
+                          />
+                        </div>
+                        <div className="text-xs text-gray-600">
+                          Complétude de l&apos;audit
                         </div>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
+
+                    {/* Additional Details */}
+                    <div className="grid md:grid-cols-2 gap-4 pt-4 border-t">
+                      <div>
+                        <h4 className="font-semibold text-gray-700 mb-2 text-sm">Détails Promesses</h4>
+                        <div className="space-y-1 text-xs">
+                          <div className="flex justify-between p-2 bg-gray-50 rounded">
+                            <span>Total promesses</span>
+                            <span className="font-semibold">{(politician.promises_kept || 0) + (politician.promises_broken || 0) + (politician.promises_partial || 0)}</span>
+                          </div>
+                          <div className="flex justify-between p-2 bg-gray-50 rounded">
+                            <span>En attente</span>
+                            <span className="font-semibold">{politician.promises_pending || 0}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-gray-700 mb-2 text-sm">Activité Parlementaire</h4>
+                        <div className="space-y-1 text-xs">
+                          <div className="flex justify-between p-2 bg-gray-50 rounded">
+                            <span>Débats</span>
+                            <span className="font-semibold">{politician.debates_participated || 0}</span>
+                          </div>
+                          <div className="flex justify-between p-2 bg-gray-50 rounded">
+                            <span>Questions</span>
+                            <span className="font-semibold">{politician.questions_asked || 0}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
             ))
           )}
         </div>

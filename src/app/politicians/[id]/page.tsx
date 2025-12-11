@@ -25,8 +25,11 @@ import {
   AlertCircle,
   CheckCircle2,
   XCircle,
-  MinusCircle
+  MinusCircle,
+  RefreshCw
 } from 'lucide-react'
+import { triggerAudit } from '@/app/actions/audit'
+import { useRouter } from 'next/navigation'
 
 interface Politician {
   id: string
@@ -98,33 +101,54 @@ export default function PoliticianProfilePage() {
   const [scores, setScores] = useState<ConsistencyScore | null>(null)
   const [verifications, setVerifications] = useState<PromiseVerification[]>([])
   const [actions, setActions] = useState<ParliamentaryAction[]>([])
+
   const [loading, setLoading] = useState(true)
+  const [isAuditing, setIsAuditing] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     async function loadData() {
       try {
-        console.log('Loading politician with ID:', id)
+        console.log('🔍 DEBUG: Profile Page Loading')
+        console.log('🔍 DEBUG: Received ID param:', id)
+        console.log('🔍 DEBUG: ID type:', typeof id)
+        console.log('🔍 DEBUG: ID length:', id?.length)
+        console.log('🔍 DEBUG: Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
+        console.log('🔍 DEBUG: Supabase Key available:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+        console.log('🔍 DEBUG: Supabase Key (first 20):', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.substring(0, 20))
 
         // Fetch politician
+        console.log('🔍 DEBUG: Making query to politicians table...')
         const { data: polData, error: polError } = await supabase
           .from('politicians')
           .select('*')
           .eq('id', id)
           .single()
 
+        console.log('🔍 DEBUG: Query completed')
+        console.log('🔍 DEBUG: Error:', polError)
+        console.log('🔍 DEBUG: Data:', polData)
+
         if (polError) {
-          console.error('Error fetching politician:', polError)
+          console.error('❌ Error fetching politician:', polError)
+          console.error('❌ Error code:', polError.code)
+          console.error('❌ Error message:', polError.message)
+          console.error('❌ Error details:', polError.details)
+          console.error('❌ Error hint:', polError.hint)
+          if (polError.code !== 'PGRST116') {
+            console.error('Error fetching politician:', polError)
+          }
           setLoading(false)
           return
         }
 
         if (!polData) {
-          console.error('No politician found with ID:', id)
+          console.error('⚠️  No politician found with ID:', id)
           setLoading(false)
           return
         }
 
-        console.log('Politician loaded:', polData)
+        console.log('✅ Politician loaded:', polData)
         setPolitician(polData)
 
         // Fetch consistency scores
@@ -223,11 +247,51 @@ export default function PoliticianProfilePage() {
                 Le politicien demandé n&apos;existe pas ou n&apos;a pas encore été audité.
               </p>
               <Link href="/score">
-                <button className="text-[#1E3A8A] hover:underline flex items-center gap-2 mx-auto">
+                <button className="text-[#1E3A8A] hover:underline flex items-center gap-2 mx-auto mb-6">
                   <ArrowLeft className="w-4 h-4" />
                   Retour au classement
                 </button>
               </Link>
+
+              <div className="border-t pt-6">
+                <p className="text-sm text-gray-500 mb-4">
+                  Vous pensez que ce politicien devrait être dans notre base ?
+                  Lancez un audit complet pour mettre à jour les données.
+                </p>
+                <button
+                  onClick={async () => {
+                    setIsAuditing(true)
+                    try {
+                      const result = await triggerAudit()
+                      if (result.success) {
+                        // Redirect to score page to see new results
+                        router.push('/score')
+                      } else {
+                        alert('Erreur lors de l\'audit: ' + result.error)
+                      }
+                    } catch (error) {
+                      console.error(error)
+                      alert('Une erreur est survenue')
+                    } finally {
+                      setIsAuditing(false)
+                    }
+                  }}
+                  disabled={isAuditing}
+                  className="bg-[#1E3A8A] text-white px-6 py-2 rounded-lg hover:bg-blue-800 transition-colors flex items-center gap-2 mx-auto disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isAuditing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Audit en cours...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-4 h-4" />
+                      Lancer l&apos;audit des données
+                    </>
+                  )}
+                </button>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -516,8 +580,8 @@ export default function PoliticianProfilePage() {
                             action.vote_position === 'pour'
                               ? 'bg-green-100 text-green-800'
                               : action.vote_position === 'contre'
-                              ? 'bg-red-100 text-red-800'
-                              : 'bg-gray-100 text-gray-800'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-gray-100 text-gray-800'
                           }
                         >
                           Vote: {action.vote_position}

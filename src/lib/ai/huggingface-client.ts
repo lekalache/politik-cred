@@ -109,7 +109,7 @@ export class HuggingFaceClient {
 
   /**
    * Calculate semantic similarity between two texts
-   * Uses the new Hugging Face API format which returns similarity directly
+   * Gets embeddings for both texts and calculates cosine similarity
    */
   async calculateSimilarity(text1: string, text2: string): Promise<number> {
     if (!this.isAvailable()) {
@@ -117,30 +117,16 @@ export class HuggingFaceClient {
     }
 
     try {
-      const response = await fetch(`${this.baseUrl}/${this.model}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          inputs: {
-            source_sentence: text1,
-            sentences: [text2]
-          }
-        })
-      })
+      // Get embeddings for both texts in a single API call
+      const embeddings = await this.getEmbeddings([text1, text2])
 
-      if (!response.ok) {
-        const errorText = await response.text()
-        throw new Error(`Hugging Face API error (${response.status}): ${errorText}`)
+      if (embeddings.length !== 2) {
+        throw new Error('Expected 2 embeddings but got ' + embeddings.length)
       }
 
-      const similarities = await response.json()
-      this.requestCount += 1
-
-      // API returns array of similarity scores
-      return Array.isArray(similarities) && similarities.length > 0 ? similarities[0] : 0
+      // Calculate cosine similarity
+      const similarity = this.cosineSimilarity(embeddings[0], embeddings[1])
+      return similarity
     } catch (error) {
       console.error('Error calculating similarity with Hugging Face:', error)
       throw error
@@ -149,7 +135,7 @@ export class HuggingFaceClient {
 
   /**
    * Batch calculate similarities between one text and multiple candidates
-   * Uses the new Hugging Face API which accepts multiple sentences at once
+   * Gets embeddings for source and all candidates, then calculates similarities
    */
   async batchCalculateSimilarities(
     sourceText: string,
@@ -160,29 +146,23 @@ export class HuggingFaceClient {
     }
 
     try {
-      const response = await fetch(`${this.baseUrl}/${this.model}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          inputs: {
-            source_sentence: sourceText,
-            sentences: candidateTexts
-          }
-        })
-      })
+      // Get embeddings for source and all candidates in a single API call
+      const allTexts = [sourceText, ...candidateTexts]
+      const embeddings = await this.getEmbeddings(allTexts)
 
-      if (!response.ok) {
-        const errorText = await response.text()
-        throw new Error(`Hugging Face API error (${response.status}): ${errorText}`)
+      if (embeddings.length !== allTexts.length) {
+        throw new Error(`Expected ${allTexts.length} embeddings but got ${embeddings.length}`)
       }
 
-      const similarities = await response.json()
-      this.requestCount += 1
+      const sourceEmbedding = embeddings[0]
+      const candidateEmbeddings = embeddings.slice(1)
 
-      return Array.isArray(similarities) ? similarities : []
+      // Calculate cosine similarity for each candidate
+      const similarities = candidateEmbeddings.map(candidateEmbedding =>
+        this.cosineSimilarity(sourceEmbedding, candidateEmbedding)
+      )
+
+      return similarities
     } catch (error) {
       console.error('Error in batch similarity calculation:', error)
       throw error

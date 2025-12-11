@@ -21,12 +21,15 @@ export class SemanticMatcher {
   private useHuggingFace: boolean
 
   constructor() {
-    this.useHuggingFace = huggingfaceClient.isAvailable()
+    // PRIMARY: Use Jaccard similarity (reliable, fast, no external dependencies)
+    // OPTIONAL: Enable Hugging Face only if explicitly requested
+    this.useHuggingFace = false
 
-    if (!this.useHuggingFace) {
-      console.warn('Hugging Face API not available. Using Jaccard similarity as fallback.')
+    if (process.env.USE_HUGGINGFACE_API === 'true' && huggingfaceClient.isAvailable()) {
+      this.useHuggingFace = true
+      console.log('✨ Semantic matcher using: Hugging Face (experimental)')
     } else {
-      console.log('Semantic matcher initialized with Hugging Face embeddings')
+      console.log('✅ Semantic matcher using: Jaccard similarity (reliable & fast)')
     }
   }
 
