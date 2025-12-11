@@ -17,6 +17,7 @@ interface Politician {
   image_url: string | null
   bio: string | null
   credibility_score: number
+  ai_score?: number | null
   total_votes: number
   created_at: string
   updated_at: string
@@ -161,6 +162,23 @@ export function PoliticianList({ onVoteClick }: PoliticianListProps) {
                 className="h-2"
               />
             </div>
+
+            {politician.ai_score !== null && politician.ai_score !== undefined && (
+              <div className="space-y-1 pt-2 border-t border-gray-100">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-indigo-700 font-medium">Score IA (Audit)</span>
+                  <span className="font-semibold text-indigo-700">
+                    {politician.ai_score}/100
+                  </span>
+                </div>
+                <div className="w-full bg-indigo-100 rounded-full h-1.5">
+                  <div
+                    className="bg-indigo-600 h-1.5 rounded-full"
+                    style={{ width: `${politician.ai_score}%` }}
+                  />
+                </div>
+              </div>
+            )}
 
             <div className="flex items-center justify-between text-sm text-gray-600">
               <div className="flex items-center space-x-1">
