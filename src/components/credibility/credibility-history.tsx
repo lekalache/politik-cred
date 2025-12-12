@@ -71,8 +71,8 @@ export function CredibilityHistory({
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
-            <Clock className="w-6 h-6 animate-spin text-gray-400" />
-            <span className="ml-2 text-gray-500">Chargement...</span>
+            <Clock className="w-6 h-6 animate-spin text-gray-400 dark:text-gray-500" />
+            <span className="ml-2 text-gray-500 dark:text-gray-400">Chargement...</span>
           </div>
         </CardContent>
       </Card>
@@ -86,8 +86,8 @@ export function CredibilityHistory({
           <CardTitle>Historique de crédibilité</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8 text-gray-500">
-            <AlertCircle className="w-12 h-12 mx-auto mb-2 text-gray-400" />
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            <AlertCircle className="w-12 h-12 mx-auto mb-2 text-gray-400 dark:text-gray-500" />
             <p>Aucun historique de crédibilité disponible pour {politicianName}</p>
             <p className="text-sm mt-2">
               Les changements apparaîtront ici lorsque des promesses seront vérifiées.
@@ -102,7 +102,7 @@ export function CredibilityHistory({
     <Card>
       <CardHeader>
         <CardTitle>Historique de crédibilité - {politicianName}</CardTitle>
-        <p className="text-sm text-gray-500 mt-1">
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
           Basé sur la vérification factuelle des promesses vs actions parlementaires
         </p>
       </CardHeader>
@@ -141,24 +141,24 @@ function CredibilityHistoryItem({
   // Get appropriate icon and color
   const getStatusIcon = () => {
     if (isPositive) {
-      return <TrendingUp className="w-5 h-5 text-green-600" />
+      return <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
     }
     if (isNegative) {
-      return <TrendingDown className="w-5 h-5 text-red-600" />
+      return <TrendingDown className="w-5 h-5 text-red-600 dark:text-red-400" />
     }
-    return <AlertCircle className="w-5 h-5 text-gray-400" />
+    return <AlertCircle className="w-5 h-5 text-gray-400 dark:text-gray-500" />
   }
 
   const getStatusColor = () => {
-    if (isPositive) return 'border-green-200 bg-green-50'
-    if (isNegative) return 'border-red-200 bg-red-50'
-    return 'border-gray-200 bg-gray-50'
+    if (isPositive) return 'border-green-200 dark:border-green-700 bg-green-50 dark:bg-green-900/20'
+    if (isNegative) return 'border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-900/20'
+    return 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
   }
 
   const getScoreChangeColor = () => {
-    if (isPositive) return 'text-green-700 font-semibold'
-    if (isNegative) return 'text-red-700 font-semibold'
-    return 'text-gray-600'
+    if (isPositive) return 'text-green-700 dark:text-green-400 font-semibold'
+    if (isNegative) return 'text-red-700 dark:text-red-400 font-semibold'
+    return 'text-gray-600 dark:text-gray-400'
   }
 
   const getBadgeVariant = () => {
@@ -190,14 +190,14 @@ function CredibilityHistoryItem({
   return (
     <div
       className={`border-l-4 pl-4 py-3 rounded-r-lg transition-all ${getStatusColor()} ${
-        isLatest ? 'ring-2 ring-blue-200' : ''
+        isLatest ? 'ring-2 ring-blue-200 dark:ring-blue-700' : ''
       }`}
     >
       {/* Header: Icon, Date, Score Change */}
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
           {getStatusIcon()}
-          <span className="text-sm text-gray-600">{date}</span>
+          <span className="text-sm text-gray-600 dark:text-gray-400">{date}</span>
           {isLatest && (
             <Badge variant="outline" className="text-xs">
               Plus récent
@@ -218,12 +218,12 @@ function CredibilityHistoryItem({
       </div>
 
       {/* Description (legally careful language) */}
-      <p className="text-sm text-gray-700 mb-2">{entry.description}</p>
+      <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">{entry.description}</p>
 
       {/* Promise text if available */}
       {entry.political_promises && (
-        <div className="bg-white bg-opacity-50 rounded p-2 mb-2">
-          <p className="text-xs text-gray-600 italic">
+        <div className="bg-white dark:bg-gray-700 bg-opacity-50 dark:bg-opacity-50 rounded p-2 mb-2">
+          <p className="text-xs text-gray-600 dark:text-gray-400 italic">
             &quot;{entry.political_promises.promise_text.substring(0, 150)}
             {entry.political_promises.promise_text.length > 150 ? '...' : ''}&quot;
           </p>
@@ -231,11 +231,11 @@ function CredibilityHistoryItem({
       )}
 
       {/* Score progression */}
-      <div className="flex items-center gap-2 text-xs text-gray-600 mb-2">
+      <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 mb-2">
         <span className="font-medium">{entry.previous_score.toFixed(1)}</span>
         <span>→</span>
         <span className="font-medium">{entry.new_score.toFixed(1)}</span>
-        <span className="text-gray-400">/ 200</span>
+        <span className="text-gray-400 dark:text-gray-500">/ 200</span>
       </div>
 
       {/* Verification sources */}
@@ -260,7 +260,7 @@ function CredibilityHistoryItem({
           href={entry.evidence_url}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-xs text-blue-600 hover:text-blue-800 inline-flex items-center gap-1"
+          className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 inline-flex items-center gap-1"
         >
           <ExternalLink className="w-3 h-3" />
           Voir la source

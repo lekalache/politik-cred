@@ -1,27 +1,57 @@
 /**
  * Assemblée Nationale Official Open Data Client
- * Fetches data from data.assemblee-nationale.fr
+ * Fetches data from data.assemblee-nationale.fr static repository
  *
  * This provides official government data including:
  * - Votes/Scrutins: Voting positions of deputies
- * - Amendments: All amendments with authors and outcomes
- * - Questions: Written questions to ministers
+ * - Deputies: Current active deputies with their info
  *
  * Data Source: https://data.assemblee-nationale.fr/
+ * Uses static ZIP file repository for reliable data access
  */
 
-import { supabase } from '@/lib/supabase'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import { mkdirSync, readdirSync, readFileSync, rmSync, existsSync, statSync } from 'fs'
+import { join } from 'path'
+import { tmpdir } from 'os'
+import AdmZip from 'adm-zip'
+
+// Create admin client directly for server-side operations that bypass RLS
+// This is initialized lazily to allow env vars to be loaded first
+let _db: SupabaseClient | null = null
+
+function getDb(): SupabaseClient {
+  if (!_db) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
+    // Use service role key if available, otherwise anon key
+    _db = createClient(supabaseUrl, supabaseServiceKey || supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    })
+
+    console.log(`📦 AN Client using: ${supabaseServiceKey ? 'service_role' : 'anon'} key`)
+  }
+  return _db
+}
 
 // ============================================================================
 // Type Definitions
 // ============================================================================
 
-interface ScrutinPublic {
+interface VotePosition {
+  acteurRef: string
+  position: 'pour' | 'contre' | 'abstention' | 'nonVotant'
+}
+
+interface ScrutinData {
+  uid: string
   numero: string
-  organeRef: string
   legislature: string
-  sessionRef: string
-  seanceRef: string
   dateScrutin: string
   titre: string
   sort: {
@@ -31,7 +61,6 @@ interface ScrutinPublic {
   syntheseVote: {
     nombreVotants: string
     suffragesExprimes: string
-    nlesNonVotantsVolontaires?: string
     decompte: {
       pour: string
       contre: string
@@ -39,65 +68,37 @@ interface ScrutinPublic {
       nonVotants: string
     }
   }
+  ventilationVotes?: {
+    organe?: {
+      groupes?: {
+        groupe?: Array<{
+          organeRef: string
+          vote?: {
+            decompteNominatif?: {
+              pours?: { votant?: Array<{ acteurRef: string }> | { acteurRef: string } }
+              contres?: { votant?: Array<{ acteurRef: string }> | { acteurRef: string } }
+              abstentions?: { votant?: Array<{ acteurRef: string }> | { acteurRef: string } }
+              nonVotants?: { votant?: Array<{ acteurRef: string }> | { acteurRef: string } }
+            }
+          }
+        }>
+      }
+    }
+  }
 }
 
-interface VotePosition {
-  acteurRef: string
-  position: 'pour' | 'contre' | 'abstention' | 'nonVotant'
-}
-
-interface Amendement {
+interface DeputyData {
   uid: string
-  identifiant: {
-    numero: string
-    numeroOrdreDepot: number
-    legislature: string
-    prefixeOrganeExamen: string
-  }
-  corps: {
-    contenuAuteur: {
-      dispositif: string
-      exposeSommaire: string
+  etatCivil: {
+    ident: {
+      prenom: string
+      nom: string
+      civ: string
+    }
+    infoNaissance?: {
+      dateNais?: string
     }
   }
-  cycleDeVie: {
-    dateDepot: string
-    dateSort?: string
-    sort?: {
-      code: string
-      libelle: string
-    }
-  }
-  signataires: {
-    acteurRef: string[]
-  }
-  texteLegislatifRef: string
-}
-
-interface QuestionEcrite {
-  uid: string
-  identifiant: {
-    numero: string
-    legislature: string
-    type: string
-  }
-  indexationAN: {
-    rubrique: string
-    analyses: {
-      analyse: string[]
-    }
-  }
-  textesQuestion: {
-    texteQuestion: string
-  }
-  textesReponse?: {
-    texteReponse: string
-  }
-  minAttrib: {
-    intituleMinistere: string
-  }
-  datePublication: string
-  dateReponseSignalee?: string
 }
 
 // ============================================================================
@@ -106,235 +107,325 @@ interface QuestionEcrite {
 
 class AssembleeOpendataClient {
   private baseUrl = 'https://data.assemblee-nationale.fr'
-  private legislature = '16' // 16th legislature (17th not yet populated)
-  private rateLimitMs = 300
+  private legislature = '17' // 17th legislature is now active with data
+  private rateLimitMs = 100
+
+  // Static repository URLs
+  private scrutinsUrl = `${this.baseUrl}/static/openData/repository/${this.legislature}/loi/scrutins/Scrutins.json.zip`
+  private deputiesUrl = `${this.baseUrl}/static/openData/repository/${this.legislature}/amo/deputes_actifs_mandats_actifs_organes/AMO10_deputes_actifs_mandats_actifs_organes.json.zip`
+
+  // Cache for acteur -> politician ID mappings
+  private acteurCache = new Map<string, string | null>()
+  private deputiesCache = new Map<string, { prenom: string; nom: string }>()
 
   private async delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms))
   }
 
-  private async fetchJson<T>(url: string): Promise<T | null> {
+  // ==========================================================================
+  // ZIP Download and Extraction
+  // ==========================================================================
+
+  /**
+   * Download and extract a ZIP file to a temporary directory
+   */
+  private async downloadAndExtractZip(url: string, prefix: string): Promise<string> {
+    const tempDir = join(tmpdir(), `an-opendata-${prefix}-${Date.now()}`)
+
     try {
-      await this.delay(this.rateLimitMs)
+      mkdirSync(tempDir, { recursive: true })
+
+      console.log(`📥 Downloading ${prefix} data from AN...`)
 
       const response = await fetch(url, {
         headers: {
-          'User-Agent': 'PolitikCred/1.0 (https://politikcred.fr)',
-          'Accept': 'application/json'
+          'User-Agent': 'PolitikCred/1.0 (https://politikcred.fr)'
         }
       })
 
       if (!response.ok) {
-        console.error(`API error ${response.status}: ${url}`)
-        return null
+        throw new Error(`Failed to download ${prefix}: ${response.status}`)
       }
 
-      return await response.json()
+      const buffer = Buffer.from(await response.arrayBuffer())
+
+      console.log(`📦 Extracting ${prefix} data (${(buffer.length / 1024 / 1024).toFixed(1)} MB)...`)
+
+      // Extract using adm-zip
+      const zip = new AdmZip(buffer)
+      zip.extractAllTo(tempDir, true)
+
+      console.log(`✅ ${prefix} data extracted to ${tempDir}`)
+      return tempDir
     } catch (error) {
-      console.error(`Fetch error for ${url}:`, error)
-      return null
+      console.error(`Error downloading/extracting ${prefix}:`, error)
+      throw error
     }
   }
 
-  // ==========================================================================
-  // Scrutins (Votes)
-  // ==========================================================================
-
   /**
-   * Get list of all scrutins for the legislature
-   * Uses the publicly available JSON API
+   * Read all JSON files from extracted directory
    */
-  async getScrutinsList(): Promise<any[]> {
-    console.log('🗳️ Fetching scrutins from data.assemblee-nationale.fr...')
+  private readJsonFiles<T>(dir: string, subdir: string): T[] {
+    const results: T[] = []
+    const jsonDir = join(dir, subdir)
 
-    // The official portal provides JSON exports
-    const url = `${this.baseUrl}/travaux-parlementaires/votes/scrutins-${this.legislature}.json`
-
-    const data = await this.fetchJson<{ scrutins: any[] }>(url)
-
-    if (data?.scrutins) {
-      console.log(`✅ Found ${data.scrutins.length} scrutins`)
-      return data.scrutins
+    if (!existsSync(jsonDir)) {
+      // Try direct json folder
+      const altDir = join(dir, 'json')
+      if (existsSync(altDir)) {
+        return this.readJsonFilesFromDir<T>(altDir)
+      }
+      console.warn(`Directory not found: ${jsonDir}`)
+      return []
     }
 
-    // Fallback: try alternative URL structure
-    const altUrl = `${this.baseUrl}/api/v2/scrutins/legislature/${this.legislature}`
-    const altData = await this.fetchJson<any[]>(altUrl)
-
-    if (Array.isArray(altData)) {
-      console.log(`✅ Found ${altData.length} scrutins (alt)`)
-      return altData
-    }
-
-    return []
+    return this.readJsonFilesFromDir<T>(jsonDir)
   }
 
-  /**
-   * Get detailed info for a specific scrutin
-   */
-  async getScrutinDetails(numero: string): Promise<any | null> {
-    const url = `${this.baseUrl}/travaux-parlementaires/votes/scrutin-${this.legislature}-${numero}.json`
-    return await this.fetchJson(url)
-  }
+  private readJsonFilesFromDir<T>(jsonDir: string): T[] {
+    const results: T[] = []
 
-  /**
-   * Get vote positions for a scrutin
-   */
-  async getScrutinVotes(numero: string): Promise<VotePosition[]> {
-    console.log(`🗳️ Fetching vote positions for scrutin ${numero}...`)
+    try {
+      const files = readdirSync(jsonDir)
 
-    const details = await this.getScrutinDetails(numero)
+      for (const file of files) {
+        if (!file.endsWith('.json')) continue
 
-    if (!details) return []
-
-    const positions: VotePosition[] = []
-
-    // Parse vote positions from scrutin data
-    const groupes = details?.scrutin?.ventilationVotes?.organe?.groupes?.groupe || []
-
-    for (const groupe of groupes) {
-      const decompteVoix = groupe.vote?.decompteVoix
-
-      // Pour
-      if (decompteVoix?.pours?.votant) {
-        const votants = Array.isArray(decompteVoix.pours.votant)
-          ? decompteVoix.pours.votant
-          : [decompteVoix.pours.votant]
-
-        for (const v of votants) {
-          positions.push({
-            acteurRef: v.acteurRef,
-            position: 'pour'
-          })
+        try {
+          const filePath = join(jsonDir, file)
+          const content = readFileSync(filePath, 'utf-8')
+          const data = JSON.parse(content)
+          results.push(data)
+        } catch (e) {
+          // Skip invalid files
         }
       }
-
-      // Contre
-      if (decompteVoix?.contres?.votant) {
-        const votants = Array.isArray(decompteVoix.contres.votant)
-          ? decompteVoix.contres.votant
-          : [decompteVoix.contres.votant]
-
-        for (const v of votants) {
-          positions.push({
-            acteurRef: v.acteurRef,
-            position: 'contre'
-          })
-        }
-      }
-
-      // Abstentions
-      if (decompteVoix?.abstentions?.votant) {
-        const votants = Array.isArray(decompteVoix.abstentions.votant)
-          ? decompteVoix.abstentions.votant
-          : [decompteVoix.abstentions.votant]
-
-        for (const v of votants) {
-          positions.push({
-            acteurRef: v.acteurRef,
-            position: 'abstention'
-          })
+    } catch (e) {
+      // Check for nested structure (e.g., json/acteur/)
+      const nestedDir = readdirSync(jsonDir)
+      for (const subFolder of nestedDir) {
+        const subPath = join(jsonDir, subFolder)
+        try {
+          const stat = statSync(subPath)
+          if (stat.isDirectory()) {
+            const nestedFiles = readdirSync(subPath)
+            for (const file of nestedFiles) {
+              if (!file.endsWith('.json')) continue
+              try {
+                const filePath = join(subPath, file)
+                const content = readFileSync(filePath, 'utf-8')
+                const data = JSON.parse(content)
+                results.push(data)
+              } catch (e) {
+                // Skip invalid files
+              }
+            }
+          }
+        } catch (e) {
+          // Not a directory, skip
         }
       }
     }
 
-    console.log(`✅ Found ${positions.length} vote positions`)
-    return positions
+    return results
   }
 
-  // ==========================================================================
-  // Amendments
-  // ==========================================================================
-
   /**
-   * Get amendments list
+   * Cleanup temporary directory
    */
-  async getAmendementsList(dossierRef?: string): Promise<any[]> {
-    console.log('📝 Fetching amendments from data.assemblee-nationale.fr...')
-
-    // The amendments are organized by legislative dossier
-    const url = dossierRef
-      ? `${this.baseUrl}/travaux-parlementaires/amendements/${dossierRef}.json`
-      : `${this.baseUrl}/travaux-parlementaires/amendements/liste-${this.legislature}.json`
-
-    const data = await this.fetchJson<{ amendements: any[] }>(url)
-
-    if (data?.amendements) {
-      console.log(`✅ Found ${data.amendements.length} amendments`)
-      return data.amendements
+  private cleanup(dir: string): void {
+    try {
+      rmSync(dir, { recursive: true, force: true })
+    } catch (e) {
+      console.warn(`Failed to cleanup ${dir}`)
     }
-
-    return []
   }
 
   // ==========================================================================
-  // Questions Écrites
+  // Deputies Data
   // ==========================================================================
 
   /**
-   * Get written questions
+   * Load deputies data into cache
    */
-  async getQuestionsEcrites(limit?: number): Promise<any[]> {
-    console.log('❓ Fetching written questions...')
+  async loadDeputiesCache(): Promise<number> {
+    console.log('👥 Loading deputies data...')
 
-    const url = `${this.baseUrl}/questions/questions_ecrites/questions-${this.legislature}.json`
+    let tempDir: string | null = null
 
-    const data = await this.fetchJson<{ questions: any[] }>(url)
+    try {
+      tempDir = await this.downloadAndExtractZip(this.deputiesUrl, 'deputies')
 
-    if (data?.questions) {
-      const questions = limit ? data.questions.slice(0, limit) : data.questions
-      console.log(`✅ Found ${questions.length} questions`)
-      return questions
+      // Read all deputy JSON files - they're in json/acteur/ subfolder
+      const jsonDir = join(tempDir, 'json')
+
+      if (!existsSync(jsonDir)) {
+        console.error('No json directory found in deputies zip')
+        return 0
+      }
+
+      // Check for acteur subfolder
+      const acteurDir = join(jsonDir, 'acteur')
+      const targetDir = existsSync(acteurDir) ? acteurDir : jsonDir
+
+      const files = readdirSync(targetDir)
+      let count = 0
+
+      for (const file of files) {
+        if (!file.endsWith('.json')) continue
+
+        try {
+          const filePath = join(targetDir, file)
+          const content = readFileSync(filePath, 'utf-8')
+          const data = JSON.parse(content)
+
+          const acteur = data.acteur
+          if (!acteur) continue
+
+          const uid = typeof acteur.uid === 'object' ? acteur.uid['#text'] : acteur.uid
+          const prenom = acteur.etatCivil?.ident?.prenom || ''
+          const nom = acteur.etatCivil?.ident?.nom || ''
+
+          if (uid && (prenom || nom)) {
+            this.deputiesCache.set(uid, { prenom, nom })
+            count++
+          }
+        } catch (e) {
+          // Skip invalid files
+        }
+      }
+
+      console.log(`✅ Loaded ${count} deputies into cache`)
+      return count
+
+    } finally {
+      if (tempDir) this.cleanup(tempDir)
     }
-
-    return []
   }
 
-  // ==========================================================================
-  // Actors (Deputies)
-  // ==========================================================================
-
   /**
-   * Get deputy reference data by acteurRef
+   * Normalize a name for matching (handle accents, hyphens, case)
    */
-  async getActeur(acteurRef: string): Promise<any | null> {
-    const url = `${this.baseUrl}/acteurs/${acteurRef}.json`
-    return await this.fetchJson(url)
+  private normalizeName(name: string): string {
+    return name
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Remove accents
+      .toLowerCase()
+      .trim()
   }
 
   /**
    * Map acteurRef to politician in database
    */
   async mapActeurToPolitician(acteurRef: string): Promise<string | null> {
-    // First check if we already have this mapping
-    const { data: existing } = await supabase
+    // Check cache first
+    if (this.acteurCache.has(acteurRef)) {
+      return this.acteurCache.get(acteurRef) || null
+    }
+
+    // Check if we already have this mapping in database
+    const { data: existing } = await getDb()
       .from('politicians')
       .select('id')
       .contains('metadata', { acteurRef })
       .single()
 
-    if (existing) return existing.id
+    if (existing) {
+      this.acteurCache.set(acteurRef, existing.id)
+      return existing.id
+    }
 
-    // Try to fetch actor details and match by name
-    const acteur = await this.getActeur(acteurRef)
-    if (!acteur?.acteur?.etatCivil) return null
+    // Get deputy info from cache
+    const deputyInfo = this.deputiesCache.get(acteurRef)
+    if (!deputyInfo) {
+      this.acteurCache.set(acteurRef, null)
+      return null
+    }
 
-    const nom = acteur.acteur.etatCivil.ident?.nom
-    const prenom = acteur.acteur.etatCivil.ident?.prenom
+    const { prenom, nom } = deputyInfo
+    const normalizedNom = this.normalizeName(nom)
+    const normalizedPrenom = this.normalizeName(prenom)
 
-    if (!nom) return null
-
-    // Find by name match
-    const { data: politician } = await supabase
+    // Strategy 1: Try exact name match
+    let { data: politician } = await getDb()
       .from('politicians')
       .select('id')
-      .ilike('last_name', `%${nom}%`)
-      .ilike('first_name', `%${prenom}%`)
+      .eq('last_name', nom)
+      .eq('first_name', prenom)
       .single()
 
+    // Strategy 2: Case-insensitive match
+    if (!politician) {
+      const result = await getDb()
+        .from('politicians')
+        .select('id')
+        .ilike('last_name', nom)
+        .ilike('first_name', prenom)
+        .single()
+      politician = result.data
+    }
+
+    // Strategy 3: Try with wildcards for partial matches
+    if (!politician) {
+      const result = await getDb()
+        .from('politicians')
+        .select('id')
+        .ilike('last_name', `%${nom}%`)
+        .ilike('first_name', `%${prenom.split('-')[0]}%`)
+        .single()
+      politician = result.data
+    }
+
+    // Strategy 4: Search by last name only, then match first name manually
+    if (!politician) {
+      const result = await getDb()
+        .from('politicians')
+        .select('id, first_name, last_name')
+        .or(`last_name.ilike.%${nom}%,last_name.ilike.%${nom.toUpperCase()}%`)
+        .limit(10)
+
+      if (result.data && result.data.length > 0) {
+        for (const p of result.data) {
+          const pNomNorm = this.normalizeName(p.last_name || '')
+          const pPrenomNorm = this.normalizeName(p.first_name || '')
+
+          // Check if names match when normalized
+          if (pNomNorm === normalizedNom || pNomNorm.includes(normalizedNom) || normalizedNom.includes(pNomNorm)) {
+            if (pPrenomNorm === normalizedPrenom ||
+                pPrenomNorm.startsWith(normalizedPrenom.split('-')[0]) ||
+                normalizedPrenom.startsWith(pPrenomNorm.split('-')[0])) {
+              politician = { id: p.id }
+              break
+            }
+          }
+        }
+      }
+    }
+
+    // Strategy 5: Full text search on name column if it exists
+    if (!politician) {
+      const fullName = `${prenom} ${nom}`
+      const result = await getDb()
+        .from('politicians')
+        .select('id, first_name, last_name, name')
+        .or(`name.ilike.%${fullName}%,name.ilike.%${nom}%`)
+        .limit(5)
+
+      if (result.data && result.data.length > 0) {
+        for (const p of result.data) {
+          const pNomNorm = this.normalizeName(p.last_name || '')
+          if (pNomNorm === normalizedNom || pNomNorm.includes(normalizedNom)) {
+            politician = { id: p.id }
+            break
+          }
+        }
+      }
+    }
+
     if (politician) {
-      // Store the acteurRef mapping - fetch current metadata first
-      const { data: current } = await supabase
+      // Store the acteurRef mapping for future lookups
+      const { data: current } = await getDb()
         .from('politicians')
         .select('metadata')
         .eq('id', politician.id)
@@ -345,92 +436,148 @@ class AssembleeOpendataClient {
         acteurRef
       }
 
-      await supabase
+      await getDb()
         .from('politicians')
         .update({ metadata: updatedMetadata })
         .eq('id', politician.id)
 
+      this.acteurCache.set(acteurRef, politician.id)
       return politician.id
     }
 
+    // Log unmatched for debugging (only first few)
+    if (this.unmatchedLogCount < 10) {
+      console.log(`   ⚠️ No match for: ${prenom} ${nom} (${acteurRef})`)
+      this.unmatchedLogCount++
+    }
+
+    this.acteurCache.set(acteurRef, null)
     return null
   }
 
+  private unmatchedLogCount = 0
+
   // ==========================================================================
-  // Database Storage
+  // Scrutins (Votes)
   // ==========================================================================
 
   /**
-   * Store scrutin votes in database
+   * Extract vote positions from scrutin data
    */
-  async storeScrutinVotes(scrutin: any): Promise<number> {
+  private extractVotePositions(scrutin: any): VotePosition[] {
+    const positions: VotePosition[] = []
+
+    const groupes = scrutin?.ventilationVotes?.organe?.groupes?.groupe || []
+    const groupeArray = Array.isArray(groupes) ? groupes : [groupes]
+
+    for (const groupe of groupeArray) {
+      if (!groupe?.vote?.decompteNominatif) continue
+
+      const decompte = groupe.vote.decompteNominatif
+
+      // Pour
+      if (decompte.pours?.votant) {
+        const votants = Array.isArray(decompte.pours.votant)
+          ? decompte.pours.votant
+          : [decompte.pours.votant]
+
+        for (const v of votants) {
+          if (v?.acteurRef) {
+            positions.push({ acteurRef: v.acteurRef, position: 'pour' })
+          }
+        }
+      }
+
+      // Contre
+      if (decompte.contres?.votant) {
+        const votants = Array.isArray(decompte.contres.votant)
+          ? decompte.contres.votant
+          : [decompte.contres.votant]
+
+        for (const v of votants) {
+          if (v?.acteurRef) {
+            positions.push({ acteurRef: v.acteurRef, position: 'contre' })
+          }
+        }
+      }
+
+      // Abstentions
+      if (decompte.abstentions?.votant) {
+        const votants = Array.isArray(decompte.abstentions.votant)
+          ? decompte.abstentions.votant
+          : [decompte.abstentions.votant]
+
+        for (const v of votants) {
+          if (v?.acteurRef) {
+            positions.push({ acteurRef: v.acteurRef, position: 'abstention' })
+          }
+        }
+      }
+
+      // Non votants
+      if (decompte.nonVotants?.votant) {
+        const votants = Array.isArray(decompte.nonVotants.votant)
+          ? decompte.nonVotants.votant
+          : [decompte.nonVotants.votant]
+
+        for (const v of votants) {
+          if (v?.acteurRef) {
+            positions.push({ acteurRef: v.acteurRef, position: 'nonVotant' })
+          }
+        }
+      }
+    }
+
+    return positions
+  }
+
+  /**
+   * Store a single scrutin's votes in database
+   */
+  private async storeScrutinVotes(scrutinData: any): Promise<number> {
+    const scrutin = scrutinData.scrutin || scrutinData
+
+    const numero = scrutin.numero
+    const dateScrutin = scrutin.dateScrutin
+    const titre = scrutin.titre || scrutin.objet?.libelle || ''
+
+    if (!numero || !dateScrutin) return 0
+
+    const positions = this.extractVotePositions(scrutin)
     let stored = 0
-    const numero = scrutin.numero || scrutin.scrutin?.numero
-
-    if (!numero) return 0
-
-    const positions = await this.getScrutinVotes(numero)
 
     for (const pos of positions) {
       const politicianId = await this.mapActeurToPolitician(pos.acteurRef)
       if (!politicianId) continue
 
-      await supabase
-        .from('parliamentary_actions')
-        .upsert({
-          politician_id: politicianId,
-          action_type: 'vote',
-          action_date: new Date(scrutin.dateScrutin || scrutin.scrutin?.dateScrutin).toISOString(),
-          description: scrutin.titre || scrutin.scrutin?.titre || '',
-          vote_position: pos.position,
-          bill_id: numero,
-          official_reference: `${this.baseUrl}/scrutin/${numero}`,
-          category: this.categorize(scrutin.titre || scrutin.scrutin?.titre || ''),
-          metadata: {
-            source: 'data.assemblee-nationale.fr',
-            legislature: this.legislature
-          }
-        }, {
-          onConflict: 'politician_id,action_type,bill_id'
-        })
+      try {
+        await getDb()
+          .from('parliamentary_actions')
+          .upsert({
+            politician_id: politicianId,
+            action_type: 'vote',
+            action_date: new Date(dateScrutin).toISOString(),
+            description: titre.substring(0, 500), // Truncate long titles
+            vote_position: pos.position,
+            bill_id: `L${this.legislature}-${numero}`,
+            official_reference: `https://www.assemblee-nationale.fr/dyn/${this.legislature}/scrutins/${String(numero).padStart(4, '0')}`,
+            category: this.categorize(titre),
+            metadata: {
+              source: 'data.assemblee-nationale.fr',
+              legislature: this.legislature,
+              scrutinUid: scrutin.uid || `VTANR5L${this.legislature}V${numero}`
+            }
+          }, {
+            onConflict: 'politician_id,action_type,bill_id'
+          })
 
-      stored++
+        stored++
+      } catch (e) {
+        // Ignore duplicate errors
+      }
     }
 
     return stored
-  }
-
-  /**
-   * Store amendment in database
-   */
-  async storeAmendment(amendement: any, authorPoliticianId: string): Promise<boolean> {
-    try {
-      const identifiant = amendement.uid || amendement.identifiant
-      const depot = amendement.cycleDeVie?.dateDepot || amendement.dateDepot
-
-      await supabase
-        .from('parliamentary_actions')
-        .upsert({
-          politician_id: authorPoliticianId,
-          action_type: 'amendment',
-          action_date: new Date(depot).toISOString(),
-          description: amendement.corps?.contenuAuteur?.exposeSommaire || `Amendement ${identifiant}`,
-          official_reference: `${this.baseUrl}/amendement/${identifiant}`,
-          category: this.categorize(amendement.corps?.contenuAuteur?.exposeSommaire || ''),
-          metadata: {
-            source: 'data.assemblee-nationale.fr',
-            sort: amendement.cycleDeVie?.sort?.libelle,
-            dispositif: amendement.corps?.contenuAuteur?.dispositif
-          }
-        }, {
-          onConflict: 'politician_id,action_type,official_reference'
-        })
-
-      return true
-    } catch (error) {
-      console.error('Error storing amendment:', error)
-      return false
-    }
   }
 
   // ==========================================================================
@@ -438,43 +585,82 @@ class AssembleeOpendataClient {
   // ==========================================================================
 
   /**
-   * Collect all available data
+   * Collect all scrutins data from static repository
    */
   async collectAllData(options?: { limit?: number }): Promise<{
     scrutins: number
     votes: number
-    amendments: number
-    questions: number
+    deputies: number
     errors: number
   }> {
     console.log('🏛️ Starting Assemblée Nationale Open Data collection...')
+    console.log(`   Using legislature: ${this.legislature}`)
 
-    const stats = { scrutins: 0, votes: 0, amendments: 0, questions: 0, errors: 0 }
+    const stats = { scrutins: 0, votes: 0, deputies: 0, errors: 0 }
 
-    // Collect scrutins and votes
+    // First, load deputies cache
     try {
-      const scrutins = await this.getScrutinsList()
-      const limit = options?.limit || scrutins.length
-
-      for (const scrutin of scrutins.slice(0, limit)) {
-        try {
-          const votesStored = await this.storeScrutinVotes(scrutin)
-          stats.votes += votesStored
-          stats.scrutins++
-          console.log(`✅ Scrutin ${scrutin.numero}: ${votesStored} votes stored`)
-        } catch (error) {
-          stats.errors++
-        }
-      }
+      stats.deputies = await this.loadDeputiesCache()
     } catch (error) {
-      console.error('Error collecting scrutins:', error)
+      console.error('Failed to load deputies cache:', error)
       stats.errors++
     }
 
+    // Now collect scrutins
+    let tempDir: string | null = null
+
+    try {
+      tempDir = await this.downloadAndExtractZip(this.scrutinsUrl, 'scrutins')
+
+      const jsonDir = join(tempDir, 'json')
+
+      if (!existsSync(jsonDir)) {
+        console.error('No json directory found in scrutins zip')
+        return stats
+      }
+
+      const files = readdirSync(jsonDir).filter(f => f.endsWith('.json'))
+      const limit = options?.limit || files.length
+      const toProcess = files.slice(0, limit)
+
+      console.log(`📊 Processing ${toProcess.length} scrutins (out of ${files.length} total)...`)
+
+      let processed = 0
+      for (const file of toProcess) {
+        try {
+          const filePath = join(jsonDir, file)
+          const content = readFileSync(filePath, 'utf-8')
+          const data = JSON.parse(content)
+
+          const votesStored = await this.storeScrutinVotes(data)
+          stats.votes += votesStored
+          stats.scrutins++
+          processed++
+
+          if (processed % 100 === 0) {
+            console.log(`   Progress: ${processed}/${toProcess.length} scrutins, ${stats.votes} votes stored`)
+          }
+
+          // Small delay to avoid overwhelming the database
+          if (processed % 50 === 0) {
+            await this.delay(this.rateLimitMs)
+          }
+        } catch (e) {
+          stats.errors++
+        }
+      }
+
+    } catch (error) {
+      console.error('Error collecting scrutins:', error)
+      stats.errors++
+    } finally {
+      if (tempDir) this.cleanup(tempDir)
+    }
+
     console.log(`\n📊 AN Open Data collection complete:`)
+    console.log(`   Deputies in cache: ${stats.deputies}`)
     console.log(`   Scrutins processed: ${stats.scrutins}`)
     console.log(`   Votes stored: ${stats.votes}`)
-    console.log(`   Amendments: ${stats.amendments}`)
     console.log(`   Errors: ${stats.errors}`)
 
     return stats

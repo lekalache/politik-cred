@@ -50,17 +50,17 @@ export function PromiseCard({ promise, onUpdate, userRole }: PromiseCardProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'verified':
-        return 'bg-green-100 text-green-800 border-green-200'
+        return 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700'
       case 'pending':
-        return 'bg-orange-100 text-orange-800 border-orange-200'
+        return 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-700'
       case 'actionable':
-        return 'bg-blue-100 text-blue-800 border-blue-200'
+        return 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700'
       case 'non_actionable':
-        return 'bg-gray-100 text-gray-800 border-gray-200'
+        return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600'
       case 'disputed':
-        return 'bg-red-100 text-red-800 border-red-200'
+        return 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700'
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200'
+        return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600'
     }
   }
 
@@ -182,13 +182,13 @@ export function PromiseCard({ promise, onUpdate, userRole }: PromiseCardProps) {
                 {getCategoryLabel(promise.category)}
               </Badge>
               {promise.is_actionable && (
-                <Badge variant="outline" className="bg-blue-50">
+                <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900/20">
                   <TrendingUp className="w-3 h-3 mr-1" />
                   Vérifiable
                 </Badge>
               )}
               {promise.confidence_score && (
-                <Badge variant="outline" className="bg-gray-50">
+                <Badge variant="outline" className="bg-gray-50 dark:bg-gray-800">
                   Confiance: {(promise.confidence_score * 100).toFixed(0)}%
                 </Badge>
               )}
@@ -217,26 +217,26 @@ export function PromiseCard({ promise, onUpdate, userRole }: PromiseCardProps) {
           {/* Meta Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             {promise.politician && (
-              <div className="flex items-center gap-2 text-gray-600">
-                <User className="w-4 h-4 text-gray-400" />
+              <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                <User className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                 <span>
-                  <strong>{promise.politician.name}</strong>
+                  <strong className="dark:text-gray-200">{promise.politician.name}</strong>
                   {promise.politician.party && (
-                    <span className="text-gray-500"> ({promise.politician.party})</span>
+                    <span className="text-gray-500 dark:text-gray-400"> ({promise.politician.party})</span>
                   )}
                 </span>
               </div>
             )}
-            <div className="flex items-center gap-2 text-gray-600">
-              <Calendar className="w-4 h-4 text-gray-400" />
+            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+              <Calendar className="w-4 h-4 text-gray-400 dark:text-gray-500" />
               {new Date(promise.promise_date).toLocaleDateString('fr-FR', {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric'
               })}
             </div>
-            <div className="flex items-center gap-2 text-gray-600">
-              <Tag className="w-4 h-4 text-gray-400" />
+            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+              <Tag className="w-4 h-4 text-gray-400 dark:text-gray-500" />
               Source: {getSourceTypeLabel(promise.source_type)}
             </div>
             {promise.source_url && (
@@ -245,7 +245,7 @@ export function PromiseCard({ promise, onUpdate, userRole }: PromiseCardProps) {
                   href={promise.source_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-700 flex items-center gap-1 text-sm"
+                  className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center gap-1 text-sm"
                 >
                   <ExternalLink className="w-4 h-4" />
                   Voir la source
@@ -256,7 +256,7 @@ export function PromiseCard({ promise, onUpdate, userRole }: PromiseCardProps) {
 
           {/* Admin Actions */}
           {userRole === 'admin' && promise.verification_status === 'pending' && (
-            <div className="flex gap-2 pt-4 border-t">
+            <div className="flex gap-2 pt-4 border-t dark:border-gray-700">
               <Button
                 size="sm"
                 variant="outline"

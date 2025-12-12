@@ -134,20 +134,20 @@ export function VoteDialog({ politicianId, onClose }: VoteDialogProps) {
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <span>Soumettre un vote avec preuves</span>
-            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+            <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700">
               Modération requise
             </Badge>
           </DialogTitle>
         </DialogHeader>
 
         {submitStatus === 'success' && (
-          <Card className="border-green-200 bg-green-50">
+          <Card className="border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/30">
             <CardContent className="p-4">
-              <div className="flex items-center space-x-2 text-green-800">
+              <div className="flex items-center space-x-2 text-green-800 dark:text-green-300">
                 <CheckCircle className="w-5 h-5" />
                 <span className="font-medium">Vote soumis avec succès!</span>
               </div>
-              <p className="text-sm text-green-700 mt-1">
+              <p className="text-sm text-green-700 dark:text-green-400 mt-1">
                 Votre vote sera examiné par nos modérateurs avant d&apos;être pris en compte.
               </p>
             </CardContent>
@@ -155,13 +155,13 @@ export function VoteDialog({ politicianId, onClose }: VoteDialogProps) {
         )}
 
         {submitStatus === 'error' && (
-          <Card className="border-red-200 bg-red-50">
+          <Card className="border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/30">
             <CardContent className="p-4">
-              <div className="flex items-center space-x-2 text-red-800">
+              <div className="flex items-center space-x-2 text-red-800 dark:text-red-300">
                 <AlertCircle className="w-5 h-5" />
                 <span className="font-medium">Erreur lors de la soumission</span>
               </div>
-              <p className="text-sm text-red-700 mt-1">
+              <p className="text-sm text-red-700 dark:text-red-400 mt-1">
                 Une erreur s&apos;est produite. Veuillez réessayer.
               </p>
             </CardContent>
@@ -176,17 +176,17 @@ export function VoteDialog({ politicianId, onClose }: VoteDialogProps) {
               <Card
                 className={`cursor-pointer transition-colors ${
                   formData.vote_type === 'positive'
-                    ? 'border-green-300 bg-green-50'
-                    : 'hover:bg-gray-50'
+                    ? 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/30'
+                    : 'hover:bg-gray-50 dark:hover:bg-gray-800'
                 }`}
                 onClick={() => setFormData(prev => ({ ...prev, vote_type: 'positive' }))}
               >
                 <CardContent className="p-4 text-center">
                   <ThumbsUp className={`w-8 h-8 mx-auto mb-2 ${
-                    formData.vote_type === 'positive' ? 'text-green-600' : 'text-gray-400'
+                    formData.vote_type === 'positive' ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'
                   }`} />
-                  <span className="font-medium">Vote positif</span>
-                  <p className="text-xs text-gray-600 mt-1">
+                  <span className="font-medium dark:text-gray-100">Vote positif</span>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                     Améliore la crédibilité
                   </p>
                 </CardContent>
@@ -194,17 +194,17 @@ export function VoteDialog({ politicianId, onClose }: VoteDialogProps) {
               <Card
                 className={`cursor-pointer transition-colors ${
                   formData.vote_type === 'negative'
-                    ? 'border-red-300 bg-red-50'
-                    : 'hover:bg-gray-50'
+                    ? 'border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/30'
+                    : 'hover:bg-gray-50 dark:hover:bg-gray-800'
                 }`}
                 onClick={() => setFormData(prev => ({ ...prev, vote_type: 'negative' }))}
               >
                 <CardContent className="p-4 text-center">
                   <ThumbsDown className={`w-8 h-8 mx-auto mb-2 ${
-                    formData.vote_type === 'negative' ? 'text-red-600' : 'text-gray-400'
+                    formData.vote_type === 'negative' ? 'text-red-600 dark:text-red-400' : 'text-gray-400 dark:text-gray-500'
                   }`} />
-                  <span className="font-medium">Vote négatif</span>
-                  <p className="text-xs text-gray-600 mt-1">
+                  <span className="font-medium dark:text-gray-100">Vote négatif</span>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                     Diminue la crédibilité
                   </p>
                 </CardContent>
@@ -230,7 +230,7 @@ export function VoteDialog({ politicianId, onClose }: VoteDialogProps) {
                 </Button>
               ))}
             </div>
-            <p className="text-xs text-gray-600">
+            <p className="text-xs text-gray-600 dark:text-gray-400">
               Plus l&apos;impact est important, plus les preuves doivent être solides.
             </p>
           </div>
@@ -306,7 +306,7 @@ export function VoteDialog({ politicianId, onClose }: VoteDialogProps) {
                 </Button>
               ))}
             </div>
-            <p className="text-xs text-gray-600">
+            <p className="text-xs text-gray-600 dark:text-gray-400">
               Évaluez la fiabilité de votre source (2: peu fiable, 10: très fiable)
             </p>
           </div>
@@ -321,7 +321,7 @@ export function VoteDialog({ politicianId, onClose }: VoteDialogProps) {
                 id="evidence_title"
                 type="text"
                 required
-                className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full mt-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
                 placeholder="Ex: Déclaration publique lors du débat du 15 janvier 2024"
                 value={formData.evidence_title}
                 onChange={(e) => setFormData(prev => ({ ...prev, evidence_title: e.target.value }))}
@@ -336,7 +336,7 @@ export function VoteDialog({ politicianId, onClose }: VoteDialogProps) {
                 id="evidence_description"
                 required
                 rows={4}
-                className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full mt-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
                 placeholder="Décrivez en détail la preuve et son contexte. Soyez objectif et factuel."
                 value={formData.evidence_description}
                 onChange={(e) => setFormData(prev => ({ ...prev, evidence_description: e.target.value }))}
@@ -350,7 +350,7 @@ export function VoteDialog({ politicianId, onClose }: VoteDialogProps) {
               <input
                 id="evidence_url"
                 type="url"
-                className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full mt-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
                 placeholder="https://exemple.com/article-ou-video"
                 value={formData.evidence_url}
                 onChange={(e) => setFormData(prev => ({ ...prev, evidence_url: e.target.value }))}
@@ -359,13 +359,13 @@ export function VoteDialog({ politicianId, onClose }: VoteDialogProps) {
           </div>
 
           {/* Legal Notice */}
-          <Card className="border-blue-200 bg-blue-50">
+          <Card className="border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30">
             <CardContent className="p-4">
               <div className="flex items-start space-x-2">
-                <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
-                <div className="text-sm text-blue-800">
+                <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                <div className="text-sm text-blue-800 dark:text-blue-200">
                   <p className="font-medium mb-1">Engagement de responsabilité</p>
-                  <p>
+                  <p className="text-blue-700 dark:text-blue-300">
                     En soumettant ce vote, vous certifiez que les informations sont exactes
                     et vérifiables. Tout contenu diffamatoire ou mensonger peut engager votre
                     responsabilité légale selon la législation française.

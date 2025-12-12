@@ -27,6 +27,14 @@ import {
   Download
 } from 'lucide-react'
 
+interface PartyStats {
+  party: string
+  count: number
+  avgScore: number
+  avgAiScore: number
+  totalVotes: number
+}
+
 interface AnalyticsData {
   totalUsers: number
   totalPoliticians: number
@@ -41,6 +49,7 @@ interface AnalyticsData {
     credibility_score: number
     total_votes: number
   }>
+  partyStats: PartyStats[]
   userEngagement: {
     dailyActiveUsers: number
     weeklyActiveUsers: number
@@ -114,6 +123,36 @@ export default function AnalyticsPage() {
         .order('credibility_score', { ascending: false })
         .limit(10)
 
+      // Fetch all politicians for party stats
+      const { data: allPoliticiansData } = await supabase
+        .from('politicians')
+        .select('party, credibility_score, ai_score, total_votes')
+        .not('party', 'is', null)
+
+      // Calculate party statistics
+      const partyMap = new Map<string, { scores: number[], aiScores: number[], votes: number[] }>()
+      allPoliticiansData?.forEach(p => {
+        if (!p.party) return
+        if (!partyMap.has(p.party)) {
+          partyMap.set(p.party, { scores: [], aiScores: [], votes: [] })
+        }
+        const partyData = partyMap.get(p.party)!
+        partyData.scores.push(p.credibility_score || 0)
+        partyData.aiScores.push(p.ai_score || 0)
+        partyData.votes.push(p.total_votes || 0)
+      })
+
+      const partyStats: PartyStats[] = Array.from(partyMap.entries())
+        .map(([party, data]) => ({
+          party,
+          count: data.scores.length,
+          avgScore: Math.round(data.scores.reduce((a, b) => a + b, 0) / data.scores.length),
+          avgAiScore: Math.round(data.aiScores.reduce((a, b) => a + b, 0) / data.aiScores.length),
+          totalVotes: data.votes.reduce((a, b) => a + b, 0)
+        }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 12)
+
       // Calculate average credibility score
       const averageCredibilityScore = topPoliticiansData?.length
         ? Math.round(topPoliticiansData.reduce((sum, p) => sum + p.credibility_score, 0) / topPoliticiansData.length)
@@ -166,6 +205,7 @@ export default function AnalyticsPage() {
         rejectedVotes,
         averageCredibilityScore,
         topPoliticians: topPoliticiansData || [],
+        partyStats,
         userEngagement,
         votesByCategory: votesByCategoryArray,
         moderationStats,
@@ -487,6 +527,81 @@ export default function AnalyticsPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Party Analytics */}
+        {analytics.partyStats.length > 0 && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Users className="w-5 h-5 text-indigo-600" />
+                <span>Statistiques par Parti</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-3 px-2 font-medium text-gray-600">Parti</th>
+                      <th className="text-center py-3 px-2 font-medium text-gray-600">Membres</th>
+                      <th className="text-center py-3 px-2 font-medium text-gray-600">Score Moyen</th>
+                      <th className="text-center py-3 px-2 font-medium text-gray-600">Score IA</th>
+                      <th className="text-right py-3 px-2 font-medium text-gray-600">Votes</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {analytics.partyStats.map((party, index) => (
+                      <tr key={party.party} className={`border-b hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
+                        <td className="py-3 px-2">
+                          <span className="font-medium text-gray-900">{party.party}</span>
+                        </td>
+                        <td className="text-center py-3 px-2">
+                          <Badge variant="outline">{party.count}</Badge>
+                        </td>
+                        <td className="text-center py-3 px-2">
+                          <span className={`font-semibold ${
+                            party.avgScore >= 150 ? 'text-green-600' :
+                            party.avgScore >= 100 ? 'text-yellow-600' :
+                            'text-red-600'
+                          }`}>
+                            {party.avgScore}/200
+                          </span>
+                        </td>
+                        <td className="text-center py-3 px-2">
+                          <span className="text-indigo-600 font-medium">{party.avgAiScore}/100</span>
+                        </td>
+                        <td className="text-right py-3 px-2 text-gray-600">
+                          {party.totalVotes.toLocaleString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Visual comparison */}
+              <div className="mt-6 space-y-3">
+                <h4 className="font-medium text-gray-700">Comparaison des scores moyens</h4>
+                {analytics.partyStats.slice(0, 6).map(party => (
+                  <div key={party.party} className="flex items-center gap-3">
+                    <span className="w-32 text-sm truncate" title={party.party}>{party.party}</span>
+                    <div className="flex-1 bg-gray-200 rounded-full h-4 overflow-hidden">
+                      <div
+                        className={`h-full transition-all ${
+                          party.avgScore >= 150 ? 'bg-green-500' :
+                          party.avgScore >= 100 ? 'bg-yellow-500' :
+                          'bg-red-500'
+                        }`}
+                        style={{ width: `${(party.avgScore / 200) * 100}%` }}
+                      />
+                    </div>
+                    <span className="w-16 text-right text-sm font-medium">{party.avgScore}/200</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Votes by Category */}
         <Card className="mb-8">

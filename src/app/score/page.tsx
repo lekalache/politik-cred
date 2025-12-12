@@ -29,6 +29,7 @@ function ScoreRankBadge({ rank }: { rank: number }) {
 export default function ScorePage() {
   const [politicians, setPoliticians] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [dataStats, setDataStats] = useState({ totalPoliticians: 0, withPromises: 0 })
 
   useEffect(() => {
     async function loadPoliticians() {
@@ -55,6 +56,23 @@ export default function ScorePage() {
         setLoading(false)
         return
       }
+
+      // Fetch total politicians count
+      const { count: totalCount } = await supabase
+        .from('politicians')
+        .select('*', { count: 'exact', head: true })
+
+      // Fetch count of politicians with promises
+      const { data: promisesData } = await supabase
+        .from('political_promises')
+        .select('politician_id')
+
+      const uniquePoliticiansWithPromises = new Set(promisesData?.map(p => p.politician_id) || []).size
+
+      setDataStats({
+        totalPoliticians: totalCount || 0,
+        withPromises: uniquePoliticiansWithPromises
+      })
 
       // Fetch consistency scores for each politician
       const { data: scoresData, error: scoresError } = await supabase
@@ -129,7 +147,7 @@ export default function ScorePage() {
           <div className="mt-4 p-3 bg-yellow-500/20 backdrop-blur-sm rounded-lg border border-yellow-300/50">
             <p className="text-yellow-100 text-sm">
               <strong>⚠️ Phase de collecte initiale :</strong> Données insuffisantes pour scores représentatifs.
-              Seulement 11/70 politicians ont des promesses extraites. Scores de qualité après 3-6 mois de collecte quotidienne.
+              Seulement {dataStats.withPromises}/{dataStats.totalPoliticians} politicians ont des promesses extraites. Scores de qualité après 3-6 mois de collecte quotidienne.
             </p>
           </div>
 

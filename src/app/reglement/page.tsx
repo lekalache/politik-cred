@@ -98,7 +98,7 @@ export default function ReglementPage() {
           <div className="relative z-10 max-w-4xl mx-auto prose prose-lg max-w-none text-gray-700 leading-relaxed">
             <div className="mb-8 text-center">
               <h2 className="text-2xl font-semibold text-gray-900 mb-2">Règles de fonctionnement de Politik-Cred – Experimental</h2>
-              <p className="text-sm text-gray-600">Dernière mise à jour : Septembre 2025</p>
+              <p className="text-sm text-gray-600">Dernière mise à jour : Décembre 2025</p>
             </div>
 
             <div className="mb-8 p-6 bg-blue-50 rounded-lg border border-blue-200">

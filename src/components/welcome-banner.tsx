@@ -29,19 +29,19 @@ export function WelcomeBanner() {
 
   return (
     <div className="fixed top-20 left-4 right-4 z-50 max-w-md mx-auto">
-      <Card className="border-green-200 bg-green-50">
+      <Card className="border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/30">
         <CardContent className="p-4">
           <div className="flex items-center space-x-3">
-            <CheckCircle className="w-6 h-6 text-green-600" />
+            <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
             <div>
-              <h3 className="font-semibold text-green-800">Bienvenue sur Politik Cred' !</h3>
-              <p className="text-sm text-green-700">
+              <h3 className="font-semibold text-green-800 dark:text-green-300">Bienvenue sur Politik Cred&apos; !</h3>
+              <p className="text-sm text-green-700 dark:text-green-400">
                 Votre compte a été vérifié avec succès.
               </p>
             </div>
             <button
               onClick={() => setShowWelcome(false)}
-              className="text-green-600 hover:text-green-800 text-xl font-bold"
+              className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 text-xl font-bold"
             >
               ×
             </button>

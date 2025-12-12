@@ -67,40 +67,35 @@ async function logAuditActivity(
 }
 
 /**
- * Step 1: Collect parliamentary data
+ * Step 1: Collect parliamentary data from AN Open Data
+ * Uses the official static repository (more reliable than API)
  */
 async function collectParliamentaryData(): Promise<JobResult> {
   const startTime = Date.now()
 
   try {
-    console.log('📊 Step 1: Collecting parliamentary data...')
-    console.log('🔍 DEBUG: CRON_SECRET available:', !!CRON_SECRET)
-    console.log('🔍 DEBUG: CRON_SECRET (first 10):', CRON_SECRET?.substring(0, 10))
+    console.log('📊 Step 1: Collecting parliamentary data from AN Open Data...')
 
-    const response = await fetch(`${process.env.URL || 'http://localhost:3000'}/api/data-collection/collect`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${CRON_SECRET}`
-      },
-      body: JSON.stringify({
-        type: 'incremental',
-        limit: 50
-      })
-    })
+    // Import the AN Open Data client directly for better control
+    const { assembleeOpendataClient } = await import('@/lib/scrapers/assemblee-opendata-client')
 
-    if (!response.ok) {
-      throw new Error(`Data collection failed: ${response.statusText}`)
-    }
+    // Collect latest scrutins - limit to 100 per day for incremental updates
+    // Full collection should be run manually or less frequently
+    const stats = await assembleeOpendataClient.collectAllData({ limit: 100 })
 
-    const result = await response.json()
     const duration = Date.now() - startTime
 
     return {
       step: 'collect-data',
-      status: 'success',
+      status: stats.errors > 0 ? 'error' : 'success',
       duration,
-      details: result
+      details: {
+        source: 'data.assemblee-nationale.fr',
+        deputies: stats.deputies,
+        scrutins: stats.scrutins,
+        votes: stats.votes,
+        errors: stats.errors
+      }
     }
   } catch (error) {
     return {

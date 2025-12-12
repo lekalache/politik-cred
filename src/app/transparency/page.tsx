@@ -47,6 +47,7 @@ interface Stats {
 interface AISystemStats {
   totalPoliticians: number
   politiciansWithScores: number
+  politiciansWithZeroScore: number
   totalPromises: number
   politiciansWithPromises: number
   parliamentaryActions: number
@@ -159,6 +160,7 @@ export default function TransparencyPage() {
       const [
         { count: totalPols },
         { count: polsWithScores },
+        { count: polsWithZeroScore },
         { data: allPromises },
         { count: totalActions },
         { count: totalVerifications },
@@ -168,6 +170,7 @@ export default function TransparencyPage() {
       ] = await Promise.all([
         supabase.from('politicians').select('*', { count: 'exact', head: true }),
         supabase.from('politicians').select('*', { count: 'exact', head: true }).not('ai_score', 'is', null),
+        supabase.from('politicians').select('*', { count: 'exact', head: true }).or('ai_score.is.null,ai_score.eq.0'),
         supabase.from('political_promises').select('politician_id'),
         supabase.from('parliamentary_actions').select('*', { count: 'exact', head: true }),
         supabase.from('promise_verifications').select('*', { count: 'exact', head: true }),
@@ -189,6 +192,7 @@ export default function TransparencyPage() {
       setAiStats({
         totalPoliticians: totalPols || 0,
         politiciansWithScores: polsWithScores || 0,
+        politiciansWithZeroScore: polsWithZeroScore || 0,
         totalPromises: allPromises?.length || 0,
         politiciansWithPromises: uniquePoliticiansWithPromises,
         parliamentaryActions: totalActions || 0,
@@ -355,7 +359,7 @@ export default function TransparencyPage() {
                     <ul className="space-y-1 list-disc list-inside">
                       <li>Seulement <strong>{aiStats.politiciansWithPromises}/{aiStats.totalPoliticians}</strong> politicians ont des promesses extraites</li>
                       <li>Moyenne de <strong>{(aiStats.totalPromises / Math.max(aiStats.politiciansWithPromises, 1)).toFixed(1)}</strong> promesses par politicien (minimum recommandé : 20+)</li>
-                      <li><strong>59 politicians ont un score de 0</strong> (pas de données collectées)</li>
+                      <li><strong>{aiStats.politiciansWithZeroScore} politicians ont un score de 0</strong> (pas de données collectées)</li>
                       <li>Les scores actuels ne sont <strong>PAS représentatifs</strong> - Données insuffisantes pour un audit fiable</li>
                       <li>Besoin de 3-6 mois de collecte continue pour des scores de qualité</li>
                     </ul>

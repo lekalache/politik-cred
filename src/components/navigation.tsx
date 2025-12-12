@@ -14,11 +14,15 @@ import {
   Settings,
   UserCheck,
   Menu,
-  X
+  X,
+  Sun,
+  Moon
 } from 'lucide-react'
+import { useTheme } from '@/components/theme-provider'
 
 export function Navigation() {
   const { user, signOut, loading } = useAuth()
+  const { theme, toggleTheme, mounted } = useTheme()
   const [authDialogOpen, setAuthDialogOpen] = useState(false)
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -35,7 +39,7 @@ export function Navigation() {
   }
 
   return (
-    <header className="bg-white border-b shadow-sm sticky top-0 z-50">
+    <header className="bg-white dark:bg-gray-800 border-b dark:border-gray-700 shadow-sm sticky top-0 z-50 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo POLITIKCRED */}
@@ -60,21 +64,44 @@ export function Navigation() {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-4">
             <div className="flex items-center space-x-2 text-sm">
-              <a href="/score" className="text-gray-600 hover:text-gray-900 transition-colors">
+              <a href="/score" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
                 Classement
               </a>
-              <span className="text-gray-300">|</span>
-              <a href="/promises" className="text-gray-600 hover:text-gray-900 transition-colors">
+              <span className="text-gray-300 dark:text-gray-600">|</span>
+              <a href="/compare" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
+                Comparer
+              </a>
+              <span className="text-gray-300 dark:text-gray-600">|</span>
+              <a href="/promises" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
                 Promesses
               </a>
-              <span className="text-gray-300">|</span>
-              <a href="/transparency" className="text-gray-600 hover:text-gray-900 transition-colors">
+              <span className="text-gray-300 dark:text-gray-600">|</span>
+              <a href="/transparency" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
                 Transparence
               </a>
             </div>
             <Badge variant="outline" className="bg-[#DC2626] text-white border-[#DC2626]">
               Beta
             </Badge>
+
+            {/* Dark Mode Toggle */}
+            {mounted ? (
+              <Button
+                onClick={toggleTheme}
+                size="sm"
+                variant="outline"
+                className="w-9 h-9 p-0 dark:border-gray-600 dark:bg-gray-800"
+                title={theme === 'light' ? 'Passer en mode sombre' : 'Passer en mode clair'}
+              >
+                {theme === 'light' ? (
+                  <Moon className="w-4 h-4" />
+                ) : (
+                  <Sun className="w-4 h-4 text-yellow-500" />
+                )}
+              </Button>
+            ) : (
+              <div className="w-9 h-9" /> // Placeholder to prevent layout shift
+            )}
 
             {loading ? (
               <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse"></div>
@@ -160,31 +187,55 @@ export function Navigation() {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t bg-white py-4">
+          <div className="md:hidden border-t dark:border-gray-700 bg-white dark:bg-gray-800 py-4 transition-colors">
             <div className="space-y-3">
-              <Badge variant="outline" className="bg-[#DC2626] text-white border-[#DC2626] block w-fit">
-                Beta
-              </Badge>
+              <div className="flex items-center justify-between">
+                <Badge variant="outline" className="bg-[#DC2626] text-white border-[#DC2626]">
+                  Beta
+                </Badge>
+                {/* Mobile Dark Mode Toggle */}
+                {mounted && (
+                  <Button
+                    onClick={toggleTheme}
+                    size="sm"
+                    variant="outline"
+                    className="w-9 h-9 p-0 dark:border-gray-600 dark:bg-gray-700"
+                  >
+                    {theme === 'light' ? (
+                      <Moon className="w-4 h-4" />
+                    ) : (
+                      <Sun className="w-4 h-4 text-yellow-500" />
+                    )}
+                  </Button>
+                )}
+              </div>
 
               {/* Mobile Navigation Links */}
-              <div className="space-y-3 pt-3 border-t border-gray-100">
+              <div className="space-y-3 pt-3 border-t border-gray-100 dark:border-gray-700">
                 <a
                   href="/score"
-                  className="text-sm text-gray-600 hover:text-gray-900 transition-colors block"
+                  className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors block"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Classement
                 </a>
                 <a
+                  href="/compare"
+                  className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors block"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Comparer
+                </a>
+                <a
                   href="/promises"
-                  className="text-sm text-gray-600 hover:text-gray-900 transition-colors block"
+                  className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors block"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Promesses
                 </a>
                 <a
                   href="/transparency"
-                  className="text-sm text-gray-600 hover:text-gray-900 transition-colors block"
+                  className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors block"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Transparence

@@ -135,16 +135,16 @@ export function NewsBanner() {
 
   // Don't show the banner until news is loaded - prevents visual "refresh" effect
   if (news.length === 0 && !error) {
-    return <div className="h-12 bg-[#1E3A8A] border-b-4 border-[#DC2626]"></div> // Placeholder with same height
+    return <div className="h-12 bg-brand-blue-dark border-b-4 border-brand-red"></div> // Placeholder with same height
   }
 
   if (error) {
     return (
-      <div className="bg-[#1E3A8A] text-white py-3 border-b-4 border-[#DC2626]">
+      <div className="bg-brand-blue-dark text-white py-3 border-b-4 border-brand-red">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-center">
             <div className="flex items-center space-x-2">
-              <AlertCircle className="w-5 h-5 text-[#DC2626]" />
+              <AlertCircle className="w-5 h-5 text-brand-red" />
               <span className="text-lg font-semibold">Actualités politique - Système en cours de déploiement</span>
             </div>
           </div>
@@ -154,9 +154,9 @@ export function NewsBanner() {
   }
 
   return (
-    <div className="bg-[#1E3A8A] text-white border-b-4 border-[#DC2626] relative overflow-hidden">
+    <div className="bg-brand-blue-dark text-white border-b-4 border-brand-red relative overflow-hidden">
       {/* Breaking News Label */}
-      <div className="absolute left-0 top-0 bottom-0 bg-[#DC2626] flex items-center px-4 z-20">
+      <div className="absolute left-0 top-0 bottom-0 bg-brand-red flex items-center px-4 z-20">
         <div className="flex items-center space-x-2">
           <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
           <span className="text-sm font-bold tracking-wider">ACTU</span>
@@ -182,20 +182,20 @@ export function NewsBanner() {
               news.map((item) => (
                 <div key={`copy-${copyIndex}-${item.id}`} className="flex items-center whitespace-nowrap mr-16">
                   <div className="flex items-center space-x-3">
-                    <Clock className="w-4 h-4 text-[#FAFAFA]" />
-                    <span className="text-sm font-medium text-[#FAFAFA]">
+                    <Clock className="w-4 h-4 text-blue-100" />
+                    <span className="text-sm font-medium text-blue-100">
                       {formatTimeAgo(item.published_at)}
                     </span>
-                    <div className="w-1 h-1 bg-[#DC2626] rounded-full" />
+                    <div className="w-1 h-1 bg-brand-red rounded-full" />
                     <span className="text-lg font-semibold">{item.title}</span>
-                    <div className="w-1 h-1 bg-[#FAFAFA] rounded-full" />
-                    <span className="text-sm text-[#FAFAFA] uppercase tracking-wide">
+                    <div className="w-1 h-1 bg-blue-100 rounded-full" />
+                    <span className="text-sm text-blue-100 uppercase tracking-wide">
                       {item.source}
                     </span>
                     {item.keywords && item.keywords.length > 0 && (
                       <>
-                        <div className="w-1 h-1 bg-[#DC2626] rounded-full" />
-                        <span className="text-sm text-[#DC2626] font-medium">
+                        <div className="w-1 h-1 bg-brand-red rounded-full" />
+                        <span className="text-sm text-brand-red font-medium">
                           #{item.keywords[0]}
                         </span>
                       </>
@@ -209,11 +209,11 @@ export function NewsBanner() {
       </div>
 
       {/* Politik Cred Brand on the right */}
-      <div className="absolute right-0 top-0 bottom-0 bg-gradient-to-l from-[#1E3A8A] via-[#1E3A8A] to-transparent flex items-center pr-4 z-20">
+      <div className="absolute right-0 top-0 bottom-0 bg-gradient-to-l from-brand-blue-dark via-brand-blue-dark to-transparent flex items-center pr-4 z-20">
         <div className="flex items-center space-x-2">
-          <span className="text-sm font-bold text-[#FAFAFA]">Politik</span>
-          <span className="text-sm font-bold text-[#DC2626]">Cred'</span>
-          <div className="w-2 h-2 bg-[#DC2626] rounded-full" />
+          <span className="text-sm font-bold text-blue-100">Politik</span>
+          <span className="text-sm font-bold text-brand-red">Cred&apos;</span>
+          <div className="w-2 h-2 bg-brand-red rounded-full" />
         </div>
       </div>
 

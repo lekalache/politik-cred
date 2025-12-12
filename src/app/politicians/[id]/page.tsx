@@ -30,6 +30,7 @@ import {
 } from 'lucide-react'
 import { triggerAudit } from '@/app/actions/audit'
 import { useRouter } from 'next/navigation'
+import { ShareButtons } from '@/components/share-buttons'
 
 interface Politician {
   id: string
@@ -38,6 +39,7 @@ interface Politician {
   position: string | null
   image_url: string | null
   bio: string | null
+  credibility_score: number
   ai_score: number | null
   ai_last_audited_at: string | null
   created_at: string
@@ -88,8 +90,9 @@ interface ParliamentaryAction {
   action_type: string
   description: string
   vote_position: string | null
-  date: string
-  source_url: string | null
+  action_date: string
+  official_reference: string | null
+  bill_id: string | null
   created_at: string
 }
 
@@ -101,10 +104,36 @@ export default function PoliticianProfilePage() {
   const [scores, setScores] = useState<ConsistencyScore | null>(null)
   const [verifications, setVerifications] = useState<PromiseVerification[]>([])
   const [actions, setActions] = useState<ParliamentaryAction[]>([])
+  const [totalActionsCount, setTotalActionsCount] = useState(0)
+  const [voteStatistics, setVoteStatistics] = useState<Record<string, number>>({})
+  const [monthlyActivity, setMonthlyActivity] = useState<{month: string, votes: number, pour: number, contre: number, abstention: number}[]>([])
 
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [isAuditing, setIsAuditing] = useState(false)
   const router = useRouter()
+
+  // Load more actions
+  const loadMoreActions = async () => {
+    if (loadingMore || actions.length >= totalActionsCount) return
+    setLoadingMore(true)
+    try {
+      const { data: moreActions } = await supabase
+        .from('parliamentary_actions')
+        .select('*')
+        .eq('politician_id', id)
+        .order('action_date', { ascending: false })
+        .range(actions.length, actions.length + 49)
+
+      if (moreActions) {
+        setActions(prev => [...prev, ...moreActions])
+      }
+    } catch (error) {
+      console.error('Error loading more actions:', error)
+    } finally {
+      setLoadingMore(false)
+    }
+  }
 
   useEffect(() => {
     async function loadData() {
@@ -197,16 +226,71 @@ export default function PoliticianProfilePage() {
           }
         }
 
-        // Fetch parliamentary actions
-        const { data: actionsData } = await supabase
+        // Fetch parliamentary actions with pagination
+        const { data: actionsData, count: totalActions } = await supabase
           .from('parliamentary_actions')
-          .select('*')
+          .select('*', { count: 'exact' })
           .eq('politician_id', id)
-          .order('date', { ascending: false })
-          .limit(20)
+          .order('action_date', { ascending: false })
+          .limit(50)
 
         if (actionsData) {
           setActions(actionsData)
+          setTotalActionsCount(totalActions || 0)
+        }
+
+        // Fetch vote statistics
+        const { data: voteStats } = await supabase
+          .from('parliamentary_actions')
+          .select('vote_position')
+          .eq('politician_id', id)
+          .eq('action_type', 'vote')
+          .not('vote_position', 'is', null)
+
+        if (voteStats) {
+          const stats = voteStats.reduce((acc, v) => {
+            const pos = v.vote_position as string
+            acc[pos] = (acc[pos] || 0) + 1
+            return acc
+          }, {} as Record<string, number>)
+          setVoteStatistics(stats)
+        }
+
+        // Fetch monthly activity data for timeline visualization
+        const { data: allVotes } = await supabase
+          .from('parliamentary_actions')
+          .select('action_date, vote_position')
+          .eq('politician_id', id)
+          .eq('action_type', 'vote')
+          .not('vote_position', 'is', null)
+          .order('action_date', { ascending: true })
+
+        if (allVotes && allVotes.length > 0) {
+          // Group by month
+          const monthlyData: Record<string, { votes: number, pour: number, contre: number, abstention: number }> = {}
+
+          allVotes.forEach(vote => {
+            const date = new Date(vote.action_date)
+            const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+
+            if (!monthlyData[monthKey]) {
+              monthlyData[monthKey] = { votes: 0, pour: 0, contre: 0, abstention: 0 }
+            }
+
+            monthlyData[monthKey].votes++
+            const pos = vote.vote_position as string
+            if (pos === 'pour') monthlyData[monthKey].pour++
+            else if (pos === 'contre') monthlyData[monthKey].contre++
+            else if (pos === 'abstention') monthlyData[monthKey].abstention++
+          })
+
+          // Convert to array and sort by month, limit to last 12 months
+          const monthlyArray = Object.entries(monthlyData)
+            .map(([month, data]) => ({ month, ...data }))
+            .sort((a, b) => a.month.localeCompare(b.month))
+            .slice(-12)
+
+          setMonthlyActivity(monthlyArray)
         }
 
       } catch (error) {
@@ -373,6 +457,16 @@ export default function PoliticianProfilePage() {
               {politician.bio}
             </p>
           )}
+
+          {/* Share Buttons */}
+          <div className="mt-6 pt-6 border-t border-white/20">
+            <ShareButtons
+              title={`${politician.name} - Score de crédibilité: ${politician.credibility_score}/200 | Politik Cred'`}
+              description={`Découvrez le profil politique de ${politician.name}${politician.party ? ` (${politician.party})` : ''} sur Politik Cred' - La plateforme de transparence politique française.`}
+              variant="icons-only"
+              className="[&_button]:hover:bg-white/20 [&_svg]:text-white"
+            />
+          </div>
         </div>
       </div>
 
@@ -544,6 +638,164 @@ export default function PoliticianProfilePage() {
           </div>
         )}
 
+        {/* Vote Statistics */}
+        {Object.keys(voteStatistics).length > 0 && (
+          <div className="mb-8">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Vote className="w-5 h-5" />
+                  Répartition des Votes ({Object.values(voteStatistics).reduce((a, b) => a + b, 0)} votes)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <div className="text-3xl font-bold text-green-600">{voteStatistics['pour'] || 0}</div>
+                    <div className="text-sm text-green-700 dark:text-green-400">Pour</div>
+                    <div className="text-xs text-green-600 mt-1">
+                      {((voteStatistics['pour'] || 0) / Object.values(voteStatistics).reduce((a, b) => a + b, 1) * 100).toFixed(1)}%
+                    </div>
+                  </div>
+                  <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                    <div className="text-3xl font-bold text-red-600">{voteStatistics['contre'] || 0}</div>
+                    <div className="text-sm text-red-700 dark:text-red-400">Contre</div>
+                    <div className="text-xs text-red-600 mt-1">
+                      {((voteStatistics['contre'] || 0) / Object.values(voteStatistics).reduce((a, b) => a + b, 1) * 100).toFixed(1)}%
+                    </div>
+                  </div>
+                  <div className="text-center p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                    <div className="text-3xl font-bold text-yellow-600">{voteStatistics['abstention'] || 0}</div>
+                    <div className="text-sm text-yellow-700 dark:text-yellow-400">Abstention</div>
+                    <div className="text-xs text-yellow-600 mt-1">
+                      {((voteStatistics['abstention'] || 0) / Object.values(voteStatistics).reduce((a, b) => a + b, 1) * 100).toFixed(1)}%
+                    </div>
+                  </div>
+                  <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div className="text-3xl font-bold text-gray-600 dark:text-gray-300">{voteStatistics['nonVotant'] || 0}</div>
+                    <div className="text-sm text-gray-700 dark:text-gray-400">Non votant</div>
+                    <div className="text-xs text-gray-600 mt-1">
+                      {((voteStatistics['nonVotant'] || 0) / Object.values(voteStatistics).reduce((a, b) => a + b, 1) * 100).toFixed(1)}%
+                    </div>
+                  </div>
+                </div>
+                {/* Progress bar visualization */}
+                <div className="mt-4 h-4 rounded-full overflow-hidden flex bg-gray-200 dark:bg-gray-700">
+                  {voteStatistics['pour'] > 0 && (
+                    <div
+                      className="bg-green-500 h-full"
+                      style={{ width: `${(voteStatistics['pour'] / Object.values(voteStatistics).reduce((a, b) => a + b, 1)) * 100}%` }}
+                    />
+                  )}
+                  {voteStatistics['contre'] > 0 && (
+                    <div
+                      className="bg-red-500 h-full"
+                      style={{ width: `${(voteStatistics['contre'] / Object.values(voteStatistics).reduce((a, b) => a + b, 1)) * 100}%` }}
+                    />
+                  )}
+                  {voteStatistics['abstention'] > 0 && (
+                    <div
+                      className="bg-yellow-500 h-full"
+                      style={{ width: `${(voteStatistics['abstention'] / Object.values(voteStatistics).reduce((a, b) => a + b, 1)) * 100}%` }}
+                    />
+                  )}
+                  {voteStatistics['nonVotant'] > 0 && (
+                    <div
+                      className="bg-gray-400 h-full"
+                      style={{ width: `${(voteStatistics['nonVotant'] / Object.values(voteStatistics).reduce((a, b) => a + b, 1)) * 100}%` }}
+                    />
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Monthly Activity Timeline */}
+        {monthlyActivity.length > 0 && (
+          <div className="mb-8">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="w-5 h-5" />
+                  Activité Mensuelle (12 derniers mois)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {/* Bar chart */}
+                  <div className="flex items-end gap-1 h-40">
+                    {monthlyActivity.map((month, index) => {
+                      const maxVotes = Math.max(...monthlyActivity.map(m => m.votes))
+                      const heightPercent = maxVotes > 0 ? (month.votes / maxVotes) * 100 : 0
+                      const pourPercent = month.votes > 0 ? (month.pour / month.votes) * 100 : 0
+                      const contrePercent = month.votes > 0 ? (month.contre / month.votes) * 100 : 0
+                      const abstentionPercent = month.votes > 0 ? (month.abstention / month.votes) * 100 : 0
+
+                      return (
+                        <div key={month.month} className="flex-1 flex flex-col items-center group relative">
+                          {/* Tooltip */}
+                          <div className="absolute bottom-full mb-2 hidden group-hover:block z-10">
+                            <div className="bg-gray-900 text-white text-xs rounded px-2 py-1 whitespace-nowrap">
+                              <div className="font-semibold">{new Date(month.month + '-01').toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })}</div>
+                              <div>{month.votes} votes</div>
+                              <div className="text-green-400">Pour: {month.pour}</div>
+                              <div className="text-red-400">Contre: {month.contre}</div>
+                              <div className="text-yellow-400">Abst: {month.abstention}</div>
+                            </div>
+                          </div>
+                          {/* Bar */}
+                          <div
+                            className="w-full rounded-t overflow-hidden flex flex-col-reverse transition-all hover:opacity-80"
+                            style={{ height: `${Math.max(heightPercent, 5)}%` }}
+                          >
+                            <div className="bg-green-500" style={{ height: `${pourPercent}%` }} />
+                            <div className="bg-red-500" style={{ height: `${contrePercent}%` }} />
+                            <div className="bg-yellow-500" style={{ height: `${abstentionPercent}%` }} />
+                          </div>
+                          {/* Label */}
+                          <span className="text-[10px] text-gray-500 mt-1 -rotate-45 origin-top-left whitespace-nowrap">
+                            {new Date(month.month + '-01').toLocaleDateString('fr-FR', { month: 'short' })}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {/* Summary stats */}
+                  <div className="grid grid-cols-3 gap-4 pt-4 border-t dark:border-gray-700">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-600">
+                        {monthlyActivity.reduce((sum, m) => sum + m.votes, 0)}
+                      </div>
+                      <div className="text-xs text-gray-500">Votes sur 12 mois</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-gray-600">
+                        {Math.round(monthlyActivity.reduce((sum, m) => sum + m.votes, 0) / monthlyActivity.length)}
+                      </div>
+                      <div className="text-xs text-gray-500">Moyenne/mois</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-600">
+                        {Math.max(...monthlyActivity.map(m => m.votes))}
+                      </div>
+                      <div className="text-xs text-gray-500">Max. mensuel</div>
+                    </div>
+                  </div>
+
+                  {/* Legend */}
+                  <div className="flex justify-center gap-4 text-xs text-gray-500">
+                    <span className="flex items-center gap-1"><span className="w-3 h-3 bg-green-500 rounded"></span> Pour</span>
+                    <span className="flex items-center gap-1"><span className="w-3 h-3 bg-red-500 rounded"></span> Contre</span>
+                    <span className="flex items-center gap-1"><span className="w-3 h-3 bg-yellow-500 rounded"></span> Abstention</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* Parliamentary Actions */}
         {actions.length > 0 && (
           <div className="mb-8">
@@ -551,7 +803,7 @@ export default function PoliticianProfilePage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Vote className="w-5 h-5" />
-                  Actions Parlementaires Récentes ({actions.length})
+                  Historique des Votes ({actions.length}/{totalActionsCount})
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -562,11 +814,18 @@ export default function PoliticianProfilePage() {
                       className="border-l-4 border-[#1E3A8A] pl-4 py-2 hover:bg-gray-50 transition-colors"
                     >
                       <div className="flex items-start justify-between mb-1">
-                        <Badge variant="outline" className="text-xs">
-                          {action.action_type}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs">
+                            {action.action_type}
+                          </Badge>
+                          {action.bill_id && (
+                            <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">
+                              {action.bill_id}
+                            </Badge>
+                          )}
+                        </div>
                         <span className="text-xs text-gray-500">
-                          {new Date(action.date).toLocaleDateString('fr-FR')}
+                          {new Date(action.action_date).toLocaleDateString('fr-FR')}
                         </span>
                       </div>
 
@@ -574,34 +833,58 @@ export default function PoliticianProfilePage() {
                         {action.description}
                       </p>
 
-                      {action.vote_position && (
-                        <Badge
-                          className={
-                            action.vote_position === 'pour'
-                              ? 'bg-green-100 text-green-800'
-                              : action.vote_position === 'contre'
-                                ? 'bg-red-100 text-red-800'
-                                : 'bg-gray-100 text-gray-800'
-                          }
-                        >
-                          Vote: {action.vote_position}
-                        </Badge>
-                      )}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {action.vote_position && (
+                          <Badge
+                            className={
+                              action.vote_position === 'pour'
+                                ? 'bg-green-100 text-green-800'
+                                : action.vote_position === 'contre'
+                                  ? 'bg-red-100 text-red-800'
+                                  : action.vote_position === 'abstention'
+                                    ? 'bg-yellow-100 text-yellow-800'
+                                    : 'bg-gray-100 text-gray-800'
+                            }
+                          >
+                            Vote: {action.vote_position}
+                          </Badge>
+                        )}
 
-                      {action.source_url && (
-                        <a
-                          href={action.source_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-[#1E3A8A] hover:underline flex items-center gap-1 mt-2"
-                        >
-                          <ExternalLink className="w-3 h-3" />
-                          Source officielle
-                        </a>
-                      )}
+                        {action.official_reference && (
+                          <a
+                            href={action.official_reference}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-[#1E3A8A] hover:underline flex items-center gap-1"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                            Voir sur Assemblée Nationale
+                          </a>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
+
+                {/* Load More Button */}
+                {actions.length < totalActionsCount && (
+                  <div className="mt-4 text-center">
+                    <button
+                      onClick={loadMoreActions}
+                      disabled={loadingMore}
+                      className="px-6 py-2 bg-[#1E3A8A] text-white rounded-lg hover:bg-blue-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {loadingMore ? (
+                        <span className="flex items-center gap-2">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Chargement...
+                        </span>
+                      ) : (
+                        `Charger plus (${totalActionsCount - actions.length} restants)`
+                      )}
+                    </button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

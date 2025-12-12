@@ -30,11 +30,11 @@ export function CredibilityBadge({
 
   // Determine color based on score (range: 0-200, baseline 100)
   const getScoreColor = (): string => {
-    if (validScore >= 150) return 'bg-green-100 text-green-800 border-green-300'    // 150-200: Excellent
-    if (validScore >= 120) return 'bg-blue-100 text-blue-800 border-blue-300'      // 120-149: Good
-    if (validScore >= 80) return 'bg-yellow-100 text-yellow-800 border-yellow-300'  // 80-119: Average
-    if (validScore >= 50) return 'bg-orange-100 text-orange-800 border-orange-300'  // 50-79: Low
-    return 'bg-red-100 text-red-800 border-red-300'                                 // 0-49: Very Low
+    if (validScore >= 150) return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border-green-300 dark:border-green-700'    // 150-200: Excellent
+    if (validScore >= 120) return 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-700'      // 120-149: Good
+    if (validScore >= 80) return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 border-yellow-300 dark:border-yellow-700'  // 80-119: Average
+    if (validScore >= 50) return 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 border-orange-300 dark:border-orange-700'  // 50-79: Low
+    return 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 border-red-300 dark:border-red-700'                                 // 0-49: Very Low
   }
 
   // Get score label (range: 0-200, baseline 100)
@@ -63,12 +63,12 @@ export function CredibilityBadge({
     if (!showTrend || recentChange === undefined) return null
 
     if (recentChange > 0) {
-      return <TrendingUp className="w-3 h-3 text-green-600 ml-1" />
+      return <TrendingUp className="w-3 h-3 text-green-600 dark:text-green-400 ml-1" />
     }
     if (recentChange < 0) {
-      return <TrendingDown className="w-3 h-3 text-red-600 ml-1" />
+      return <TrendingDown className="w-3 h-3 text-red-600 dark:text-red-400 ml-1" />
     }
-    return <Minus className="w-3 h-3 text-gray-400 ml-1" />
+    return <Minus className="w-3 h-3 text-gray-400 dark:text-gray-500 ml-1" />
   }
 
   return (
@@ -82,7 +82,7 @@ export function CredibilityBadge({
       </Badge>
 
       {size !== 'small' && (
-        <span className="text-xs text-gray-500">({getScoreLabel()})</span>
+        <span className="text-xs text-gray-500 dark:text-gray-400">({getScoreLabel()})</span>
       )}
     </div>
   )
@@ -111,16 +111,16 @@ export function CredibilityScoreCard({
 
   // Get color for circular progress (range: 0-200, baseline 100)
   const getProgressColor = (): string => {
-    if (validScore >= 150) return 'text-green-600'
-    if (validScore >= 120) return 'text-blue-600'
-    if (validScore >= 80) return 'text-yellow-600'
-    if (validScore >= 50) return 'text-orange-600'
-    return 'text-red-600'
+    if (validScore >= 150) return 'text-green-600 dark:text-green-400'
+    if (validScore >= 120) return 'text-blue-600 dark:text-blue-400'
+    if (validScore >= 80) return 'text-yellow-600 dark:text-yellow-400'
+    if (validScore >= 50) return 'text-orange-600 dark:text-orange-400'
+    return 'text-red-600 dark:text-red-400'
   }
 
   return (
-    <div className={`bg-white rounded-lg border-2 p-6 ${className}`}>
-      <h3 className="text-lg font-semibold text-gray-800 mb-4">
+    <div className={`bg-white dark:bg-gray-800 rounded-lg border-2 dark:border-gray-700 p-6 ${className}`}>
+      <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">
         Score de crédibilité
       </h3>
 
@@ -137,7 +137,7 @@ export function CredibilityScoreCard({
               stroke="currentColor"
               strokeWidth="8"
               fill="none"
-              className="text-gray-200"
+              className="text-gray-200 dark:text-gray-700"
             />
             {/* Progress circle */}
             <circle
@@ -158,29 +158,29 @@ export function CredibilityScoreCard({
             <span className={`text-4xl font-bold ${getProgressColor()}`}>
               {validScore.toFixed(1)}
             </span>
-            <span className="text-xs text-gray-500">/ 200</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">/ 200</span>
           </div>
         </div>
       </div>
 
       {/* Stats breakdown */}
       {total > 0 && (
-        <div className="space-y-3 border-t pt-4">
+        <div className="space-y-3 border-t dark:border-gray-700 pt-4">
           <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-600">Promesses tenues</span>
+            <span className="text-sm text-gray-600 dark:text-gray-400">Promesses tenues</span>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-green-600">{promisesKept}</span>
-              <span className="text-xs text-gray-400">
+              <span className="text-sm font-semibold text-green-600 dark:text-green-400">{promisesKept}</span>
+              <span className="text-xs text-gray-400 dark:text-gray-500">
                 ({total > 0 ? Math.round((promisesKept / total) * 100) : 0}%)
               </span>
             </div>
           </div>
 
           <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-600">Promesses non tenues</span>
+            <span className="text-sm text-gray-600 dark:text-gray-400">Promesses non tenues</span>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-red-600">{promisesBroken}</span>
-              <span className="text-xs text-gray-400">
+              <span className="text-sm font-semibold text-red-600 dark:text-red-400">{promisesBroken}</span>
+              <span className="text-xs text-gray-400 dark:text-gray-500">
                 ({total > 0 ? Math.round((promisesBroken / total) * 100) : 0}%)
               </span>
             </div>
@@ -188,10 +188,10 @@ export function CredibilityScoreCard({
 
           {promisesPartial > 0 && (
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Promesses partielles</span>
+              <span className="text-sm text-gray-600 dark:text-gray-400">Promesses partielles</span>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold text-yellow-600">{promisesPartial}</span>
-                <span className="text-xs text-gray-400">
+                <span className="text-sm font-semibold text-yellow-600 dark:text-yellow-400">{promisesPartial}</span>
+                <span className="text-xs text-gray-400 dark:text-gray-500">
                   ({total > 0 ? Math.round((promisesPartial / total) * 100) : 0}%)
                 </span>
               </div>
@@ -201,7 +201,7 @@ export function CredibilityScoreCard({
       )}
 
       {/* Legal disclaimer */}
-      <p className="text-xs text-gray-400 mt-4 border-t pt-3">
+      <p className="text-xs text-gray-400 dark:text-gray-500 mt-4 border-t dark:border-gray-700 pt-3">
         Score basé sur la vérification factuelle des promesses vs actions parlementaires.
         Données vérifiées par sources multiples.
       </p>

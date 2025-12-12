@@ -13,16 +13,16 @@
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
-# Scheduled Functions
-[[functions]]
-  schedule = "@daily"  # Runs once per day at midnight UTC
-  # For specific time: "0 6 * * *" = 6:00 AM UTC daily
-  # Add 1 hour in winter (CET) or 2 hours in summer (CEST) for Paris time
-
 # Function timeout overrides
 [functions]
   # Default timeout is 10 seconds, increase for data collection
   "scheduled-data-collection" = { timeout = 600 }  # 10 minutes
+
+# Scheduled Functions - Daily Data Collection
+# Runs at 6:00 AM Paris time (5:00 AM UTC in winter, 4:00 AM UTC in summer)
+# Using 5:00 AM UTC to be consistent year-round
+[functions."scheduled-data-collection"]
+  schedule = "0 5 * * *"
 
 # API route timeouts
 [[redirects]]

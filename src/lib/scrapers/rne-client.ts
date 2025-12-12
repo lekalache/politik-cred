@@ -267,7 +267,6 @@ class RNEClient {
           external_id: externalId,
           source_system: 'rne',
           is_active: true,
-          verification_status: 'verified',
           metadata: {
             rne: {
               source: 'data.gouv.fr/rne',
@@ -396,7 +395,6 @@ class RNEClient {
           external_id: externalId,
           source_system: 'rne',
           is_active: true,
-          verification_status: 'verified',
           metadata: {
             rne: {
               source: 'data.gouv.fr/rne',
