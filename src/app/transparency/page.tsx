@@ -242,31 +242,31 @@ export default function TransparencyPage() {
 
   const getReasonColor = (reason: string) => {
     if (reason === 'promise_kept' || reason === 'statement_verified') {
-      return 'bg-green-50 text-green-700 border-green-200'
+      return 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-700'
     }
     if (reason === 'promise_broken' || reason === 'statement_contradicted') {
-      return 'bg-red-50 text-red-700 border-red-200'
+      return 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-700'
     }
     if (reason === 'promise_partial') {
-      return 'bg-orange-50 text-orange-700 border-orange-200'
+      return 'bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-700'
     }
-    return 'bg-gray-50 text-gray-700 border-gray-200'
+    return 'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600'
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navigation />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center space-x-3 mb-4">
-            <Eye className="w-8 h-8 text-blue-600" />
+            <Eye className="w-8 h-8 text-blue-600 dark:text-blue-400" />
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                 Transparence et audit
               </h1>
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-400">
                 Consultez l'historique complet des vérifications de promesses et l'évolution des scores de crédibilité
               </p>
             </div>
@@ -275,66 +275,66 @@ export default function TransparencyPage() {
 
         {/* AI-Powered System Statistics */}
         {aiStats && (
-          <Card className="mb-8 border-2 border-indigo-200 bg-gradient-to-br from-indigo-50 to-white">
+          <Card className="mb-8 border-2 border-indigo-200 dark:border-indigo-700 bg-gradient-to-br from-indigo-50 to-white dark:from-indigo-900/30 dark:to-gray-800">
             <CardHeader>
-              <CardTitle className="flex items-center gap-3 text-indigo-900">
+              <CardTitle className="flex items-center gap-3 text-indigo-900 dark:text-indigo-200">
                 <Shield className="w-6 h-6" />
                 Statistiques du Système IA - En Direct
               </CardTitle>
-              <p className="text-sm text-indigo-700 mt-2">
+              <p className="text-sm text-indigo-700 dark:text-indigo-300 mt-2">
                 🚧 <strong>Système en construction</strong> - Données collectées automatiquement par IA.
                 Scores actuels non représentatifs : données insuffisantes pour audit de qualité.
               </p>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-white rounded-lg p-4 border border-indigo-200">
-                  <div className="text-sm text-indigo-600 mb-1">Politicians Audités</div>
-                  <div className="text-3xl font-bold text-indigo-900">
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-indigo-200 dark:border-indigo-700">
+                  <div className="text-sm text-indigo-600 dark:text-indigo-400 mb-1">Politicians Audités</div>
+                  <div className="text-3xl font-bold text-indigo-900 dark:text-indigo-200">
                     {aiStats.politiciansWithScores}/{aiStats.totalPoliticians}
                   </div>
-                  <div className="text-xs text-indigo-600 mt-1">avec scores IA</div>
+                  <div className="text-xs text-indigo-600 dark:text-indigo-400 mt-1">avec scores IA</div>
                 </div>
 
-                <div className="bg-white rounded-lg p-4 border border-green-200">
-                  <div className="text-sm text-green-600 mb-1">Promesses Extraites</div>
-                  <div className="text-3xl font-bold text-green-900">{aiStats.totalPromises}</div>
-                  <div className="text-xs text-green-600 mt-1">
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-green-200 dark:border-green-700">
+                  <div className="text-sm text-green-600 dark:text-green-400 mb-1">Promesses Extraites</div>
+                  <div className="text-3xl font-bold text-green-900 dark:text-green-200">{aiStats.totalPromises}</div>
+                  <div className="text-xs text-green-600 dark:text-green-400 mt-1">
                     {aiStats.politiciansWithPromises} politicians
                   </div>
                 </div>
 
-                <div className="bg-white rounded-lg p-4 border border-blue-200">
-                  <div className="text-sm text-blue-600 mb-1">Actions Parlementaires</div>
-                  <div className="text-3xl font-bold text-blue-900">{aiStats.parliamentaryActions}</div>
-                  <div className="text-xs text-blue-600 mt-1">votes & activités</div>
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-blue-200 dark:border-blue-700">
+                  <div className="text-sm text-blue-600 dark:text-blue-400 mb-1">Actions Parlementaires</div>
+                  <div className="text-3xl font-bold text-blue-900 dark:text-blue-200">{aiStats.parliamentaryActions}</div>
+                  <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">votes & activités</div>
                 </div>
 
-                <div className="bg-white rounded-lg p-4 border border-purple-200">
-                  <div className="text-sm text-purple-600 mb-1">Vérifications IA</div>
-                  <div className="text-3xl font-bold text-purple-900">{aiStats.promiseVerifications}</div>
-                  <div className="text-xs text-purple-600 mt-1">promesses vérifiées</div>
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-purple-200 dark:border-purple-700">
+                  <div className="text-sm text-purple-600 dark:text-purple-400 mb-1">Vérifications IA</div>
+                  <div className="text-3xl font-bold text-purple-900 dark:text-purple-200">{aiStats.promiseVerifications}</div>
+                  <div className="text-xs text-purple-600 dark:text-purple-400 mt-1">promesses vérifiées</div>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-white rounded-lg p-4 border border-amber-200">
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-amber-200 dark:border-amber-700">
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-sm text-amber-600 mb-1">Score Moyen de Cohérence</div>
-                      <div className="text-2xl font-bold text-amber-900">
+                      <div className="text-sm text-amber-600 dark:text-amber-400 mb-1">Score Moyen de Cohérence</div>
+                      <div className="text-2xl font-bold text-amber-900 dark:text-amber-200">
                         {aiStats.avgConsistencyScore.toFixed(1)}/100
                       </div>
                     </div>
-                    <TrendingUp className="w-8 h-8 text-amber-500" />
+                    <TrendingUp className="w-8 h-8 text-amber-500 dark:text-amber-400" />
                   </div>
                 </div>
 
-                <div className="bg-white rounded-lg p-4 border border-gray-200">
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-sm text-gray-600 mb-1">Dernier Audit Automatique</div>
-                      <div className="text-lg font-semibold text-gray-900">
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Dernier Audit Automatique</div>
+                      <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                         {aiStats.lastAuditDate
                           ? new Date(aiStats.lastAuditDate).toLocaleDateString('fr-FR', {
                               day: 'numeric',
@@ -345,16 +345,16 @@ export default function TransparencyPage() {
                           : 'Aucun audit'}
                       </div>
                     </div>
-                    <Calendar className="w-8 h-8 text-gray-500" />
+                    <Calendar className="w-8 h-8 text-gray-500 dark:text-gray-400" />
                   </div>
                 </div>
               </div>
 
               {/* Data Quality Warning */}
-              <div className="mt-4 p-4 bg-yellow-50 rounded-lg border-2 border-yellow-300">
+              <div className="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border-2 border-yellow-300 dark:border-yellow-700">
                 <div className="flex items-start gap-3">
-                  <AlertCircle className="w-6 h-6 text-yellow-700 mt-0.5 flex-shrink-0" />
-                  <div className="text-sm text-yellow-900">
+                  <AlertCircle className="w-6 h-6 text-yellow-700 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-yellow-900 dark:text-yellow-200">
                     <strong className="block mb-2">⚠️ Qualité des Données - Phase de Collecte Initiale</strong>
                     <ul className="space-y-1 list-disc list-inside">
                       <li>Seulement <strong>{aiStats.politiciansWithPromises}/{aiStats.totalPoliticians}</strong> politicians ont des promesses extraites</li>
@@ -363,7 +363,7 @@ export default function TransparencyPage() {
                       <li>Les scores actuels ne sont <strong>PAS représentatifs</strong> - Données insuffisantes pour un audit fiable</li>
                       <li>Besoin de 3-6 mois de collecte continue pour des scores de qualité</li>
                     </ul>
-                    <div className="mt-3 pt-3 border-t border-yellow-300">
+                    <div className="mt-3 pt-3 border-t border-yellow-300 dark:border-yellow-600">
                       <strong>Ce que nous construisons :</strong> Système automatisé qui collectera quotidiennement
                       promesses + actions parlementaires pour produire des scores objectifs basés sur des données complètes.
                     </div>
@@ -371,10 +371,10 @@ export default function TransparencyPage() {
                 </div>
               </div>
 
-              <div className="mt-4 p-3 bg-indigo-100 rounded-lg border border-indigo-200">
+              <div className="mt-4 p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg border border-indigo-200 dark:border-indigo-700">
                 <div className="flex items-start gap-2">
-                  <CheckCircle className="w-5 h-5 text-indigo-600 mt-0.5" />
-                  <div className="text-sm text-indigo-900">
+                  <CheckCircle className="w-5 h-5 text-indigo-600 dark:text-indigo-400 mt-0.5" />
+                  <div className="text-sm text-indigo-900 dark:text-indigo-200">
                     <strong>Infrastructure automatisée en place :</strong> Collecte quotidienne des données parlementaires (6h00),
                     extraction IA des promesses, matching sémantique, calcul objectif des scores.
                     Zéro intervention humaine dans le scoring.
@@ -388,40 +388,40 @@ export default function TransparencyPage() {
         {/* Statistics Cards */}
         {stats && (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-            <Card>
+            <Card className="dark:bg-gray-800 dark:border-gray-700">
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-blue-600">{stats.total_changes}</div>
-                <div className="text-sm text-gray-600">Vérifications totales</div>
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.total_changes}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Vérifications totales</div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="dark:bg-gray-800 dark:border-gray-700">
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-purple-600">{stats.total_politicians}</div>
-                <div className="text-sm text-gray-600">Politiciens suivis</div>
+                <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{stats.total_politicians}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Politiciens suivis</div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="dark:bg-gray-800 dark:border-gray-700">
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-indigo-600">{stats.avg_score.toFixed(1)}</div>
-                <div className="text-sm text-gray-600">Score moyen</div>
+                <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{stats.avg_score.toFixed(1)}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Score moyen</div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="dark:bg-gray-800 dark:border-gray-700">
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-green-600">{stats.promises_kept}</div>
-                <div className="text-sm text-gray-600">Promesses tenues</div>
+                <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.promises_kept}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Promesses tenues</div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="dark:bg-gray-800 dark:border-gray-700">
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-red-600">{stats.promises_broken}</div>
-                <div className="text-sm text-gray-600">Promesses non tenues</div>
+                <div className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.promises_broken}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Promesses non tenues</div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="dark:bg-gray-800 dark:border-gray-700">
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-orange-600">{stats.promises_partial}</div>
-                <div className="text-sm text-gray-600">Promesses partielles</div>
+                <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{stats.promises_partial}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Promesses partielles</div>
               </CardContent>
             </Card>
           </div>
@@ -481,25 +481,25 @@ export default function TransparencyPage() {
         {loading ? (
           <div className="space-y-4">
             {[...Array(5)].map((_, i) => (
-              <Card key={i} className="animate-pulse">
+              <Card key={i} className="animate-pulse dark:bg-gray-800 dark:border-gray-700">
                 <CardContent className="p-6">
                   <div className="space-y-3">
-                    <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
         ) : credibilityChanges.length === 0 ? (
-          <Card className="text-center py-12">
+          <Card className="text-center py-12 dark:bg-gray-800 dark:border-gray-700">
             <CardContent>
-              <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <FileText className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
                 Aucun enregistrement trouvé
               </h3>
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-400">
                 Aucune vérification correspondant aux critères sélectionnés.
               </p>
             </CardContent>
@@ -507,12 +507,12 @@ export default function TransparencyPage() {
         ) : (
           <div className="space-y-4">
             {credibilityChanges.map((record) => (
-              <Card key={record.id} className="hover:shadow-md transition-shadow">
+              <Card key={record.id} className="hover:shadow-md dark:hover:shadow-black/30 transition-shadow dark:bg-gray-800 dark:border-gray-700">
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div className="space-y-2 flex-1">
                       <div className="flex items-center space-x-3">
-                        <h3 className="font-semibold text-lg">{record.politician_name}</h3>
+                        <h3 className="font-semibold text-lg dark:text-gray-100">{record.politician_name}</h3>
                         <Badge
                           variant="outline"
                           className={getReasonColor(record.change_reason)}
@@ -520,13 +520,13 @@ export default function TransparencyPage() {
                           {getReasonLabel(record.change_reason)}
                         </Badge>
                         {record.is_disputed && (
-                          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                          <Badge variant="outline" className="bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 border-yellow-200 dark:border-yellow-700">
                             <AlertCircle className="w-3 h-3 mr-1" />
                             Contesté
                           </Badge>
                         )}
                       </div>
-                      <div className="flex items-center space-x-4 text-sm text-gray-600">
+                      <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
                         <div className="flex items-center space-x-1">
                           <Calendar className="w-4 h-4" />
                           <span>{new Date(record.created_at).toLocaleDateString('fr-FR')}</span>
@@ -542,28 +542,28 @@ export default function TransparencyPage() {
                     <div className="text-right">
                       <div className="flex items-center space-x-2">
                         {record.score_change > 0 ? (
-                          <TrendingUp className="w-5 h-5 text-green-600" />
+                          <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
                         ) : (
-                          <TrendingDown className="w-5 h-5 text-red-600" />
+                          <TrendingDown className="w-5 h-5 text-red-600 dark:text-red-400" />
                         )}
                         <span className={`text-2xl font-bold ${
-                          record.score_change > 0 ? 'text-green-600' : 'text-red-600'
+                          record.score_change > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                         }`}>
                           {record.score_change > 0 ? '+' : ''}{record.score_change}
                         </span>
                       </div>
-                      <div className="text-sm text-gray-500 mt-1">
+                      <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                         {record.previous_score.toFixed(1)} → {record.new_score.toFixed(1)}
                       </div>
                     </div>
                   </div>
 
-                  <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-                    <p className="text-sm text-gray-700 leading-relaxed">
+                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 space-y-3">
+                    <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                       {record.description}
                     </p>
                     {record.verification_confidence && (
-                      <div className="flex items-center space-x-2 text-xs text-gray-600">
+                      <div className="flex items-center space-x-2 text-xs text-gray-600 dark:text-gray-400">
                         <CheckCircle className="w-3 h-3" />
                         <span>Confiance : {(record.verification_confidence * 100).toFixed(0)}%</span>
                       </div>
@@ -573,7 +573,7 @@ export default function TransparencyPage() {
                         href={record.evidence_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-800"
+                        className="inline-flex items-center space-x-1 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
                       >
                         <ExternalLink className="w-4 h-4" />
                         <span>Voir la source</span>
@@ -587,15 +587,15 @@ export default function TransparencyPage() {
         )}
 
         {/* Legal Notice */}
-        <Card className="mt-12 border-blue-200 bg-blue-50">
+        <Card className="mt-12 border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20">
           <CardContent className="p-6">
             <div className="flex items-start space-x-3">
-              <Eye className="w-6 h-6 text-blue-600 mt-0.5" />
+              <Eye className="w-6 h-6 text-blue-600 dark:text-blue-400 mt-0.5" />
               <div>
-                <h3 className="font-semibold text-blue-900 mb-2">
+                <h3 className="font-semibold text-blue-900 dark:text-blue-200 mb-2">
                   Engagement de transparence
                 </h3>
-                <p className="text-blue-800 text-sm">
+                <p className="text-blue-800 dark:text-blue-300 text-sm">
                   Conformément à nos obligations légales et à notre engagement pour la transparence,
                   tous les changements de score de crédibilité sont conservés dans cet historique public.
                   Chaque vérification est documentée avec ses sources, sa méthode et son niveau de confiance.

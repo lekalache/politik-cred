@@ -121,29 +121,29 @@ export default function PromisesPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Navigation */}
       <Navigation />
 
       {/* Page Header */}
-      <div className="bg-white border-b">
+      <div className="bg-white dark:bg-gray-800 border-b dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-3">
-                <FileText className="w-8 h-8 text-blue-600" />
-                <h1 className="text-3xl font-bold text-gray-900">
+                <FileText className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
                   Suivi des Promesses
                 </h1>
               </div>
-              <p className="mt-2 text-gray-600">
+              <p className="mt-2 text-gray-600 dark:text-gray-400">
                 Suivez et vérifiez les promesses politiques avec des preuves parlementaires
               </p>
             </div>
             {role === 'admin' && (
               <Button
                 onClick={() => setShowSubmissionDialog(true)}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Ajouter une Promesse
@@ -156,61 +156,61 @@ export default function PromisesPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
+          <Card className="dark:bg-gray-800 dark:border-gray-700">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
                 Total Promesses
               </CardTitle>
-              <FileText className="w-4 h-4 text-gray-400" />
+              <FileText className="w-4 h-4 text-gray-400 dark:text-gray-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.total}</div>
-              <p className="text-xs text-gray-500 mt-1">
+              <div className="text-2xl font-bold dark:text-gray-100">{stats.total}</div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Toutes catégories confondues
               </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="dark:bg-gray-800 dark:border-gray-700">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
                 En Attente
               </CardTitle>
-              <Clock className="w-4 h-4 text-orange-400" />
+              <Clock className="w-4 h-4 text-orange-400 dark:text-orange-300" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-orange-600">{stats.pending}</div>
-              <p className="text-xs text-gray-500 mt-1">
+              <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{stats.pending}</div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Non encore vérifiées
               </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="dark:bg-gray-800 dark:border-gray-700">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
                 Vérifiées
               </CardTitle>
-              <CheckCircle2 className="w-4 h-4 text-green-400" />
+              <CheckCircle2 className="w-4 h-4 text-green-400 dark:text-green-300" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{stats.verified}</div>
-              <p className="text-xs text-gray-500 mt-1">
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.verified}</div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Avec preuves confirmées
               </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="dark:bg-gray-800 dark:border-gray-700">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
                 Vérifiables
               </CardTitle>
-              <BarChart3 className="w-4 h-4 text-blue-400" />
+              <BarChart3 className="w-4 h-4 text-blue-400 dark:text-blue-300" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{stats.actionable}</div>
-              <p className="text-xs text-gray-500 mt-1">
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.actionable}</div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Peuvent être vérifiées
               </p>
             </CardContent>
@@ -218,12 +218,12 @@ export default function PromisesPage() {
         </div>
 
         {/* Filters */}
-        <Card className="mb-6">
+        <Card className="mb-6 dark:bg-gray-800 dark:border-gray-700">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Filter className="w-5 h-5 text-gray-400" />
-                <CardTitle>Filtres</CardTitle>
+                <Filter className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                <CardTitle className="dark:text-gray-100">Filtres</CardTitle>
               </div>
             </div>
           </CardHeader>
@@ -231,7 +231,7 @@ export default function PromisesPage() {
             <div className="space-y-4">
               {/* Status Filter */}
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
                   Statut
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -271,7 +271,7 @@ export default function PromisesPage() {
 
               {/* Category Filter */}
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
                   Catégorie
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -292,9 +292,9 @@ export default function PromisesPage() {
         </Card>
 
         {/* Info Alert */}
-        <Alert className="mb-6 bg-blue-50 border-blue-200">
-          <AlertTriangle className="h-4 w-4 text-blue-600" />
-          <AlertDescription className="text-blue-800">
+        <Alert className="mb-6 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+          <AlertTriangle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          <AlertDescription className="text-blue-800 dark:text-blue-200">
             <strong>Comment ça marche :</strong> Les promesses sont extraites automatiquement
             des déclarations politiques et confrontées aux actions parlementaires réelles
             (votes, amendements, propositions de loi). Le système utilise l'IA sémantique
@@ -306,23 +306,23 @@ export default function PromisesPage() {
         {loading ? (
           <div className="grid grid-cols-1 gap-4">
             {[1, 2, 3].map((i) => (
-              <Card key={i} className="animate-pulse">
+              <Card key={i} className="animate-pulse dark:bg-gray-800 dark:border-gray-700">
                 <CardContent className="p-6">
-                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
-                  <div className="h-3 bg-gray-200 rounded w-full mb-2"></div>
-                  <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-4"></div>
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full mb-2"></div>
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
                 </CardContent>
               </Card>
             ))}
           </div>
         ) : filteredPromises.length === 0 ? (
-          <Card>
+          <Card className="dark:bg-gray-800 dark:border-gray-700">
             <CardContent className="p-12 text-center">
-              <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <FileText className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
                 Aucune promesse trouvée
               </h3>
-              <p className="text-gray-500 mb-4">
+              <p className="text-gray-500 dark:text-gray-400 mb-4">
                 {activeFilter !== 'all' || selectedCategory !== 'all'
                   ? 'Essayez de modifier vos filtres pour voir plus de résultats.'
                   : 'Aucune promesse n\'a encore été ajoutée au système.'}
@@ -330,7 +330,7 @@ export default function PromisesPage() {
               {role === 'admin' && (
                 <Button
                   onClick={() => setShowSubmissionDialog(true)}
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Ajouter la Première Promesse
