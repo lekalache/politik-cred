@@ -255,19 +255,19 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <Navigation />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="animate-pulse space-y-6">
-            <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[...Array(8)].map((_, i) => (
-                <div key={i} className="h-32 bg-gray-200 rounded-lg"></div>
+                <div key={i} className="h-32 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
               ))}
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="h-64 bg-gray-200 rounded-lg"></div>
-              <div className="h-64 bg-gray-200 rounded-lg"></div>
+              <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+              <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
             </div>
           </div>
         </div>
@@ -277,14 +277,14 @@ export default function AnalyticsPage() {
 
   if (!analytics) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <Navigation />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <Card className="text-center py-12">
+          <Card className="text-center py-12 dark:bg-gray-800 dark:border-gray-700">
             <CardContent>
               <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold mb-2">Erreur de chargement</h2>
-              <p className="text-gray-600">
+              <h2 className="text-xl font-semibold mb-2 dark:text-gray-100">Erreur de chargement</h2>
+              <p className="text-gray-600 dark:text-gray-400">
                 Impossible de charger les données d'analyse.
               </p>
             </CardContent>
@@ -298,7 +298,7 @@ export default function AnalyticsPage() {
   const userTrends = getChangeIndicator(analytics.trends.usersThisWeek, analytics.trends.usersLastWeek)
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navigation />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -306,12 +306,12 @@ export default function AnalyticsPage() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-3">
-              <BarChart3 className="w-8 h-8 text-blue-600" />
+              <BarChart3 className="w-8 h-8 text-blue-600 dark:text-blue-400" />
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                   Analytics & Reporting
                 </h1>
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-400">
                   Tableau de bord des statistiques de la plateforme
                 </p>
               </div>
@@ -347,15 +347,15 @@ export default function AnalyticsPage() {
 
         {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
+          <Card className="dark:bg-gray-800 dark:border-gray-700">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Utilisateurs totaux</p>
-                  <p className="text-2xl font-bold text-gray-900">{analytics.totalUsers.toLocaleString()}</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Utilisateurs totaux</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{analytics.totalUsers.toLocaleString()}</p>
                 </div>
-                <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg">
-                  <Users className="w-6 h-6 text-blue-600" />
+                <div className="flex items-center justify-center w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                  <Users className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                 </div>
               </div>
               <div className="mt-4 flex items-center">
@@ -363,20 +363,20 @@ export default function AnalyticsPage() {
                   {userTrends.positive ? <TrendingUp className="w-4 h-4 mr-1" /> : <TrendingDown className="w-4 h-4 mr-1" />}
                   <span className="text-sm font-medium">{userTrends.value}%</span>
                 </div>
-                <span className="text-sm text-gray-600 ml-2">vs période précédente</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400 ml-2">vs période précédente</span>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="dark:bg-gray-800 dark:border-gray-700">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Votes totaux</p>
-                  <p className="text-2xl font-bold text-gray-900">{analytics.totalVotes.toLocaleString()}</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Votes totaux</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{analytics.totalVotes.toLocaleString()}</p>
                 </div>
-                <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-lg">
-                  <Vote className="w-6 h-6 text-green-600" />
+                <div className="flex items-center justify-center w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                  <Vote className="w-6 h-6 text-green-600 dark:text-green-400" />
                 </div>
               </div>
               <div className="mt-4 flex items-center">
@@ -384,20 +384,20 @@ export default function AnalyticsPage() {
                   {voteTrends.positive ? <TrendingUp className="w-4 h-4 mr-1" /> : <TrendingDown className="w-4 h-4 mr-1" />}
                   <span className="text-sm font-medium">{voteTrends.value}%</span>
                 </div>
-                <span className="text-sm text-gray-600 ml-2">vs période précédente</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400 ml-2">vs période précédente</span>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="dark:bg-gray-800 dark:border-gray-700">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Score moyen</p>
-                  <p className="text-2xl font-bold text-gray-900">{analytics.averageCredibilityScore}/200</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Score moyen</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{analytics.averageCredibilityScore}/200</p>
                 </div>
-                <div className="flex items-center justify-center w-12 h-12 bg-purple-100 rounded-lg">
-                  <Target className="w-6 h-6 text-purple-600" />
+                <div className="flex items-center justify-center w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                  <Target className="w-6 h-6 text-purple-600 dark:text-purple-400" />
                 </div>
               </div>
               <div className="mt-4">
@@ -409,19 +409,19 @@ export default function AnalyticsPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="dark:bg-gray-800 dark:border-gray-700">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">En attente</p>
-                  <p className="text-2xl font-bold text-gray-900">{analytics.pendingVotes}</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">En attente</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{analytics.pendingVotes}</p>
                 </div>
-                <div className="flex items-center justify-center w-12 h-12 bg-yellow-100 rounded-lg">
-                  <Clock className="w-6 h-6 text-yellow-600" />
+                <div className="flex items-center justify-center w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
+                  <Clock className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
                 </div>
               </div>
               <div className="mt-4">
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-gray-600 dark:text-gray-400">
                   Temps moyen: {analytics.moderationStats.averageProcessingTime}h
                 </div>
               </div>
@@ -432,10 +432,10 @@ export default function AnalyticsPage() {
         {/* Detailed Analytics */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Vote Distribution */}
-          <Card>
+          <Card className="dark:bg-gray-800 dark:border-gray-700">
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <PieChart className="w-5 h-5 text-blue-600" />
+              <CardTitle className="flex items-center space-x-2 dark:text-gray-100">
+                <PieChart className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                 <span>Répartition des votes</span>
               </CardTitle>
             </CardHeader>
@@ -443,42 +443,42 @@ export default function AnalyticsPage() {
               <div className="space-y-4">
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div>
-                    <div className="text-2xl font-bold text-green-600">{analytics.approvedVotes}</div>
-                    <div className="text-sm text-gray-600">Approuvés</div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-2xl font-bold text-green-600 dark:text-green-400">{analytics.approvedVotes}</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Approuvés</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-500">
                       {analytics.totalVotes > 0 ? Math.round((analytics.approvedVotes / analytics.totalVotes) * 100) : 0}%
                     </div>
                   </div>
                   <div>
-                    <div className="text-2xl font-bold text-yellow-600">{analytics.pendingVotes}</div>
-                    <div className="text-sm text-gray-600">En attente</div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{analytics.pendingVotes}</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">En attente</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-500">
                       {analytics.totalVotes > 0 ? Math.round((analytics.pendingVotes / analytics.totalVotes) * 100) : 0}%
                     </div>
                   </div>
                   <div>
-                    <div className="text-2xl font-bold text-red-600">{analytics.rejectedVotes}</div>
-                    <div className="text-sm text-gray-600">Rejetés</div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-2xl font-bold text-red-600 dark:text-red-400">{analytics.rejectedVotes}</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Rejetés</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-500">
                       {analytics.totalVotes > 0 ? Math.round((analytics.rejectedVotes / analytics.totalVotes) * 100) : 0}%
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
+                  <div className="flex justify-between text-sm dark:text-gray-300">
                     <span>Approuvés</span>
                     <span>{analytics.approvedVotes}</span>
                   </div>
                   <Progress value={analytics.totalVotes > 0 ? (analytics.approvedVotes / analytics.totalVotes) * 100 : 0} className="h-2" />
 
-                  <div className="flex justify-between text-sm">
+                  <div className="flex justify-between text-sm dark:text-gray-300">
                     <span>En attente</span>
                     <span>{analytics.pendingVotes}</span>
                   </div>
                   <Progress value={analytics.totalVotes > 0 ? (analytics.pendingVotes / analytics.totalVotes) * 100 : 0} className="h-2" />
 
-                  <div className="flex justify-between text-sm">
+                  <div className="flex justify-between text-sm dark:text-gray-300">
                     <span>Rejetés</span>
                     <span>{analytics.rejectedVotes}</span>
                   </div>
@@ -489,35 +489,35 @@ export default function AnalyticsPage() {
           </Card>
 
           {/* Top Politicians */}
-          <Card>
+          <Card className="dark:bg-gray-800 dark:border-gray-700">
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Award className="w-5 h-5 text-yellow-600" />
+              <CardTitle className="flex items-center space-x-2 dark:text-gray-100">
+                <Award className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
                 <span>Top politiciens par crédibilité</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 {analytics.topPoliticians.slice(0, 8).map((politician, index) => (
-                  <div key={politician.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50">
+                  <div key={politician.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">
                     <div className="flex items-center space-x-3">
                       <div className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
-                        index === 0 ? 'bg-yellow-100 text-yellow-800' :
-                        index === 1 ? 'bg-gray-100 text-gray-800' :
-                        index === 2 ? 'bg-orange-100 text-orange-800' :
-                        'bg-blue-100 text-blue-800'
+                        index === 0 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300' :
+                        index === 1 ? 'bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-200' :
+                        index === 2 ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300' :
+                        'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300'
                       }`}>
                         {index + 1}
                       </div>
                       <div>
-                        <div className="font-medium text-gray-900">{politician.name}</div>
-                        <div className="text-xs text-gray-600">{politician.total_votes} votes</div>
+                        <div className="font-medium text-gray-900 dark:text-gray-100">{politician.name}</div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400">{politician.total_votes} votes</div>
                       </div>
                     </div>
                     <Badge variant="outline" className={
-                      politician.credibility_score >= 150 ? 'bg-green-50 text-green-700 border-green-200' :
-                      politician.credibility_score >= 100 ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
-                      'bg-red-50 text-red-700 border-red-200'
+                      politician.credibility_score >= 150 ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700' :
+                      politician.credibility_score >= 100 ? 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-700' :
+                      'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-700'
                     }>
                       {politician.credibility_score}/200
                     </Badge>
@@ -530,10 +530,10 @@ export default function AnalyticsPage() {
 
         {/* Party Analytics */}
         {analytics.partyStats.length > 0 && (
-          <Card className="mb-8">
+          <Card className="mb-8 dark:bg-gray-800 dark:border-gray-700">
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Users className="w-5 h-5 text-indigo-600" />
+              <CardTitle className="flex items-center space-x-2 dark:text-gray-100">
+                <Users className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                 <span>Statistiques par Parti</span>
               </CardTitle>
             </CardHeader>
@@ -541,36 +541,36 @@ export default function AnalyticsPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-3 px-2 font-medium text-gray-600">Parti</th>
-                      <th className="text-center py-3 px-2 font-medium text-gray-600">Membres</th>
-                      <th className="text-center py-3 px-2 font-medium text-gray-600">Score Moyen</th>
-                      <th className="text-center py-3 px-2 font-medium text-gray-600">Score IA</th>
-                      <th className="text-right py-3 px-2 font-medium text-gray-600">Votes</th>
+                    <tr className="border-b dark:border-gray-600">
+                      <th className="text-left py-3 px-2 font-medium text-gray-600 dark:text-gray-400">Parti</th>
+                      <th className="text-center py-3 px-2 font-medium text-gray-600 dark:text-gray-400">Membres</th>
+                      <th className="text-center py-3 px-2 font-medium text-gray-600 dark:text-gray-400">Score Moyen</th>
+                      <th className="text-center py-3 px-2 font-medium text-gray-600 dark:text-gray-400">Score IA</th>
+                      <th className="text-right py-3 px-2 font-medium text-gray-600 dark:text-gray-400">Votes</th>
                     </tr>
                   </thead>
                   <tbody>
                     {analytics.partyStats.map((party, index) => (
-                      <tr key={party.party} className={`border-b hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
+                      <tr key={party.party} className={`border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 ${index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50/50 dark:bg-gray-750'}`}>
                         <td className="py-3 px-2">
-                          <span className="font-medium text-gray-900">{party.party}</span>
+                          <span className="font-medium text-gray-900 dark:text-gray-100">{party.party}</span>
                         </td>
                         <td className="text-center py-3 px-2">
-                          <Badge variant="outline">{party.count}</Badge>
+                          <Badge variant="outline" className="dark:border-gray-600 dark:text-gray-300">{party.count}</Badge>
                         </td>
                         <td className="text-center py-3 px-2">
                           <span className={`font-semibold ${
-                            party.avgScore >= 150 ? 'text-green-600' :
-                            party.avgScore >= 100 ? 'text-yellow-600' :
-                            'text-red-600'
+                            party.avgScore >= 150 ? 'text-green-600 dark:text-green-400' :
+                            party.avgScore >= 100 ? 'text-yellow-600 dark:text-yellow-400' :
+                            'text-red-600 dark:text-red-400'
                           }`}>
                             {party.avgScore}/200
                           </span>
                         </td>
                         <td className="text-center py-3 px-2">
-                          <span className="text-indigo-600 font-medium">{party.avgAiScore}/100</span>
+                          <span className="text-indigo-600 dark:text-indigo-400 font-medium">{party.avgAiScore}/100</span>
                         </td>
-                        <td className="text-right py-3 px-2 text-gray-600">
+                        <td className="text-right py-3 px-2 text-gray-600 dark:text-gray-400">
                           {party.totalVotes.toLocaleString()}
                         </td>
                       </tr>
@@ -581,11 +581,11 @@ export default function AnalyticsPage() {
 
               {/* Visual comparison */}
               <div className="mt-6 space-y-3">
-                <h4 className="font-medium text-gray-700">Comparaison des scores moyens</h4>
+                <h4 className="font-medium text-gray-700 dark:text-gray-300">Comparaison des scores moyens</h4>
                 {analytics.partyStats.slice(0, 6).map(party => (
                   <div key={party.party} className="flex items-center gap-3">
-                    <span className="w-32 text-sm truncate" title={party.party}>{party.party}</span>
-                    <div className="flex-1 bg-gray-200 rounded-full h-4 overflow-hidden">
+                    <span className="w-32 text-sm truncate dark:text-gray-300" title={party.party}>{party.party}</span>
+                    <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-4 overflow-hidden">
                       <div
                         className={`h-full transition-all ${
                           party.avgScore >= 150 ? 'bg-green-500' :
@@ -595,7 +595,7 @@ export default function AnalyticsPage() {
                         style={{ width: `${(party.avgScore / 200) * 100}%` }}
                       />
                     </div>
-                    <span className="w-16 text-right text-sm font-medium">{party.avgScore}/200</span>
+                    <span className="w-16 text-right text-sm font-medium dark:text-gray-300">{party.avgScore}/200</span>
                   </div>
                 ))}
               </div>
@@ -604,19 +604,19 @@ export default function AnalyticsPage() {
         )}
 
         {/* Votes by Category */}
-        <Card className="mb-8">
+        <Card className="mb-8 dark:bg-gray-800 dark:border-gray-700">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <BarChart3 className="w-5 h-5 text-purple-600" />
+            <CardTitle className="flex items-center space-x-2 dark:text-gray-100">
+              <BarChart3 className="w-5 h-5 text-purple-600 dark:text-purple-400" />
               <span>Votes par catégorie</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               {analytics.votesByCategory.map((category) => (
-                <div key={category.category} className="text-center p-4 bg-gray-50 rounded-lg">
-                  <div className="text-2xl font-bold text-gray-900">{category.count}</div>
-                  <div className="text-sm text-gray-600 capitalize">
+                <div key={category.category} className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{category.count}</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400 capitalize">
                     {category.category === 'integrity' ? 'Intégrité' :
                      category.category === 'competence' ? 'Compétence' :
                      category.category === 'transparency' ? 'Transparence' :
@@ -624,7 +624,7 @@ export default function AnalyticsPage() {
                      category.category === 'leadership' ? 'Leadership' :
                      'Autre'}
                   </div>
-                  <div className="text-xs text-gray-500 mt-1">
+                  <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">
                     {analytics.totalVotes > 0 ? Math.round((category.count / analytics.totalVotes) * 100) : 0}%
                   </div>
                 </div>
@@ -634,42 +634,42 @@ export default function AnalyticsPage() {
         </Card>
 
         {/* Moderation Stats */}
-        <Card>
+        <Card className="dark:bg-gray-800 dark:border-gray-700">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Shield className="w-5 h-5 text-blue-600" />
+            <CardTitle className="flex items-center space-x-2 dark:text-gray-100">
+              <Shield className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               <span>Statistiques de modération</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                   {analytics.moderationStats.averageProcessingTime}h
                 </div>
-                <div className="text-sm text-gray-600">Temps moyen de traitement</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Temps moyen de traitement</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">
+                <div className="text-2xl font-bold text-green-600 dark:text-green-400">
                   {Math.round(analytics.moderationStats.accuracyRate * 100)}%
                 </div>
-                <div className="text-sm text-gray-600">Taux de précision</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Taux de précision</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-purple-600">
+                <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                   {analytics.moderationStats.moderatorWorkload.reduce((sum, m) => sum + m.votes_processed, 0)}
                 </div>
-                <div className="text-sm text-gray-600">Votes traités</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Votes traités</div>
               </div>
             </div>
 
             <div className="mt-6">
-              <h4 className="font-medium text-gray-900 mb-3">Charge de travail des modérateurs</h4>
+              <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Charge de travail des modérateurs</h4>
               <div className="space-y-2">
                 {analytics.moderationStats.moderatorWorkload.map((moderator) => (
                   <div key={moderator.moderator_name} className="flex items-center justify-between">
-                    <span className="text-sm text-gray-700">{moderator.moderator_name}</span>
-                    <span className="text-sm font-medium">{moderator.votes_processed} votes</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{moderator.moderator_name}</span>
+                    <span className="text-sm font-medium dark:text-gray-200">{moderator.votes_processed} votes</span>
                   </div>
                 ))}
               </div>
